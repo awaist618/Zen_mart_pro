@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
@@ -24,8 +25,10 @@ class VendorDashboard extends ConsumerWidget {
                   child: const _VendorKpiGrid(),
                 ),
                 const SizedBox(height: 8),
-                const _ManageShop(),
+                const _ShopStatusCard(),
                 const SizedBox(height: 24),
+                const _ManageShop(),
+                const SizedBox(height: 32),
                 const _IncomingOrders(),
               ]),
             ),
@@ -46,100 +49,118 @@ class _VendorHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 100),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF8B5CF6), Color(0xFFC084FC)], // Purple/Violet Vendor Theme
-        ),
+        color: Color(0xFF0F172A), // Match App Theme Dark
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(36),
           bottomRight: Radius.circular(36),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Background Blobs (Premium Theme style)
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF8B5CF6).withOpacity(0.15),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'VENDOR PORTAL',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VENDOR PORTAL',
+                        style: TextStyle(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.8),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Green Basket Store',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _HeaderActionIcon(
+                        icon: Icons.notifications_none_rounded,
+                        onTap: () {},
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => ref.read(authServiceProvider).signOut(),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
+                          ),
+                          child: const CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Color(0xFF1E293B),
+                            child: Text('GB', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Text(
+                "Today's Sales",
+                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
                   const Text(
-                    'Green Basket Store',
+                    'Rs 18,420',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  _HeaderActionIcon(
-                    icon: Icons.notifications_none_rounded,
-                    onTap: () {},
                   ),
                   const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => ref.read(authServiceProvider).signOut(),
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Color(0xFF8B5CF6),
-                        child: Text('GB', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    margin: const EdgeInsets.only(bottom: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: const Text(
+                      '24 Orders',
+                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Text(
-            "Today's Sales",
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Rs 18,420',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                margin: const EdgeInsets.only(bottom: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  '24 Orders',
-                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
               ),
             ],
           ),
@@ -161,9 +182,9 @@ class _HeaderActionIcon extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
       ),
@@ -188,29 +209,29 @@ class _VendorKpiGrid extends StatelessWidget {
           title: 'New Orders',
           value: '07',
           icon: Icons.shopping_bag_rounded,
-          color: Color(0xFF6366F1),
+          color: Color(0xFF8B5CF6),
           subtitle: 'Awaiting Action',
         ),
         _KpiCard(
-          title: 'Total Products',
+          title: 'Total Items',
           value: '156',
           icon: Icons.inventory_2_rounded,
-          color: Color(0xFF8B5CF6),
-          subtitle: 'Active Items',
+          color: Color(0xFF6366F1),
+          subtitle: 'Active Products',
         ),
         _KpiCard(
           title: 'Low Stock',
           value: '03',
           icon: Icons.warning_amber_rounded,
           color: Color(0xFFEF4444),
-          subtitle: 'Needs Restock',
+          subtitle: 'Needs Attention',
         ),
         _KpiCard(
           title: 'Store Rating',
           value: '4.8',
           icon: Icons.star_rounded,
           color: Color(0xFFF59E0B),
-          subtitle: 'From 124 reviews',
+          subtitle: '124 Reviews',
         ),
       ],
     );
@@ -265,7 +286,7 @@ class _KpiCard extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1E293B),
                 ),
@@ -276,10 +297,62 @@ class _KpiCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.black.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShopStatusCard extends StatelessWidget {
+  const _ShopStatusCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B5CF6).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Store Status: Online',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Your shop is visible to customers',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: true,
+            onChanged: (v) {},
+            activeColor: Colors.white,
+            activeTrackColor: Colors.white.withOpacity(0.3),
           ),
         ],
       ),
@@ -310,7 +383,7 @@ class _ManageShop extends StatelessWidget {
             _ActionItem(label: 'Add Product', icon: Icons.add_box_rounded, color: Color(0xFF10B981)),
             _ActionItem(label: 'Inventory', icon: Icons.list_alt_rounded, color: Color(0xFF6366F1)),
             _ActionItem(label: 'Coupons', icon: Icons.confirmation_number_rounded, color: Color(0xFFF59E0B)),
-            _ActionItem(label: 'Insights', icon: Icons.auto_graph_rounded, color: Color(0xFF8B5CF6)),
+            _ActionItem(label: 'Reviews', icon: Icons.rate_review_rounded, color: Color(0xFF8B5CF6)),
           ],
         ),
       ],
@@ -375,7 +448,7 @@ class _IncomingOrders extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Incoming Orders',
+                'Recent Orders',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               TextButton(
@@ -388,7 +461,7 @@ class _IncomingOrders extends StatelessWidget {
           const _OrderTile(
             orderId: '#4832',
             amount: 'Rs 1,240',
-            items: '3 Items',
+            customer: 'Awais Tariq',
             time: '2m ago',
             status: 'Pending',
             color: Color(0xFFF59E0B),
@@ -397,7 +470,7 @@ class _IncomingOrders extends StatelessWidget {
           const _OrderTile(
             orderId: '#4829',
             amount: 'Rs 860',
-            items: '1 Item',
+            customer: 'Hafsa Ah',
             time: '15m ago',
             status: 'Preparing',
             color: Color(0xFF10B981),
@@ -411,7 +484,7 @@ class _IncomingOrders extends StatelessWidget {
 class _OrderTile extends StatelessWidget {
   final String orderId;
   final String amount;
-  final String items;
+  final String customer;
   final String time;
   final String status;
   final Color color;
@@ -419,7 +492,7 @@ class _OrderTile extends StatelessWidget {
   const _OrderTile({
     required this.orderId,
     required this.amount,
-    required this.items,
+    required this.customer,
     required this.time,
     required this.status,
     required this.color,
@@ -448,7 +521,7 @@ class _OrderTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '$items • $amount',
+                '$customer • $amount',
                 style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
               ),
             ],
@@ -498,7 +571,7 @@ class _VendorBottomNav extends StatelessWidget {
         children: const [
           _BottomNavItem(icon: Icons.dashboard_rounded, label: 'Home', isActive: true),
           _BottomNavItem(icon: Icons.receipt_long_rounded, label: 'Orders', isActive: false),
-          _BottomNavItem(icon: Icons.inventory_2_rounded, label: 'Inventory', isActive: false),
+          _BottomNavItem(icon: Icons.inventory_2_rounded, label: 'Items', isActive: false),
           _BottomNavItem(icon: Icons.person_rounded, label: 'Profile', isActive: false),
         ],
       ),
@@ -524,14 +597,14 @@ class _BottomNavItem extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: isActive ? Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
+          color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
           size: 26,
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            color: isActive ? Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
+            color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
             fontSize: 11,
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
           ),
