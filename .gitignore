@@ -36,7 +36,7 @@ local.properties
 lib/firebase_options*.dart
 lib/core/secrets.dart
 android/app/google-services*.json
-ios/Runner/GoogleService-Info*.plist
+# ios/Runner/GoogleService-Info*.plist (Allowed for now to fix build)
 ios/firebase_app_id_file.json
 macos/Runner/GoogleService-Info*.plist
 macos/firebase_app_id_file.json

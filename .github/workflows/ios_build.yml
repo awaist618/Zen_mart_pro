@@ -15,6 +15,11 @@ jobs:
         with:
           channel: 'stable'
           
+      - name: Create Secrets File (Fix Compilation)
+        run: |
+          mkdir -p lib/core
+          echo "class AppSecrets { static const String smtpEmail = 'dummy@mail.com'; static const String smtpPassword = 'dummy'; }" > lib/core/secrets.dart
+          
       - name: Install Dependencies
         run: flutter pub get
 
