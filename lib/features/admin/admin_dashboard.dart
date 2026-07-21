@@ -9,31 +9,28 @@ class AdminDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _HeroHeader(ref: ref),
-            Transform.translate(
-              offset: const Offset(0, -42),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    const _KpiGrid(),
-                    const SizedBox(height: 16),
-                    const _QuickActions(),
-                    const SizedBox(height: 16),
-                    const _RecentActivity(),
-                    const SizedBox(height: 16),
-                  ],
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: _HeroHeader(ref: ref),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                Transform.translate(
+                  offset: const Offset(0, -40),
+                  child: const _KpiGrid(),
                 ),
-              ),
+                const SizedBox(height: 8),
+                const _QuickActions(),
+                const SizedBox(height: 24),
+                const _RecentActivity(),
+              ]),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: const _AdminBottomNav(),
     );
@@ -47,238 +44,17 @@ class _HeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 100),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, Color(0xFF8B7FF0)],
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
         ),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: -30,
-            right: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.08)),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Good morning',
-                            style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13)),
-                        const Text('Super Admin',
-                            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                  _HeroIconButton(
-                    icon: Icons.logout_rounded, 
-                    onTap: () => ref.read(authServiceProvider).signOut(),
-                  ),
-                  const SizedBox(width: 10),
-                  const CircleAvatar(
-                    radius: 19,
-                    backgroundColor: Color(0xFFFFA53E),
-                    child: Text('SA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Text('Platform revenue today', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-              const Text('Rs 842,600', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Row(
-                children: const [
-                  Icon(Icons.arrow_outward_rounded, color: Color(0xFFC8FFEE), size: 14),
-                  SizedBox(width: 2),
-                  Text('12.4% vs yesterday', style: TextStyle(color: Color(0xFFC8FFEE), fontSize: 12, fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _HeroIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), borderRadius: BorderRadius.circular(12)),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
-}
-
-class _KpiData {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
-  const _KpiData(this.icon, this.value, this.label, this.color);
-}
-
-class _KpiGrid extends StatelessWidget {
-  const _KpiGrid();
-
-  static const List<_KpiData> _items = [
-    _KpiData(Icons.storefront_rounded, '128', 'Active shops', Color(0xFF00D9A5)),
-    _KpiData(Icons.people_alt_rounded, '64', 'Vendors', Color(0xFFFFA53E)),
-    _KpiData(Icons.receipt_long_rounded, '3,240', 'Orders today', Color(0xFF54A0FF)),
-    _KpiData(Icons.two_wheeler_rounded, '42', 'Riders online', Color(0xFFFF6B6B)),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.4,
-      children: _items.map((k) {
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: k.color,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(color: k.color.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 8)),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(k.icon, color: Colors.white, size: 22),
-              const SizedBox(height: 8),
-              Text(k.value, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w700)),
-              Text(k.label, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11.5)),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _ActionData {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _ActionData(this.icon, this.label, this.color);
-}
-
-class _QuickActions extends StatelessWidget {
-  const _QuickActions();
-
-  static const List<_ActionData> _actions = [
-    _ActionData(Icons.add_rounded, 'New vendor', AppColors.primary),
-    _ActionData(Icons.storefront_rounded, 'New shop', Color(0xFFFFA53E)),
-    _ActionData(Icons.category_rounded, 'Categories', Color(0xFF00D9A5)),
-    _ActionData(Icons.report_problem_rounded, 'Complaints', Color(0xFFFF6B6B)),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Quick actions', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 14),
-          Row(
-            children: _actions.map((a) {
-              return Expanded(
-                child: InkWell(
-                  onTap: () {
-                    // TODO: route to respective management screen
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: a.color.withOpacity(0.14),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(a.icon, color: a.color, size: 22),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(a.label, style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityItem {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  const _ActivityItem(this.icon, this.color, this.title, this.subtitle);
-}
-
-class _RecentActivity extends StatelessWidget {
-  const _RecentActivity();
-
-  static const List<_ActivityItem> _items = [
-    _ActivityItem(Icons.person_add_alt_rounded, Color(0xFFFFA53E), 'New vendor registration', 'Green Basket Store · 5 min ago'),
-    _ActivityItem(Icons.error_outline_rounded, Color(0xFFFF6B6B), 'Complaint filed', 'Order #4821 · 18 min ago'),
-    _ActivityItem(Icons.check_circle_outline_rounded, Color(0xFF00D9A5), 'Order delivered', 'Order #4819 · 40 min ago'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,49 +62,415 @@ class _RecentActivity extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Recent activity', style: Theme.of(context).textTheme.titleMedium),
-              const Text('View all', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SUPER ADMIN',
+                    style: TextStyle(
+                      color: AppColors.accent.withOpacity(0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Zen Mart Control',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  _HeaderActionIcon(
+                    icon: Icons.notifications_none_rounded,
+                    onTap: () {},
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => ref.read(authServiceProvider).signOut(),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.accent, width: 2),
+                      ),
+                      child: const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Color(0xFF1E293B),
+                        child: Text('AD', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 6),
-          for (int i = 0; i < _items.length; i++) ...[
-            _ActivityRow(item: _items[i]),
-            if (i != _items.length - 1) const Divider(height: 1),
-          ],
+          const SizedBox(height: 32),
+          Text(
+            'Total Revenue (Monthly)',
+            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                'Rs 2.48M',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(bottom: 6),
+                decoration: BoxDecoration(
+                  color: Colors.greenAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      '+18%',
+                      style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _ActivityRow extends StatelessWidget {
-  final _ActivityItem item;
-  const _ActivityRow({required this.item});
+class _HeaderActionIcon extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _HeaderActionIcon({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(color: item.color.withOpacity(0.14), borderRadius: BorderRadius.circular(10)),
-            child: Icon(item.icon, size: 16, color: item.color),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 13.5)),
-                Text(item.subtitle, style: Theme.of(context).textTheme.labelSmall),
-              ],
-            ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+}
+
+class _KpiGrid extends StatelessWidget {
+  const _KpiGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: 1.3,
+      children: const [
+        _KpiCard(
+          title: 'Total Shops',
+          value: '154',
+          icon: Icons.storefront_rounded,
+          color: Color(0xFF6366F1),
+          trend: '+5 this week',
+        ),
+        _KpiCard(
+          title: 'Active Riders',
+          value: '42',
+          icon: Icons.two_wheeler_rounded,
+          color: Color(0xFFF59E0B),
+          trend: '82% online',
+        ),
+        _KpiCard(
+          title: 'Pending Orders',
+          value: '28',
+          icon: Icons.pending_actions_rounded,
+          color: Color(0xFFEF4444),
+          trend: 'Needs attention',
+        ),
+        _KpiCard(
+          title: 'Total Customers',
+          value: '1.2k',
+          icon: Icons.people_alt_rounded,
+          color: Color(0xFF10B981),
+          trend: '+12% growth',
+        ),
+      ],
+    );
+  }
+}
+
+class _KpiCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final String trend;
+
+  const _KpiCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.trend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black.withOpacity(0.5),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Manage Platform',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1))),
+            Expanded(child: _ActionItem(label: 'Approvals', icon: Icons.verified_user_rounded, color: Color(0xFF10B981))),
+            Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B))),
+            Expanded(child: _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B))),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionItem extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _ActionItem({required this.label, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5)),
+            ],
+          ),
+          child: Icon(icon, color: color, size: 28),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentActivity extends StatelessWidget {
+  const _RecentActivity();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Events',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const _ActivityTile(
+            title: 'New Vendor Registration',
+            subtitle: 'Al-Madina Grocery requested approval',
+            time: '2m ago',
+            icon: Icons.store_mall_directory_rounded,
+            color: Color(0xFF6366F1),
+          ),
+          const Divider(height: 24),
+          const _ActivityTile(
+            title: 'Withdrawal Request',
+            subtitle: 'Rider #124 requested Rs 5,000',
+            time: '15m ago',
+            icon: Icons.account_balance_wallet_rounded,
+            color: Color(0xFFF59E0B),
+          ),
+          const Divider(height: 24),
+          const _ActivityTile(
+            title: 'System Alert',
+            subtitle: 'High traffic detected in Malakwal region',
+            time: '1h ago',
+            icon: Icons.bolt_rounded,
+            color: Color(0xFFEF4444),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String time;
+  final IconData icon;
+  final Color color;
+
+  const _ActivityTile({
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          time,
+          style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+        ),
+      ],
     );
   }
 }
@@ -339,35 +481,57 @@ class _AdminBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, -4))],
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+        ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavIcon(icon: Icons.home_rounded, active: true),
-            _NavIcon(icon: Icons.storefront_rounded, active: false),
-            _NavIcon(icon: Icons.people_alt_rounded, active: false),
-            _NavIcon(icon: Icons.bar_chart_rounded, active: false),
-            _NavIcon(icon: Icons.settings_rounded, active: false),
-          ],
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: const [
+          _BottomNavItem(icon: Icons.dashboard_rounded, label: 'Home', isActive: true),
+          _BottomNavItem(icon: Icons.storefront_rounded, label: 'Shops', isActive: false),
+          _BottomNavItem(icon: Icons.people_rounded, label: 'Users', isActive: false),
+          _BottomNavItem(icon: Icons.bar_chart_rounded, label: 'Stats', isActive: false),
+        ],
       ),
     );
   }
 }
 
-class _NavIcon extends StatelessWidget {
+class _BottomNavItem extends StatelessWidget {
   final IconData icon;
-  final bool active;
-  const _NavIcon({required this.icon, required this.active});
+  final String label;
+  final bool isActive;
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Icon(icon, color: active ? AppColors.primary : AppColors.textSecondary.withOpacity(0.5), size: 24);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
+          size: 26,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
+            fontSize: 11,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+      ],
+    );
   }
 }
