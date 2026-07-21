@@ -39,7 +39,9 @@ class UserModel {
       role: _parseRole(data['role']),
       shopId: data['shopId'],
       status: data['status'] ?? 'active',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate() 
+          : DateTime.now(),
     );
   }
 

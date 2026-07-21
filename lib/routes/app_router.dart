@@ -24,6 +24,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (authState.isLoading || userModel.isLoading) return null;
 
+      // Handle potential errors (like Permission Denied)
+      if (userModel.hasError) {
+        return loggingIn ? null : '/welcome';
+      }
+
       final user = authState.value;
       if (user == null) {
         return loggingIn ? null : '/welcome';
@@ -32,7 +37,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final model = userModel.value;
       if (model == null) return null; // Still fetching role
 
-      if (loggingIn) {
+      // If logged in but on a public screen (Splash, Welcome, Login, Signup),
+      // redirect to the appropriate dashboard
+      final isPublicScreen = loggingIn || state.matchedLocation == '/';
+      if (isPublicScreen) {
         switch (model.role) {
           case UserRole.superAdmin: return '/admin';
           case UserRole.vendor: return '/vendor';

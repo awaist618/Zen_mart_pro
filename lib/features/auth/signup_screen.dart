@@ -134,8 +134,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 : const Text('Sign Up'),
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
               children: [
                 const Text("Already have an account? "),
                 GestureDetector(
