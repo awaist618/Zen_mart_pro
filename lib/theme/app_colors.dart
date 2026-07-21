@@ -22,6 +22,10 @@ class AppColors {
   static const Color customer = accent;
   static const Color rider = Color(0xFFF43F5E);
 
+  static const Color vendorAccent = vendor;
+  static const Color customerAccent = customer;
+  static const Color riderAccent = rider;
+
   /// Returns the accent color tied to a given role string
   static Color forRole(String role) {
     switch (role.toLowerCase()) {

@@ -8,6 +8,7 @@ import '../features/auth/welcome_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/admin/admin_dashboard.dart';
+import '../features/admin/add_vendor_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/customer/customer_home.dart';
 import '../features/rider/rider_dashboard.dart';
@@ -71,6 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
+      GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
