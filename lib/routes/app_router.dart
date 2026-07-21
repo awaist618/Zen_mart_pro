@@ -1,0 +1,58 @@
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/providers.dart';
+import '../models/user_model.dart';
+import '../screens/splash_screen.dart';
+import '../features/auth/welcome_screen.dart';
+import '../features/auth/login_screen.dart';
+import '../features/auth/signup_screen.dart';
+import '../features/admin/admin_dashboard.dart';
+import '../features/vendor/vendor_dashboard.dart';
+import '../features/customer/customer_home.dart';
+import '../features/rider/rider_dashboard.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authStateProvider);
+  final userModel = ref.watch(userModelProvider);
+
+  return GoRouter(
+    initialLocation: '/',
+    redirect: (context, state) {
+      final loggingIn = state.matchedLocation == '/login' || 
+                         state.matchedLocation == '/welcome' || 
+                         state.matchedLocation == '/signup';
+
+      if (authState.isLoading || userModel.isLoading) return null;
+
+      final user = authState.value;
+      if (user == null) {
+        return loggingIn ? null : '/welcome';
+      }
+
+      final model = userModel.value;
+      if (model == null) return null; // Still fetching role
+
+      if (loggingIn) {
+        switch (model.role) {
+          case UserRole.superAdmin: return '/admin';
+          case UserRole.vendor: return '/vendor';
+          case UserRole.customer: return '/customer';
+          case UserRole.rider: return '/rider';
+          default: return '/welcome';
+        }
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
+      GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
+      GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
+      GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
+    ],
+  );
+});
