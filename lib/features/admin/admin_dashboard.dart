@@ -63,29 +63,34 @@ class _HeroHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SUPER ADMIN',
-                    style: TextStyle(
-                      color: AppColors.accent.withOpacity(0.8),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SUPER ADMIN',
+                      style: TextStyle(
+                        color: AppColors.accent.withOpacity(0.8),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Zen Mart Control',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Zen Mart Control',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               Row(
                 children: [
                   _HeaderActionIcon(
@@ -121,12 +126,16 @@ class _HeroHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'Rs 2.48M',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
+              const Flexible(
+                child: Text(
+                  'Rs 2.48M',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -138,6 +147,7 @@ class _HeroHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 14),
                     SizedBox(width: 4),

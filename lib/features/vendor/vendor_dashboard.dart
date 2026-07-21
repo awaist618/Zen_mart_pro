@@ -80,29 +80,34 @@ class _VendorHero extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'VENDOR PORTAL',
-                        style: TextStyle(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.8),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'VENDOR PORTAL',
+                          style: TextStyle(
+                            color: const Color(0xFF8B5CF6).withOpacity(0.8),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Green Basket Store',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Green Basket Store',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                   Row(
                     children: [
                       _HeaderActionIcon(
@@ -138,12 +143,16 @@ class _VendorHero extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    'Rs 18,420',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
+                  const Flexible(
+                    child: Text(
+                      'Rs 18,420',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

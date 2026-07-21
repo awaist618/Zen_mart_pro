@@ -66,5 +66,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- Permissions for Marketplace Features -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Zen Mart Pro needs your location to show nearby shops and calculate delivery times.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Zen Mart Pro needs your location to provide accurate delivery tracking.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Zen Mart Pro needs camera access to allow vendors to take product photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Zen Mart Pro needs library access to upload product and profile images.</string>
 </dict>
 </plist>
