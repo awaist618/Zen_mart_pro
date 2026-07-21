@@ -6,7 +6,11 @@ import 'routes/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase Initialization Error: $e");
+  }
   runApp(const ProviderScope(child: ZenMartProApp()));
 }
 

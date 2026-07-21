@@ -46,8 +46,9 @@ class UserModel {
   }
 
   static UserRole _parseRole(String? role) {
-    switch (role) {
+    switch (role?.toLowerCase()) {
       case 'super_admin':
+      case 'admin': // Alias for convenience
         return UserRole.superAdmin;
       case 'vendor':
         return UserRole.vendor;

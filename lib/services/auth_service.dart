@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -34,10 +35,28 @@ class AuthService {
     });
   }
 
+  Stream<UserModel?> getUserStream(String uid) {
+    return _db.collection('users').doc(uid).snapshots().map((doc) {
+      if (doc.exists) {
+        return UserModel.fromFirestore(doc);
+      }
+      return null;
+    });
+  }
+
   Future<UserModel?> getUserData(String uid) async {
-    DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
-    if (doc.exists) {
-      return UserModel.fromFirestore(doc);
+    try {
+      DocumentSnapshot doc = await _db
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 10));
+      if (doc.exists) {
+        return UserModel.fromFirestore(doc);
+      }
+    } catch (e) {
+      debugPrint('Error fetching user data: $e');
+      rethrow;
     }
     return null;
   }

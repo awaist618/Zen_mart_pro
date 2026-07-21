@@ -78,7 +78,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
-                hintText: 'John Doe',
+                hintText: 'Awais Tariq',
                 prefixIcon: Icon(Icons.person_outline),
               ),
             ),
@@ -89,7 +89,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
-                hintText: 'john@example.com',
+                hintText: 'awais@example.com',
                 prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
@@ -100,7 +100,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                hintText: '+1 234 567 8900',
+                hintText: '+92 0300 123456',
                 prefixIcon: Icon(Icons.phone_outlined),
               ),
             ),

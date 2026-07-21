@@ -164,7 +164,7 @@ class _KpiGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
-      childAspectRatio: 1.6,
+      childAspectRatio: 1.4,
       children: _items.map((k) {
         return Container(
           padding: const EdgeInsets.all(14),

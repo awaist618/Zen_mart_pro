@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers.dart';
@@ -22,24 +23,36 @@ final routerProvider = Provider<GoRouter>((ref) {
                          state.matchedLocation == '/welcome' || 
                          state.matchedLocation == '/signup';
 
+      // If either is loading, stay on the current screen (Splash)
       if (authState.isLoading || userModel.isLoading) return null;
 
-      // Handle potential errors (like Permission Denied)
-      if (userModel.hasError) {
+      // Handle auth errors
+      if (authState.hasError || userModel.hasError) {
         return loggingIn ? null : '/welcome';
       }
 
       final user = authState.value;
+      
+      // If no user is logged in
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
 
       final model = userModel.value;
-      if (model == null) return null; // Still fetching role
+      
+      // If user exists in Auth but document is missing in Firestore after loading
+      if (model == null && !userModel.isLoading) {
+        debugPrint('Router: User logged in but no Firestore profile found for UID: ${user.uid}');
+        return '/welcome';
+      }
+
+      // Still fetching role
+      if (model == null) return null;
 
       // If logged in but on a public screen (Splash, Welcome, Login, Signup),
       // redirect to the appropriate dashboard
-      final isPublicScreen = loggingIn || state.matchedLocation == '/';
+      final isPublicScreen = loggingIn || state.matchedLocation == '/' || state.matchedLocation == '/welcome';
+      
       if (isPublicScreen) {
         switch (model.role) {
           case UserRole.superAdmin: return '/admin';
