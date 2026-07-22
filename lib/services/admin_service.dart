@@ -5,9 +5,20 @@ import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/approval_model.dart';
 import '../models/payout_model.dart';
+import '../models/activity_model.dart';
 
 class AdminService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  /// Get stream of all activity logs
+  Stream<List<ActivityModel>> getActivityLogs({DateTime? start}) {
+    Query query = _db.collection('activity_logs').orderBy('timestamp', descending: true);
+    if (start != null) {
+      query = query.where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(start));
+    }
+    return query.snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList());
+  }
 
   /// Get stream of all pending approvals
   Stream<List<ApprovalModel>> getPendingApprovals() {
@@ -146,6 +157,18 @@ class AdminService {
   /// Delete notification
   Future<void> deleteNotification(String notificationId) async {
     await _db.collection('admin_notifications').doc(notificationId).delete();
+  }
+
+  /// Get stream of orders based on time range
+  Stream<List<OrderModel>> getOrdersStream({required DateTime start, required DateTime end}) {
+    return _db
+        .collection('orders')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => OrderModel.fromFirestore(doc))
+            .toList());
   }
 
   /// Get revenue stats based on time range

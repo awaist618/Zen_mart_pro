@@ -5,37 +5,63 @@ import '../../core/providers.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
 
-class VendorManagementScreen extends ConsumerWidget {
+class VendorManagementScreen extends ConsumerStatefulWidget {
   const VendorManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VendorManagementScreen> createState() => _VendorManagementScreenState();
+}
+
+class _VendorManagementScreenState extends ConsumerState<VendorManagementScreen> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final vendorsAsync = ref.watch(allVendorsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Vendor Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4)],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Search vendors...',
+                border: InputBorder.none,
+                icon: Icon(Icons.search, size: 20),
+              ),
+            ),
+          ),
+        ),
       ),
       body: vendorsAsync.when(
         data: (vendors) {
-          if (vendors.isEmpty) {
-            return const Center(child: Text('No vendors registered yet.'));
+          final filtered = vendors.where((v) => v.name.toLowerCase().contains(_searchQuery)).toList();
+          
+          if (filtered.isEmpty) {
+            return const Center(child: Text('No vendors found.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: vendors.length,
+            itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) => _VendorListTile(vendor: vendors[index]),
+            itemBuilder: (context, index) => _VendorListTile(vendor: filtered[index]),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add_vendor_fab',
         onPressed: () => context.push('/admin/add-vendor'),
         backgroundColor: const Color(0xFF8B5CF6),
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),

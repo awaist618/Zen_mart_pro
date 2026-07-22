@@ -5,37 +5,63 @@ import '../../core/providers.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
 
-class RiderManagementScreen extends ConsumerWidget {
+class RiderManagementScreen extends ConsumerStatefulWidget {
   const RiderManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RiderManagementScreen> createState() => _RiderManagementScreenState();
+}
+
+class _RiderManagementScreenState extends ConsumerState<RiderManagementScreen> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final ridersAsync = ref.watch(allRidersProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Rider Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4)],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Search riders...',
+                border: InputBorder.none,
+                icon: Icon(Icons.search, size: 20),
+              ),
+            ),
+          ),
+        ),
       ),
       body: ridersAsync.when(
         data: (riders) {
-          if (riders.isEmpty) {
-            return const Center(child: Text('No riders registered yet.'));
+          final filtered = riders.where((r) => r.name.toLowerCase().contains(_searchQuery)).toList();
+
+          if (filtered.isEmpty) {
+            return const Center(child: Text('No riders found.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: riders.length,
+            itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) => _RiderListTile(rider: riders[index]),
+            itemBuilder: (context, index) => _RiderListTile(rider: filtered[index]),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add_rider_fab',
         onPressed: () => context.push('/admin/add-rider'),
         backgroundColor: AppColors.rider,
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),

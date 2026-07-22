@@ -12,6 +12,7 @@ import '../models/notification_model.dart';
 import '../models/shop_model.dart';
 import '../models/approval_model.dart';
 import '../models/payout_model.dart';
+import '../models/activity_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -85,6 +86,10 @@ final pendingApprovalsProvider = StreamProvider<List<ApprovalModel>>((ref) {
 
 final payoutRequestsProvider = StreamProvider<List<PayoutModel>>((ref) {
   return ref.watch(adminServiceProvider).getPayoutRequests();
+});
+
+final activityLogsProvider = StreamProvider.family<List<ActivityModel>, DateTime?>((ref, start) {
+  return ref.watch(adminServiceProvider).getActivityLogs(start: start);
 });
 
 // Admin Stats Providers

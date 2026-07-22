@@ -12,7 +12,7 @@ import '../features/admin/add_vendor_screen.dart';
 import '../features/admin/add_rider_screen.dart';
 import '../features/admin/notifications_screen.dart';
 import '../features/admin/admin_profile_screen.dart';
-import '../features/admin/revenue_analytics_screen.dart';
+import '../features/admin/analytics_dashboard_screen.dart';
 import '../features/admin/all_shops_screen.dart';
 import '../features/admin/rider_management_screen.dart';
 import '../features/admin/pending_orders_screen.dart';
@@ -21,6 +21,9 @@ import '../features/admin/vendor_management_screen.dart';
 import '../features/admin/approval_center_screen.dart';
 import '../features/admin/payout_management_screen.dart';
 import '../features/admin/system_settings_screen.dart';
+import '../features/admin/activity_log_screen.dart';
+import '../features/admin/shop_management_screen.dart';
+import '../features/admin/user_management_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/customer/customer_home.dart';
@@ -95,8 +98,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),
       GoRoute(path: '/admin/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
-      GoRoute(path: '/admin/revenue', builder: (context, state) => const RevenueAnalyticsScreen()),
+      GoRoute(path: '/admin/analytics', builder: (context, state) => const AnalyticsDashboardScreen()),
       GoRoute(path: '/admin/all-shops', builder: (context, state) => const AllShopsScreen()),
+      GoRoute(path: '/admin/shops', builder: (context, state) => const ShopManagementScreen()),
+      GoRoute(path: '/admin/users', builder: (context, state) => UserManagementScreen(initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0)),
       GoRoute(path: '/admin/riders', builder: (context, state) => const RiderManagementScreen()),
       GoRoute(path: '/admin/pending-orders', builder: (context, state) => const PendingOrdersScreen()),
       GoRoute(path: '/admin/customers', builder: (context, state) => const CustomerManagementScreen()),
@@ -104,6 +109,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/approvals', builder: (context, state) => const ApprovalCenterScreen()),
       GoRoute(path: '/admin/payouts', builder: (context, state) => const PayoutManagementScreen()),
       GoRoute(path: '/admin/system', builder: (context, state) => const SystemSettingsScreen()),
+      GoRoute(path: '/admin/activity-log', builder: (context, state) => const ActivityLogScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
       GoRoute(path: '/vendor/add-product', builder: (context, state) => const AddProductScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),

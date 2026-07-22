@@ -5,31 +5,56 @@ import '../../core/providers.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
 
-class CustomerManagementScreen extends ConsumerWidget {
+class CustomerManagementScreen extends ConsumerStatefulWidget {
   const CustomerManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomerManagementScreen> createState() => _CustomerManagementScreenState();
+}
+
+class _CustomerManagementScreenState extends ConsumerState<CustomerManagementScreen> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final customersAsync = ref.watch(allCustomersProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Customer Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4)],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Search customers...',
+                border: InputBorder.none,
+                icon: Icon(Icons.search, size: 20),
+              ),
+            ),
+          ),
+        ),
       ),
       body: customersAsync.when(
         data: (customers) {
-          if (customers.isEmpty) {
-            return const Center(child: Text('No customers registered yet.'));
+          final filtered = customers.where((c) => c.name.toLowerCase().contains(_searchQuery)).toList();
+
+          if (filtered.isEmpty) {
+            return const Center(child: Text('No customers found.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: customers.length,
+            itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) => _CustomerListTile(customer: customers[index]),
+            itemBuilder: (context, index) => _CustomerListTile(customer: filtered[index]),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

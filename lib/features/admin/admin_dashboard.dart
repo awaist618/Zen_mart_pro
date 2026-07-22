@@ -120,7 +120,7 @@ class _HeroHeader extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           InkWell(
-            onTap: () => context.push('/admin/revenue'),
+            onTap: () => context.push('/admin/analytics'),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -369,8 +369,8 @@ class _QuickActions extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: const [
-            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/vendors')),
-            Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/riders')),
+            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/users?tab=0')),
+            Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/users?tab=2')),
             Expanded(child: _ActionItem(label: 'Approvals', icon: Icons.verified_user_rounded, color: Color(0xFF10B981), route: '/admin/approvals')),
             Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B), route: '/admin/payouts')),
             Expanded(child: _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B), route: '/admin/system')),
@@ -447,7 +447,7 @@ class _RecentActivity extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/admin/activity-log'),
                 child: const Text('View All'),
               ),
             ],
@@ -570,11 +570,11 @@ class _AdminBottomNav extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: const [
-          _BottomNavItem(icon: Icons.dashboard_rounded, label: 'Home', isActive: true),
-          _BottomNavItem(icon: Icons.storefront_rounded, label: 'Shops', isActive: false),
-          _BottomNavItem(icon: Icons.people_rounded, label: 'Users', isActive: false),
-          _BottomNavItem(icon: Icons.bar_chart_rounded, label: 'Stats', isActive: false),
+        children: [
+          _BottomNavItem(icon: Icons.dashboard_rounded, label: 'Home', isActive: true, onTap: () {}),
+          _BottomNavItem(icon: Icons.storefront_rounded, label: 'Shops', isActive: false, onTap: () => context.push('/admin/shops')),
+          _BottomNavItem(icon: Icons.people_rounded, label: 'Users', isActive: false, onTap: () => context.push('/admin/users')),
+          _BottomNavItem(icon: Icons.bar_chart_rounded, label: 'Stats', isActive: false, onTap: () => context.push('/admin/analytics')),
         ],
       ),
     );
@@ -585,33 +585,38 @@ class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final VoidCallback onTap;
 
   const _BottomNavItem({
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
-          size: 26,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
             color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            size: 26,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
