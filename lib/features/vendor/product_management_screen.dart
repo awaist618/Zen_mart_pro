@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/product_model.dart';
 import '../../theme/app_colors.dart';
+import './widgets/vendor_bottom_nav.dart';
 
 class ProductManagementScreen extends ConsumerStatefulWidget {
   const ProductManagementScreen({super.key});
@@ -12,8 +13,21 @@ class ProductManagementScreen extends ConsumerStatefulWidget {
   ConsumerState<ProductManagementScreen> createState() => _ProductManagementScreenState();
 }
 
-class _ProductManagementScreenState extends ConsumerState<ProductManagementScreen> {
+class _ProductManagementScreenState extends ConsumerState<ProductManagementScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,63 +36,160 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('My Products', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Inventory Management', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextField(
-                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                decoration: const InputDecoration(
-                  hintText: 'Search products...',
-                  border: InputBorder.none,
-                  icon: Icon(Icons.search, size: 20),
+          preferredSize: const Size.fromHeight(110),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                    decoration: const InputDecoration(
+                      hintText: 'Search products...',
+                      border: InputBorder.none,
+                      icon: Icon(Icons.search, size: 20),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              TabBar(
+                controller: _tabController,
+                labelColor: const Color(0xFF8B5CF6),
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: const Color(0xFF8B5CF6),
+                tabs: const [
+                  Tab(text: 'All Products'),
+                  Tab(text: 'Categories'),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-      body: productsAsync.when(
-        data: (products) {
-          final filtered = products.where((p) => p.name.toLowerCase().contains(_searchQuery)).toList();
-          
-          if (filtered.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.withOpacity(0.5)),
-                  const SizedBox(height: 16),
-                  const Text('No products found', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => _ProductManagementTile(product: filtered[index]),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // All Products Tab
+          productsAsync.when(
+            data: (products) {
+              final filtered = products.where((p) => p.name.toLowerCase().contains(_searchQuery)).toList();
+              
+              if (filtered.isEmpty) {
+                return _EmptyState(icon: Icons.inventory_2_outlined, message: 'No products found');
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: filtered.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => _ProductManagementTile(product: filtered[index]),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text('Error: $e')),
+          ),
+          // Categories Tab
+          productsAsync.when(
+            data: (products) {
+              final categories = products.map((p) => p.category).toSet().toList();
+              if (categories.isEmpty) {
+                return _EmptyState(icon: Icons.category_outlined, message: 'No categories found');
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final count = products.where((p) => p.category == cat).length;
+                  return _CategoryTile(name: cat, count: count);
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text('Error: $e')),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/vendor/add-product'),
         backgroundColor: const Color(0xFF8B5CF6),
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('Add Product', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+      bottomNavigationBar: const VendorBottomNav(currentIndex: 2),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  const _EmptyState({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64, color: Colors.grey.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(message, style: const TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  final String name;
+  final int count;
+  const _CategoryTile({required this.name, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF8B5CF6).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.category_rounded, color: Color(0xFF8B5CF6), size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text('$count Products', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+        ],
       ),
     );
   }
@@ -118,8 +229,15 @@ class _ProductManagementTile extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text('Stock: ${product.stock}', style: TextStyle(color: product.stock < 5 ? Colors.red : Colors.grey, fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _StockBadge(label: 'Stock: ${product.stock}', color: product.stock < 5 ? Colors.red : Colors.green),
+                        const SizedBox(width: 8),
+                        _StockBadge(label: 'Sold: ${product.soldQuantity}', color: Colors.blue),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -242,6 +360,28 @@ class _ProductManagementTile extends ConsumerWidget {
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StockBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _StockBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }

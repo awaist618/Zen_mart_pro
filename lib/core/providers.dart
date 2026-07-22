@@ -15,6 +15,7 @@ import '../models/approval_model.dart';
 import '../models/payout_model.dart';
 import '../models/activity_model.dart';
 import '../models/review_model.dart';
+import '../models/coupon_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -80,6 +81,18 @@ final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getIncomingOrders(user.shopId!);
+});
+
+final allShopOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!);
+});
+
+final shopCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getShopCoupons(user.shopId!);
 });
 
 final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {

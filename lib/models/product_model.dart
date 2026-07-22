@@ -9,6 +9,7 @@ class ProductModel {
   final double price;
   final double discount;
   final int stock;
+  final int soldQuantity;
   final String unit; // kg, liter, pcs, etc.
   final String imageUrl;
   final String category;
@@ -24,6 +25,7 @@ class ProductModel {
     required this.price,
     this.discount = 0.0,
     required this.stock,
+    this.soldQuantity = 0,
     required this.unit,
     required this.imageUrl,
     required this.category,
@@ -42,6 +44,7 @@ class ProductModel {
       price: (data['price'] ?? 0.0).toDouble(),
       discount: (data['discount'] ?? 0.0).toDouble(),
       stock: data['stock'] ?? 0,
+      soldQuantity: data['soldQuantity'] ?? 0,
       unit: data['unit'] ?? 'pcs',
       imageUrl: data['imageUrl'] ?? '',
       category: data['category'] ?? 'General',
@@ -59,6 +62,7 @@ class ProductModel {
       'price': price,
       'discount': discount,
       'stock': stock,
+      'soldQuantity': soldQuantity,
       'unit': unit,
       'imageUrl': imageUrl,
       'category': category,

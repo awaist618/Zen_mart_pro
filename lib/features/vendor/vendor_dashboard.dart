@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
+import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
+import './widgets/vendor_bottom_nav.dart';
 
 class VendorDashboard extends ConsumerWidget {
   const VendorDashboard({super.key});
@@ -36,7 +38,7 @@ class VendorDashboard extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const _VendorBottomNav(),
+      bottomNavigationBar: const VendorBottomNav(currentIndex: 0),
     );
   }
 }
@@ -180,8 +182,6 @@ class _VendorHero extends ConsumerWidget {
                       ],
                     ),
                   ],
-                ),
-              ),
                 ),
               ),
             ],
@@ -442,9 +442,24 @@ class _ManageShop extends StatelessWidget {
               color: const Color(0xFF10B981),
               onTap: () => context.push('/vendor/add-product'),
             ),
-            _ActionItem(label: 'Inventory', icon: Icons.list_alt_rounded, color: const Color(0xFF6366F1), onTap: () {}),
-            _ActionItem(label: 'Coupons', icon: Icons.confirmation_number_rounded, color: const Color(0xFFF59E0B), onTap: () {}),
-            _ActionItem(label: 'Reviews', icon: Icons.rate_review_rounded, color: const Color(0xFF8B5CF6), onTap: () {}),
+            _ActionItem(
+              label: 'Inventory', 
+              icon: Icons.list_alt_rounded, 
+              color: const Color(0xFF6366F1), 
+              onTap: () => context.push('/vendor/products'),
+            ),
+            _ActionItem(
+              label: 'Coupons', 
+              icon: Icons.confirmation_number_rounded, 
+              color: const Color(0xFFF59E0B), 
+              onTap: () => context.push('/vendor/coupons'),
+            ),
+            _ActionItem(
+              label: 'Reviews', 
+              icon: Icons.rate_review_rounded, 
+              color: const Color(0xFF8B5CF6), 
+              onTap: () => context.push('/vendor/reviews'),
+            ),
           ],
         ),
       ],
@@ -492,11 +507,13 @@ class _ActionItem extends StatelessWidget {
   }
 }
 
-class _IncomingOrders extends StatelessWidget {
+class _IncomingOrders extends ConsumerWidget {
   const _IncomingOrders();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomingOrdersAsync = ref.watch(incomingOrdersProvider);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -517,32 +534,51 @@ class _IncomingOrders extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/vendor/orders'),
                 child: const Text('View All'),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const _OrderTile(
-            orderId: '#4832',
-            amount: 'Rs 1,240',
-            customer: 'Awais Tariq',
-            time: '2m ago',
-            status: 'Pending',
-            color: Color(0xFFF59E0B),
-          ),
-          const Divider(height: 24),
-          const _OrderTile(
-            orderId: '#4829',
-            amount: 'Rs 860',
-            customer: 'Hafsa Ah',
-            time: '15m ago',
-            status: 'Preparing',
-            color: Color(0xFF10B981),
+          incomingOrdersAsync.when(
+            data: (orders) {
+              if (orders.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: Text('No pending orders', style: TextStyle(color: Colors.grey))),
+                );
+              }
+              final recentOrders = orders.take(3).toList();
+              return Column(
+                children: recentOrders.map((order) {
+                  return Column(
+                    children: [
+                      _OrderTile(
+                        orderId: '#${order.id.substring(0, 4).toUpperCase()}',
+                        amount: 'Rs ${order.totalAmount}',
+                        customer: order.customerName,
+                        time: '${DateTime.now().difference(order.createdAt).inMinutes}m ago',
+                        status: 'Pending',
+                        color: const Color(0xFFF59E0B),
+                        onTap: () => _showOrderDetails(context, order),
+                      ),
+                      if (order != recentOrders.last) const Divider(height: 24),
+                    ],
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Text('Error: $e'),
           ),
         ],
       ),
     );
+  }
+
+  void _showOrderDetails(BuildContext context, OrderModel order) {
+    // Navigate to order details or show a quick bottom sheet
+    context.push('/vendor/order-details/${order.id}');
   }
 }
 
@@ -553,6 +589,7 @@ class _OrderTile extends StatelessWidget {
   final String time;
   final String status;
   final Color color;
+  final VoidCallback onTap;
 
   const _OrderTile({
     required this.orderId,
@@ -561,120 +598,63 @@ class _OrderTile extends StatelessWidget {
     required this.time,
     required this.status,
     required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.receipt_long_rounded, color: color, size: 20),
           ),
-          child: Icon(Icons.receipt_long_rounded, color: color, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Order $orderId',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$customer • $amount',
+                  style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Order $orderId',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                time,
+                style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
               ),
-              const SizedBox(height: 2),
-              Text(
-                '$customer • $amount',
-                style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              time,
-              style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _VendorBottomNav extends StatelessWidget {
-  const _VendorBottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: const [
-          _BottomNavItem(icon: Icons.dashboard_rounded, label: 'Home', isActive: true),
-          _BottomNavItem(icon: Icons.receipt_long_rounded, label: 'Orders', isActive: false),
-          _BottomNavItem(icon: Icons.inventory_2_rounded, label: 'Items', isActive: false),
-          _BottomNavItem(icon: Icons.person_rounded, label: 'Profile', isActive: false),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
-          size: 26,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFF94A3B8),
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

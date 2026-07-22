@@ -4,6 +4,7 @@ import '../models/order_model.dart';
 import '../models/vendor_notification_model.dart';
 import '../models/review_model.dart';
 import '../models/shop_model.dart';
+import '../models/coupon_model.dart';
 
 class VendorService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -103,9 +104,27 @@ class VendorService {
             snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
   }
 
+  /// Get stream of all orders for a shop
+  Stream<List<OrderModel>> getAllShopOrders(String shopId) {
+    return _db
+        .collection('orders')
+        .where('shopId', isEqualTo: shopId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
   /// Update Order Status (Accept/Reject/Complete)
   Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
     await _db.collection('orders').doc(orderId).update({'status': status.name});
+  }
+
+  /// Get a single order
+  Future<OrderModel?> getOrder(String orderId) async {
+    final doc = await _db.collection('orders').doc(orderId).get();
+    if (doc.exists) return OrderModel.fromFirestore(doc);
+    return null;
   }
 
   /// Get stream of reviews for a specific shop
@@ -128,5 +147,30 @@ class VendorService {
         .collection('reviews')
         .doc(reviewId)
         .update({'reply': reply});
+  }
+
+  /// Add Coupon
+  Future<void> addCoupon(CouponModel coupon) async {
+    await _db.collection('coupons').add(coupon.toMap());
+  }
+
+  /// Update Coupon
+  Future<void> updateCoupon(String couponId, Map<String, dynamic> data) async {
+    await _db.collection('coupons').doc(couponId).update(data);
+  }
+
+  /// Delete Coupon
+  Future<void> deleteCoupon(String couponId) async {
+    await _db.collection('coupons').doc(couponId).delete();
+  }
+
+  /// Get stream of coupons for a specific shop
+  Stream<List<CouponModel>> getShopCoupons(String shopId) {
+    return _db
+        .collection('coupons')
+        .where('shopId', isEqualTo: shopId)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => CouponModel.fromFirestore(doc)).toList());
   }
 }

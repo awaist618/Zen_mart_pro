@@ -5,11 +5,18 @@ import '../../core/providers.dart';
 import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 
-class VendorReviewsScreen extends ConsumerWidget {
+class VendorReviewsScreen extends ConsumerStatefulWidget {
   const VendorReviewsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VendorReviewsScreen> createState() => _VendorReviewsScreenState();
+}
+
+class _VendorReviewsScreenState extends ConsumerState<VendorReviewsScreen> {
+  int? _filterRating;
+
+  @override
+  Widget build(BuildContext context) {
     final reviewsAsync = ref.watch(shopReviewsProvider);
 
     return Scaffold(
@@ -19,21 +26,74 @@ class VendorReviewsScreen extends ConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                _FilterChip(
+                  label: 'All',
+                  isSelected: _filterRating == null,
+                  onSelected: () => setState(() => _filterRating = null),
+                ),
+                ...List.generate(5, (index) {
+                  final rating = 5 - index;
+                  return _FilterChip(
+                    label: '$rating Stars',
+                    isSelected: _filterRating == rating,
+                    onSelected: () => setState(() => _filterRating = rating),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
       ),
       body: reviewsAsync.when(
         data: (reviews) {
-          if (reviews.isEmpty) {
-            return const Center(child: Text('No reviews yet.'));
+          final filtered = _filterRating == null 
+              ? reviews 
+              : reviews.where((r) => r.rating == _filterRating).toList();
+
+          if (filtered.isEmpty) {
+            return Center(child: Text(_filterRating == null ? 'No reviews yet.' : 'No reviews with $_filterRating stars.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: reviews.length,
+            itemCount: filtered.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) => _ReviewCard(review: reviews[index]),
+            itemBuilder: (context, index) => _ReviewCard(review: filtered[index]),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  const _FilterChip({required this.label, required this.isSelected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) => onSelected(),
+        selectedColor: const Color(0xFF8B5CF6),
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
     );
   }
@@ -74,6 +134,24 @@ class _ReviewCard extends ConsumerWidget {
           Text(
             'Order: #${review.orderId.substring(0, 8).toUpperCase()}',
             style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          FutureBuilder(
+            future: ref.read(vendorServiceProvider).getOrder(review.orderId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text('Loading products...', style: TextStyle(fontSize: 12, color: Colors.grey));
+              }
+              final order = snapshot.data;
+              if (order == null || order.items.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              final productNames = order.items.map((item) => item['name'] ?? 'Product').join(', ');
+              return Text(
+                'Products: $productNames',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6366F1), fontWeight: FontWeight.w500),
+              );
+            },
           ),
           const SizedBox(height: 12),
           Text(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
+import './widgets/vendor_bottom_nav.dart';
 
 class VendorProfileScreen extends ConsumerWidget {
   const VendorProfileScreen({super.key});
@@ -10,11 +11,12 @@ class VendorProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userModelProvider);
+    final shopAsync = ref.watch(currentShopProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Shop Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Vendor Account', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
@@ -24,106 +26,137 @@ class VendorProfileScreen extends ConsumerWidget {
           if (user == null) return const Center(child: Text('User not found'));
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Shop Logo Section
-                Center(
-                  child: Stack(
+                // Profile & Shop Identity
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10)),
+                    ],
+                  ),
+                  child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
-                        ),
-                        child: const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Color(0xFF1E293B),
-                          child: Icon(Icons.storefront_rounded, size: 50, color: Colors.white),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF8B5CF6),
-                            shape: BoxShape.circle,
+                      Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 45,
+                              backgroundColor: const Color(0xFF1E293B),
+                              child: Text(
+                                user.name.substring(0, 1).toUpperCase(),
+                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ),
                           ),
-                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
-                        ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF8B5CF6),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        user.name,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        shopAsync.value?.name ?? 'Loading Shop...',
+                        style: TextStyle(color: Colors.black.withOpacity(0.5), fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  user.name,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                const SizedBox(height: 24),
+
+                _SectionHeader(title: 'Shop Management'),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.storefront_rounded,
+                      title: 'Shop Information',
+                      subtitle: 'Name, Category, Description',
+                      onTap: () {},
+                    ),
+                    _SettingsTile(
+                      icon: Icons.photo_size_select_actual_outlined,
+                      title: 'Shop Banner',
+                      subtitle: 'Update store header image',
+                      onTap: () {},
+                    ),
+                    _SettingsTile(
+                      icon: Icons.business_center_outlined,
+                      title: 'Business Details',
+                      subtitle: 'Address, Tax Info, Documents',
+                      onTap: () {},
+                    ),
+                  ],
                 ),
-                Text(
-                  'VENDOR ID: ${user.uid.substring(0, 8).toUpperCase()}',
-                  style: TextStyle(
-                    color: const Color(0xFF8B5CF6),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10,
-                    letterSpacing: 1.5,
+                const SizedBox(height: 24),
+
+                _SectionHeader(title: 'Account Settings'),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.person_outline_rounded,
+                      title: 'Profile Settings',
+                      subtitle: 'Contact details and email',
+                      onTap: () {},
+                    ),
+                    _SettingsTile(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'Password & Security',
+                      subtitle: 'Change password, 2FA',
+                      onTap: () {},
+                    ),
+                    _SettingsTile(
+                      icon: Icons.settings_outlined,
+                      title: 'App Settings',
+                      subtitle: 'Notifications, Language',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Logout Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ref.read(authServiceProvider).signOut();
+                      context.go('/welcome');
+                    },
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('Logout Session', style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.withOpacity(0.1),
+                      foregroundColor: Colors.red,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-
-                // Shop & Vendor Info
-                _ProfileInfoCard(
-                  icon: Icons.email_outlined,
-                  title: 'Email Address',
-                  value: user.email,
-                ),
-                const SizedBox(height: 16),
-                _ProfileInfoCard(
-                  icon: Icons.phone_outlined,
-                  title: 'Phone Number',
-                  value: user.phone.isEmpty ? 'Not Provided' : user.phone,
-                ),
-                const SizedBox(height: 16),
-                _ProfileInfoCard(
-                  icon: Icons.business_outlined,
-                  title: 'Shop Information',
-                  value: 'Active Store • ID: ${user.shopId ?? "N/A"}',
-                ),
-                const SizedBox(height: 32),
-
-                // Settings List
-                _buildSettingsTile(
-                  icon: Icons.lock_outline_rounded,
-                  title: 'Change Password',
-                  onTap: () {},
-                ),
-                _buildSettingsTile(
-                  icon: Icons.edit_outlined,
-                  title: 'Edit Profile',
-                  onTap: () {},
-                ),
-                _buildSettingsTile(
-                  icon: Icons.photo_size_select_actual_outlined,
-                  title: 'Shop Banner',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 16),
-                
-                _buildSettingsTile(
-                  icon: Icons.logout_rounded,
-                  title: 'Logout',
-                  titleColor: Colors.redAccent,
-                  iconColor: Colors.redAccent,
-                  showArrow: false,
-                  onTap: () {
-                    ref.read(authServiceProvider).signOut();
-                    context.go('/welcome');
-                  },
                 ),
                 const SizedBox(height: 40),
               ],
@@ -133,81 +166,82 @@ class VendorProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
-    );
-  }
-
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? titleColor,
-    Color? iconColor,
-    bool showArrow = true,
-  }) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (iconColor ?? const Color(0xFF8B5CF6)).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor ?? const Color(0xFF8B5CF6), size: 20),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: titleColor ?? const Color(0xFF1E293B),
-        ),
-      ),
-      trailing: showArrow ? const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)) : null,
+      bottomNavigationBar: const VendorBottomNav(currentIndex: 3),
     );
   }
 }
 
-class _ProfileInfoCard extends StatelessWidget {
-  final IconData icon;
+class _SectionHeader extends StatelessWidget {
   final String title;
-  final String value;
+  const _SectionHeader({required this.title});
 
-  const _ProfileInfoCard({required this.icon, required this.title, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: Colors.black.withOpacity(0.4),
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  const _SettingsGroup({required this.children});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF8B5CF6), size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: Column(children: children),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF8B5CF6).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: const Color(0xFF8B5CF6), size: 22),
       ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.4))),
+      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
     );
   }
 }
