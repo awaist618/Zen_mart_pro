@@ -17,6 +17,14 @@ class UserModel {
   final String? shopId;
   final String status;
   final DateTime createdAt;
+  
+  // Rider & Vendor specific
+  final bool isOnline;
+  final String? vehicleInfo;
+  final String? licenseNumber;
+  final double rating;
+  final int totalDeliveries;
+  final double totalEarnings;
 
   UserModel({
     required this.uid,
@@ -27,6 +35,12 @@ class UserModel {
     this.shopId,
     required this.status,
     required this.createdAt,
+    this.isOnline = false,
+    this.vehicleInfo,
+    this.licenseNumber,
+    this.rating = 0.0,
+    this.totalDeliveries = 0,
+    this.totalEarnings = 0.0,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -42,13 +56,19 @@ class UserModel {
       createdAt: data['createdAt'] != null 
           ? (data['createdAt'] as Timestamp).toDate() 
           : DateTime.now(),
+      isOnline: data['isOnline'] ?? false,
+      vehicleInfo: data['vehicleInfo'],
+      licenseNumber: data['licenseNumber'],
+      rating: (data['rating'] ?? 0.0).toDouble(),
+      totalDeliveries: data['totalDeliveries'] ?? 0,
+      totalEarnings: (data['totalEarnings'] ?? 0.0).toDouble(),
     );
   }
 
   static UserRole _parseRole(String? role) {
     switch (role?.toLowerCase()) {
       case 'super_admin':
-      case 'admin': // Alias for convenience
+      case 'admin':
         return UserRole.superAdmin;
       case 'vendor':
         return UserRole.vendor;
@@ -70,6 +90,12 @@ class UserModel {
       'shopId': shopId,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
+      'isOnline': isOnline,
+      'vehicleInfo': vehicleInfo,
+      'licenseNumber': licenseNumber,
+      'rating': rating,
+      'totalDeliveries': totalDeliveries,
+      'totalEarnings': totalEarnings,
     };
   }
 }

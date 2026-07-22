@@ -388,11 +388,16 @@ class _ManageShop extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            _ActionItem(label: 'Add Product', icon: Icons.add_box_rounded, color: Color(0xFF10B981)),
-            _ActionItem(label: 'Inventory', icon: Icons.list_alt_rounded, color: Color(0xFF6366F1)),
-            _ActionItem(label: 'Coupons', icon: Icons.confirmation_number_rounded, color: Color(0xFFF59E0B)),
-            _ActionItem(label: 'Reviews', icon: Icons.rate_review_rounded, color: Color(0xFF8B5CF6)),
+          children: [
+            _ActionItem(
+              label: 'Add Product', 
+              icon: Icons.add_box_rounded, 
+              color: const Color(0xFF10B981),
+              onTap: () => context.push('/vendor/add-product'),
+            ),
+            _ActionItem(label: 'Inventory', icon: Icons.list_alt_rounded, color: const Color(0xFF6366F1), onTap: () {}),
+            _ActionItem(label: 'Coupons', icon: Icons.confirmation_number_rounded, color: const Color(0xFFF59E0B), onTap: () {}),
+            _ActionItem(label: 'Reviews', icon: Icons.rate_review_rounded, color: const Color(0xFF8B5CF6), onTap: () {}),
           ],
         ),
       ],
@@ -404,33 +409,37 @@ class _ActionItem extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
+  final VoidCallback onTap;
 
-  const _ActionItem({required this.label, required this.icon, required this.color});
+  const _ActionItem({required this.label, required this.icon, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5)),
-              ],
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5)),
+                ],
+              ),
+              child: Icon(icon, color: color, size: 28),
             ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

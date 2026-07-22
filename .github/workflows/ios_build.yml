@@ -1,8 +1,7 @@
 name: iOS Build
 
 on:
-  push:
-    branches: [ main, master ]
+  workflow_dispatch: # This allows you to start the build manually whenever you want
 
 jobs:
   build:

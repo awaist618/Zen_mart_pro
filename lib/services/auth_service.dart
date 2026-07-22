@@ -45,6 +45,8 @@ class AuthService {
     required String role, // 'vendor' or 'rider'
     String? shopName,
     String? shopCategory,
+    String? vehicleInfo,
+    String? licenseNumber,
   }) async {
     // 1. Initialize a secondary Firebase app instance
     // This allows creating a user without affecting the current admin session
@@ -85,6 +87,12 @@ class AuthService {
         'phone': phone,
         'role': role,
         'shopId': shopId,
+        'vehicleInfo': vehicleInfo,
+        'licenseNumber': licenseNumber,
+        'isOnline': false,
+        'rating': 5.0, // Initial rating
+        'totalDeliveries': 0,
+        'totalEarnings': 0.0,
         'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
       });

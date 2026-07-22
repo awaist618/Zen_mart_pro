@@ -9,9 +9,16 @@ import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/add_vendor_screen.dart';
+import '../features/admin/add_rider_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
+import '../features/vendor/add_product_screen.dart';
 import '../features/customer/customer_home.dart';
 import '../features/rider/rider_dashboard.dart';
+import '../features/rider/order_details_screen.dart';
+import '../features/rider/rider_profile_screen.dart';
+import '../features/rider/history_screen.dart';
+import '../features/rider/earnings_screen.dart';
+import '../features/chat/chat_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -73,9 +80,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
       GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
+      GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
+      GoRoute(path: '/vendor/add-product', builder: (context, state) => const AddProductScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
+      GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
+      GoRoute(path: '/rider/history', builder: (context, state) => const RiderHistoryScreen()),
+      GoRoute(path: '/rider/earnings', builder: (context, state) => const RiderEarningsScreen()),
+      GoRoute(
+        path: '/chat/:orderId/:name',
+        builder: (context, state) => ChatScreen(
+          orderId: state.pathParameters['orderId']!,
+          otherPartyName: state.pathParameters['name']!,
+        ),
+      ),
     ],
   );
 });
