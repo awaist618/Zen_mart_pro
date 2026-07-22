@@ -5,6 +5,7 @@ import '../services/rider_service.dart';
 import '../services/cloudinary_service.dart';
 import '../services/vendor_service.dart';
 import '../services/admin_service.dart';
+import '../services/customer_service.dart';
 import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
@@ -16,12 +17,16 @@ import '../models/payout_model.dart';
 import '../models/activity_model.dart';
 import '../models/review_model.dart';
 import '../models/coupon_model.dart';
+import '../models/address_model.dart';
+import '../models/offer_model.dart';
+import '../models/cart_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
 final cloudinaryServiceProvider = Provider((ref) => CloudinaryService());
 final vendorServiceProvider = Provider((ref) => VendorService());
 final adminServiceProvider = Provider((ref) => AdminService());
+final customerServiceProvider = Provider((ref) => CustomerService());
 
 final authStateProvider = StreamProvider((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
@@ -93,6 +98,121 @@ final shopCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopCoupons(user.shopId!);
+});
+
+final customerAddressesProvider = StreamProvider<List<AddressModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(customerServiceProvider).getSavedAddresses(user.uid);
+});
+
+final defaultAddressProvider = Provider<AddressModel?>((ref) {
+  final addresses = ref.watch(customerAddressesProvider).asData?.value ?? [];
+  try {
+    return addresses.firstWhere((a) => a.isDefault);
+  } catch (_) {
+    return addresses.isNotEmpty ? addresses.first : null;
+  }
+});
+
+final searchProductsProvider = StreamProvider.family<List<ProductModel>, String>((ref, query) {
+  return ref.watch(customerServiceProvider).searchProducts(query);
+});
+
+final searchShopsProvider = StreamProvider.family<List<ShopModel>, String>((ref, query) {
+  return ref.watch(customerServiceProvider).searchShops(query);
+});
+
+final allCategoriesProvider = StreamProvider<List<String>>((ref) {
+  return ref.watch(customerServiceProvider).getAllCategories();
+});
+
+final customerOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(customerServiceProvider).getCustomerOrders(user.uid);
+});
+
+class CartNotifier extends StateNotifier<CartModel> {
+  CartNotifier() : super(CartModel());
+
+  void addItem(ProductModel product) {
+    if (state.items.containsKey(product.id)) {
+      state = CartModel(
+        items: {
+          ...state.items,
+          product.id: state.items[product.id]!.copyWith(
+            quantity: state.items[product.id]!.quantity + 1,
+          ),
+        },
+      );
+    } else {
+      state = CartModel(
+        items: {
+          ...state.items,
+          product.id: CartItem(product: product),
+        },
+      );
+    }
+  }
+
+  void removeItem(String productId) {
+    if (!state.items.containsKey(productId)) return;
+    if (state.items[productId]!.quantity > 1) {
+      state = CartModel(
+        items: {
+          ...state.items,
+          productId: state.items[productId]!.copyWith(
+            quantity: state.items[productId]!.quantity - 1,
+          ),
+        },
+      );
+    } else {
+      final newItems = Map<String, CartItem>.from(state.items);
+      newItems.remove(productId);
+      state = CartModel(items: newItems);
+    }
+  }
+
+  void clearCart() {
+    state = CartModel();
+  }
+}
+
+final cartProvider = StateNotifierProvider<CartNotifier, CartModel>((ref) {
+  return CartNotifier();
+});
+
+final activeOffersProvider = StreamProvider<List<OfferModel>>((ref) {
+  return ref.watch(customerServiceProvider).getActiveOffers();
+});
+
+final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  return ref.watch(customerServiceProvider).getFeaturedShops();
+});
+
+final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  return ref.watch(customerServiceProvider).getNearbyShops();
+});
+
+final shopDetailProvider = StreamProvider.family<ShopModel?, String>((ref, shopId) {
+  return ref.watch(customerServiceProvider).getShopById(shopId);
+});
+
+final shopProductsByIdProvider = StreamProvider.family<List<ProductModel>, String>((ref, shopId) {
+  return ref.watch(customerServiceProvider).getShopProducts(shopId);
+});
+
+final categoryShopsProvider = StreamProvider.family<List<ShopModel>, String>((ref, category) {
+  return ref.watch(customerServiceProvider).getCategoryShops(category);
+});
+
+final offerShopsProvider = StreamProvider.family<List<ShopModel>, List<String>>((ref, shopIds) {
+  return ref.watch(customerServiceProvider).getShopsByIds(shopIds);
+});
+
+final offerProductsProvider = StreamProvider.family<List<ProductModel>, List<String>>((ref, productIds) {
+  return ref.watch(customerServiceProvider).getProductsByIds(productIds);
 });
 
 final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {

@@ -37,6 +37,20 @@ import '../features/vendor/vendor_reviews_screen.dart';
 import '../features/vendor/coupon_management_screen.dart';
 import '../features/customer/customer_home.dart';
 import '../features/customer/shop_detail_screen.dart';
+import '../features/customer/customer_profile_screen.dart';
+import '../features/customer/address_management_screen.dart';
+import '../features/customer/search_screen.dart';
+import '../features/customer/cart_screen.dart';
+import '../features/customer/checkout_screen.dart';
+import '../features/customer/order_success_screen.dart';
+import '../features/customer/customer_orders_screen.dart';
+import '../features/customer/customer_order_details_screen.dart';
+import '../features/customer/category_shops_screen.dart';
+import '../features/customer/featured_shops_screen.dart';
+import '../features/customer/offer_details_screen.dart';
+import '../features/customer/product_details_screen.dart';
+import '../models/offer_model.dart';
+import '../models/product_model.dart';
 import '../features/rider/rider_dashboard.dart';
 import '../features/rider/order_details_screen.dart';
 import '../features/rider/rider_profile_screen.dart';
@@ -131,6 +145,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/vendor/reviews', builder: (context, state) => const VendorReviewsScreen()),
       GoRoute(path: '/vendor/coupons', builder: (context, state) => const CouponManagementScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
+      GoRoute(path: '/customer/profile', builder: (context, state) => const CustomerProfileScreen()),
+      GoRoute(path: '/customer/addresses', builder: (context, state) => const AddressManagementScreen()),
+      GoRoute(path: '/customer/search', builder: (context, state) => const CustomerSearchScreen()),
+      GoRoute(path: '/customer/cart', builder: (context, state) => const CartScreen()),
+      GoRoute(path: '/customer/checkout', builder: (context, state) => const CheckoutScreen()),
+      GoRoute(path: '/customer/orders', builder: (context, state) => const CustomerOrdersScreen()),
+      GoRoute(path: '/customer/order-details/:id', builder: (context, state) => CustomerOrderDetailsScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(path: '/customer/order-success/:id', builder: (context, state) => OrderSuccessScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(path: '/customer/featured-shops', builder: (context, state) => const FeaturedShopsScreen()),
+      GoRoute(path: '/customer/category/:name', builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!)),
+      GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
+      GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
       GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),

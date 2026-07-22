@@ -6,11 +6,19 @@ class ShopModel {
   final String vendorId;
   final String vendorName;
   final String address;
+  final GeoPoint? location;
   final String category;
   final String imageUrl;
   final double rating;
   final String status; // active, disabled
   final int activeOrders;
+  final bool hasFreeDelivery;
+  final bool isOpen;
+  final String deliveryTime; // e.g., '20-30 min'
+  final double deliveryFee;
+  final String phone;
+  final String description;
+  final bool isFeatured;
   final DateTime createdAt;
 
   ShopModel({
@@ -19,11 +27,19 @@ class ShopModel {
     required this.vendorId,
     required this.vendorName,
     required this.address,
+    this.location,
     required this.category,
     required this.imageUrl,
     this.rating = 0.0,
     required this.status,
     this.activeOrders = 0,
+    this.hasFreeDelivery = false,
+    this.isOpen = true,
+    this.deliveryTime = '25-35 min',
+    this.deliveryFee = 0.0,
+    this.phone = '',
+    this.description = '',
+    this.isFeatured = false,
     required this.createdAt,
   });
 
@@ -35,11 +51,19 @@ class ShopModel {
       vendorId: data['vendorId'] ?? '',
       vendorName: data['vendorName'] ?? 'Unknown Vendor',
       address: data['address'] ?? 'No Address',
+      location: data['location'],
       category: data['category'] ?? 'General',
       imageUrl: data['imageUrl'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
       status: data['status'] ?? 'active',
       activeOrders: data['activeOrders'] ?? 0,
+      hasFreeDelivery: data['hasFreeDelivery'] ?? false,
+      isOpen: data['isOpen'] ?? true,
+      deliveryTime: data['deliveryTime'] ?? '25-35 min',
+      deliveryFee: (data['deliveryFee'] ?? 0.0).toDouble(),
+      phone: data['phone'] ?? '',
+      description: data['description'] ?? '',
+      isFeatured: data['isFeatured'] ?? false,
       createdAt: data['createdAt'] != null 
           ? (data['createdAt'] as Timestamp).toDate() 
           : DateTime.now(),
@@ -52,11 +76,19 @@ class ShopModel {
       'vendorId': vendorId,
       'vendorName': vendorName,
       'address': address,
+      'location': location,
       'category': category,
       'imageUrl': imageUrl,
       'rating': rating,
       'status': status,
       'activeOrders': activeOrders,
+      'hasFreeDelivery': hasFreeDelivery,
+      'isOpen': isOpen,
+      'deliveryTime': deliveryTime,
+      'deliveryFee': deliveryFee,
+      'phone': phone,
+      'description': description,
+      'isFeatured': isFeatured,
       'createdAt': createdAt,
     };
   }

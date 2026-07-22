@@ -1,0 +1,220 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/address_model.dart';
+import '../models/product_model.dart';
+import '../models/shop_model.dart';
+import '../models/offer_model.dart';
+import '../models/order_model.dart';
+
+class CustomerService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  /// Get all active promotional offers
+  Stream<List<OfferModel>> getActiveOffers() {
+    return _db
+        .collection('offers')
+        .where('expiryDate', isGreaterThan: Timestamp.now())
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => OfferModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Get shops in a specific category
+  Stream<List<ShopModel>> getCategoryShops(String category) {
+    return _db
+        .collection('shops')
+        .where('status', isEqualTo: 'active')
+        .where('category', isEqualTo: category)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ShopModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Get featured shops
+  Stream<List<ShopModel>> getFeaturedShops() {
+    return _db
+        .collection('shops')
+        .where('status', isEqualTo: 'active')
+        .where('isFeatured', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ShopModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Get nearby shops (simple implementation fetching all active for now)
+  Stream<List<ShopModel>> getNearbyShops() {
+    return _db
+        .collection('shops')
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ShopModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Get a single shop by ID
+  Stream<ShopModel?> getShopById(String shopId) {
+    return _db.collection('shops').doc(shopId).snapshots().map((doc) {
+      if (doc.exists) return ShopModel.fromFirestore(doc);
+      return null;
+    });
+  }
+
+  /// Get products of a shop
+  Stream<List<ProductModel>> getShopProducts(String shopId) {
+    return _db
+        .collection('products')
+        .where('shopId', isEqualTo: shopId)
+        .where('isAvailable', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProductModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Place a new order
+  Future<String> placeOrder(Map<String, dynamic> orderData) async {
+    final docRef = await _db.collection('orders').add(orderData);
+    return docRef.id;
+  }
+
+  /// Get stream of orders for a specific customer
+  Stream<List<OrderModel>> getCustomerOrders(String userId) {
+    return _db
+        .collection('orders')
+        .where('customerId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
+  /// Get products by multiple IDs (for Offer details)
+  Stream<List<ProductModel>> getProductsByIds(List<String> productIds) {
+    if (productIds.isEmpty) return Stream.value([]);
+    return _db
+        .collection('products')
+        .where(FieldPath.documentId, whereIn: productIds)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProductModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Get shops by multiple IDs (for Offer details)
+  Stream<List<ShopModel>> getShopsByIds(List<String> shopIds) {
+    if (shopIds.isEmpty) return Stream.value([]);
+    return _db
+        .collection('shops')
+        .where(FieldPath.documentId, whereIn: shopIds)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ShopModel.fromFirestore(doc))
+            .toList());
+  }
+
+  Stream<List<AddressModel>> getSavedAddresses(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => AddressModel.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<void> addAddress(String userId, AddressModel address) async {
+    if (address.isDefault) {
+      await _clearDefaultAddress(userId);
+    }
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .add(address.toMap());
+  }
+
+  Future<void> updateAddress(String userId, AddressModel address) async {
+    if (address.isDefault) {
+      await _clearDefaultAddress(userId);
+    }
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .doc(address.id)
+        .update(address.toMap());
+  }
+
+  Future<void> deleteAddress(String userId, String addressId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .doc(addressId)
+        .delete();
+  }
+
+  Future<void> setDefaultAddress(String userId, String addressId) async {
+    await _clearDefaultAddress(userId);
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .doc(addressId)
+        .update({'isDefault': true});
+  }
+
+  Future<void> _clearDefaultAddress(String userId) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .where('isDefault', isEqualTo: true)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      await doc.reference.update({'isDefault': false});
+    }
+  }
+
+  /// Search Products
+  Stream<List<ProductModel>> searchProducts(String query) {
+    return _db
+        .collection('products')
+        .where('isAvailable', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProductModel.fromFirestore(doc))
+            .where((p) =>
+                p.name.toLowerCase().contains(query.toLowerCase()) ||
+                p.category.toLowerCase().contains(query.toLowerCase()) ||
+                p.brand.toLowerCase().contains(query.toLowerCase()))
+            .toList());
+  }
+
+  /// Search Shops
+  Stream<List<ShopModel>> searchShops(String query) {
+    return _db
+        .collection('shops')
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ShopModel.fromFirestore(doc))
+            .where((s) => s.name.toLowerCase().contains(query.toLowerCase()))
+            .toList());
+  }
+
+  /// Get all categories from products
+  Stream<List<String>> getAllCategories() {
+    return _db.collection('products').snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => doc.data()['category'] as String? ?? 'General')
+          .toSet()
+          .toList();
+    });
+  }
+}

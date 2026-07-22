@@ -13,6 +13,7 @@ class ProductModel {
   final String unit; // kg, liter, pcs, etc.
   final String imageUrl;
   final String category;
+  final String brand;
   final bool isAvailable;
   final DateTime createdAt;
 
@@ -29,6 +30,7 @@ class ProductModel {
     required this.unit,
     required this.imageUrl,
     required this.category,
+    this.brand = 'Generic',
     this.isAvailable = true,
     required this.createdAt,
   });
@@ -48,6 +50,7 @@ class ProductModel {
       unit: data['unit'] ?? 'pcs',
       imageUrl: data['imageUrl'] ?? '',
       category: data['category'] ?? 'General',
+      brand: data['brand'] ?? 'Generic',
       isAvailable: data['isAvailable'] ?? true,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
@@ -66,6 +69,7 @@ class ProductModel {
       'unit': unit,
       'imageUrl': imageUrl,
       'category': category,
+      'brand': brand,
       'isAvailable': isAvailable,
       'createdAt': FieldValue.serverTimestamp(),
     };
