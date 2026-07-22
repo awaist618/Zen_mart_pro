@@ -32,6 +32,8 @@ class OrderModel {
   final GeoPoint? deliveryLocation;
   final List<dynamic> items;
   final String paymentMethod;
+  final String paymentStatus; // 'pending', 'paid', 'failed'
+  final String? deliveryOtp;
   final List<String>? rejectedBy;
   final DateTime createdAt;
   final DateTime? deliveredAt;
@@ -55,6 +57,8 @@ class OrderModel {
     this.deliveryLocation,
     required this.items,
     required this.paymentMethod,
+    this.paymentStatus = 'pending',
+    this.deliveryOtp,
     this.rejectedBy,
     required this.createdAt,
     this.deliveredAt,
@@ -81,6 +85,8 @@ class OrderModel {
       deliveryLocation: data['deliveryLocation'],
       items: data['items'] ?? [],
       paymentMethod: data['paymentMethod'] ?? 'Cash on Delivery',
+      paymentStatus: data['paymentStatus'] ?? 'pending',
+      deliveryOtp: data['deliveryOtp'],
       rejectedBy: data['rejectedBy'] != null ? List<String>.from(data['rejectedBy']) : null,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       deliveredAt: data['deliveredAt'] != null ? (data['deliveredAt'] as Timestamp).toDate() : null,
@@ -113,6 +119,8 @@ class OrderModel {
       'deliveryLocation': deliveryLocation,
       'items': items,
       'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
+      'deliveryOtp': deliveryOtp,
       'rejectedBy': rejectedBy,
       'createdAt': Timestamp.fromDate(createdAt),
       'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 
@@ -49,10 +50,10 @@ class SupportCenterScreen extends StatelessWidget {
             Row(
               children: [
                 _ContactCard(
-                  label: 'Live Chat',
-                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Support Hub',
+                  icon: Icons.support_agent_rounded,
                   color: Colors.blue,
-                  onTap: () {},
+                  onTap: () => context.push('/support'),
                 ),
                 const SizedBox(width: 16),
                 _ContactCard(
@@ -85,12 +86,16 @@ class _SupportItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        leading: Icon(icon, color: color ?? AppColors.rider),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: onTap,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          leading: Icon(icon, color: color ?? AppColors.rider),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     );
   }

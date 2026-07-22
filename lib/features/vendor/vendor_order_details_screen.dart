@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
-import '../../theme/app_colors.dart';
+import '../../services/pdf_service.dart';
 
 class VendorOrderDetailsScreen extends ConsumerWidget {
   final String orderId;
@@ -19,6 +19,22 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        actions: [
+          FutureBuilder<OrderModel?>(
+            future: ref.read(vendorServiceProvider).getOrder(orderId),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null) {
+                return IconButton(
+                  icon: const Icon(Icons.print_rounded),
+                  onPressed: () => PdfService.generateOrderInvoice(snapshot.data!),
+                  tooltip: 'Print Invoice',
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: FutureBuilder<OrderModel?>(
         future: ref.read(vendorServiceProvider).getOrder(orderId),
@@ -77,6 +93,14 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
                 _InfoCard(
                   children: [
                     _InfoRow(label: 'Method', value: order.paymentMethod),
+                    _InfoRow(
+                      label: 'Status', 
+                      value: order.paymentStatus.toUpperCase(),
+                      valueStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange,
+                      ),
+                    ),
                     _InfoRow(label: 'Order Time', value: DateFormat('MMM dd, yyyy - h:mm a').format(order.createdAt)),
                   ],
                 ),
@@ -124,7 +148,7 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () => _updateStatus(context, ref, order.id, OrderStatus.rejected),
+              onPressed: () => _updateStatus(context, ref, order.id, OrderStatus.cancelled),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               child: const Text('Reject'),
             ),
@@ -156,7 +180,7 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
   }
 
   void _updateStatus(BuildContext context, WidgetRef ref, String id, OrderStatus status) async {
-    await ref.read(vendorServiceProvider).updateOrderStatus(id, status);
+    await ref.read(orderServiceProvider).updateStatus(id, status);
     if (context.mounted) Navigator.pop(context);
   }
 }

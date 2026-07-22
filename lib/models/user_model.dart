@@ -8,6 +8,12 @@ enum UserRole {
   unknown
 }
 
+enum VerificationStatus {
+  pending,
+  verified,
+  rejected
+}
+
 class UserModel {
   final String uid;
   final String name;
@@ -17,14 +23,24 @@ class UserModel {
   final String? shopId;
   final String status;
   final DateTime createdAt;
+  final String? profilePicture;
   
   // Rider & Vendor specific
   final bool isOnline;
   final String? vehicleInfo;
+  final String? vehicleBrand;
+  final String? vehicleModel;
+  final String? vehicleColor;
+  final String? vehicleImage;
   final String? licenseNumber;
+  final String? cnic;
+  final String? address;
   final double rating;
   final int totalDeliveries;
   final double totalEarnings;
+  final VerificationStatus verificationStatus;
+  final Map<String, String>? documents; // docType -> status (uploaded, pending, approved, rejected)
+  final Map<String, String>? documentUrls; // docType -> url
 
   UserModel({
     required this.uid,
@@ -35,12 +51,22 @@ class UserModel {
     this.shopId,
     required this.status,
     required this.createdAt,
+    this.profilePicture,
     this.isOnline = false,
     this.vehicleInfo,
+    this.vehicleBrand,
+    this.vehicleModel,
+    this.vehicleColor,
+    this.vehicleImage,
     this.licenseNumber,
+    this.cnic,
+    this.address,
     this.rating = 0.0,
     this.totalDeliveries = 0,
     this.totalEarnings = 0.0,
+    this.verificationStatus = VerificationStatus.pending,
+    this.documents,
+    this.documentUrls,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -56,13 +82,31 @@ class UserModel {
       createdAt: data['createdAt'] != null 
           ? (data['createdAt'] as Timestamp).toDate() 
           : DateTime.now(),
+      profilePicture: data['profilePicture'],
       isOnline: data['isOnline'] ?? false,
       vehicleInfo: data['vehicleInfo'],
+      vehicleBrand: data['vehicleBrand'],
+      vehicleModel: data['vehicleModel'],
+      vehicleColor: data['vehicleColor'],
+      vehicleImage: data['vehicleImage'],
       licenseNumber: data['licenseNumber'],
+      cnic: data['cnic'],
+      address: data['address'],
       rating: (data['rating'] ?? 0.0).toDouble(),
       totalDeliveries: data['totalDeliveries'] ?? 0,
       totalEarnings: (data['totalEarnings'] ?? 0.0).toDouble(),
+      verificationStatus: _parseVerificationStatus(data['verificationStatus']),
+      documents: data['documents'] != null ? Map<String, String>.from(data['documents']) : null,
+      documentUrls: data['documentUrls'] != null ? Map<String, String>.from(data['documentUrls']) : null,
     );
+  }
+
+  static VerificationStatus _parseVerificationStatus(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'verified': return VerificationStatus.verified;
+      case 'rejected': return VerificationStatus.rejected;
+      default: return VerificationStatus.pending;
+    }
   }
 
   static UserRole _parseRole(String? role) {
@@ -90,12 +134,22 @@ class UserModel {
       'shopId': shopId,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
+      'profilePicture': profilePicture,
       'isOnline': isOnline,
       'vehicleInfo': vehicleInfo,
+      'vehicleBrand': vehicleBrand,
+      'vehicleModel': vehicleModel,
+      'vehicleColor': vehicleColor,
+      'vehicleImage': vehicleImage,
       'licenseNumber': licenseNumber,
+      'cnic': cnic,
+      'address': address,
       'rating': rating,
       'totalDeliveries': totalDeliveries,
       'totalEarnings': totalEarnings,
+      'verificationStatus': verificationStatus.name,
+      'documents': documents,
+      'documentUrls': documentUrls,
     };
   }
 }

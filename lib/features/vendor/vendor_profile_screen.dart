@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import './widgets/vendor_bottom_nav.dart';
+import '../../core/widgets/password_dialogs.dart';
+import '../../models/user_model.dart';
+import '../../models/shop_model.dart';
+import '../../models/product_model.dart';
+import '../../models/order_model.dart';
 
 class VendorProfileScreen extends ConsumerWidget {
   const VendorProfileScreen({super.key});
@@ -12,151 +18,103 @@ class VendorProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userModelProvider);
     final shopAsync = ref.watch(currentShopProvider);
+    final productsAsync = ref.watch(shopProductsProvider);
+    final ordersAsync = ref.watch(allShopOrdersProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Vendor Account', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Store Management', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/support'),
+            icon: const Icon(Icons.help_outline_rounded),
+          ),
+        ],
       ),
       body: userAsync.when(
         data: (user) {
           if (user == null) return const Center(child: Text('User not found'));
+          final shop = shopAsync.asData?.value;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Profile & Shop Identity
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10)),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
-                            ),
-                            child: CircleAvatar(
-                              radius: 45,
-                              backgroundColor: const Color(0xFF1E293B),
-                              child: Text(
-                                user.name.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF8B5CF6),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.edit, color: Colors.white, size: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user.name,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        shopAsync.value?.name ?? 'Loading Shop...',
-                        style: TextStyle(color: Colors.black.withOpacity(0.5), fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
+                // Enhanced Shop Identity Card
+                _buildShopCard(context, user, shop),
                 const SizedBox(height: 24),
 
-                _SectionHeader(title: 'Shop Management'),
+                // Stats Grid
+                _buildStatsGrid(productsAsync, ordersAsync, user),
+                const SizedBox(height: 24),
+
+                _SectionHeader(title: 'Shop Controls'),
                 const SizedBox(height: 12),
                 _SettingsGroup(
                   children: [
                     _SettingsTile(
                       icon: Icons.storefront_rounded,
-                      title: 'Shop Information',
-                      subtitle: 'Name, Category, Description',
-                      onTap: () {},
+                      title: 'Edit Shop Details',
+                      subtitle: 'Name, Category, Description, Banner',
+                      onTap: () => context.push('/vendor/edit-shop'),
                     ),
                     _SettingsTile(
-                      icon: Icons.photo_size_select_actual_outlined,
-                      title: 'Shop Banner',
-                      subtitle: 'Update store header image',
-                      onTap: () {},
+                      icon: Icons.account_balance_rounded,
+                      title: 'Bank Information',
+                      subtitle: 'Payout methods and details',
+                      onTap: () => _showBankInfoDialog(context, ref, user),
                     ),
                     _SettingsTile(
-                      icon: Icons.business_center_outlined,
-                      title: 'Business Details',
-                      subtitle: 'Address, Tax Info, Documents',
-                      onTap: () {},
+                      icon: Icons.insights_rounded,
+                      title: 'Sales Analytics',
+                      subtitle: 'View detailed performance reports',
+                      onTap: () => context.push('/vendor/analytics'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
-                _SectionHeader(title: 'Account Settings'),
+                _SectionHeader(title: 'Customer Engagement'),
                 const SizedBox(height: 12),
                 _SettingsGroup(
                   children: [
                     _SettingsTile(
-                      icon: Icons.person_outline_rounded,
-                      title: 'Profile Settings',
-                      subtitle: 'Contact details and email',
-                      onTap: () {},
+                      icon: Icons.star_outline_rounded,
+                      title: 'Customer Reviews',
+                      subtitle: 'View and reply to store feedback',
+                      onTap: () => context.push('/vendor/reviews'),
                     ),
                     _SettingsTile(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Password & Security',
-                      subtitle: 'Change password, 2FA',
-                      onTap: () {},
-                    ),
-                    _SettingsTile(
-                      icon: Icons.settings_outlined,
-                      title: 'App Settings',
-                      subtitle: 'Notifications, Language',
-                      onTap: () {},
+                      icon: Icons.confirmation_number_outlined,
+                      title: 'Promo Coupons',
+                      subtitle: 'Manage discount codes',
+                      onTap: () => context.push('/vendor/coupons'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Logout Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ref.read(authServiceProvider).signOut();
-                      context.go('/welcome');
-                    },
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Logout Session', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.1),
-                      foregroundColor: Colors.red,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                _SectionHeader(title: 'Account Security'),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'Change Password',
+                      subtitle: 'Keep your credentials safe',
+                      onTap: () => PasswordDialogs.showChangePasswordDialog(context, ref),
                     ),
-                  ),
+                    _SettingsTile(
+                      icon: Icons.power_settings_new_rounded,
+                      title: 'Logout',
+                      subtitle: 'Sign out from this device',
+                      onTap: () => _showLogoutDialog(context, ref),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 40),
               ],
@@ -169,48 +127,222 @@ class VendorProfileScreen extends ConsumerWidget {
       bottomNavigationBar: const VendorBottomNav(currentIndex: 3),
     );
   }
-}
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
+  Widget _buildShopCard(BuildContext context, UserModel user, ShopModel? shop) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          // Banner Area
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.vendor.withOpacity(0.1),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop!.bannerImage!), fit: BoxFit.cover) : null,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  bottom: -40,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: AppColors.vendor,
+                        backgroundImage: shop?.logoUrl != null ? NetworkImage(shop!.logoUrl!) : null,
+                        child: shop?.logoUrl == null
+                            ? Text(shop?.name.substring(0, 1).toUpperCase() ?? 'V',
+                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white))
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 50),
+          Text(shop?.name ?? 'Loading Shop...', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(user.email, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _Badge(icon: Icons.star_rounded, label: '${user.rating} Rating', color: Colors.orange),
+              const SizedBox(width: 12),
+              _Badge(icon: Icons.verified_user_rounded, label: 'Verified Vendor', color: Colors.blue),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStatsGrid(AsyncValue<List<ProductModel>> products, AsyncValue<List<OrderModel>> orders, UserModel user) {
     return Row(
       children: [
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: Colors.black.withOpacity(0.4),
-            letterSpacing: 1.2,
+        Expanded(
+          child: _StatBox(
+            label: 'Total Revenue',
+            value: 'Rs ${NumberFormat.compact().format(user.totalEarnings)}',
+            icon: Icons.account_balance_wallet_outlined,
+            color: Colors.green,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _StatBox(
+            label: 'Products',
+            value: (products.value?.length ?? 0).toString(),
+            icon: Icons.inventory_2_outlined,
+            color: AppColors.vendor,
           ),
         ),
       ],
     );
   }
+
+  void _showBankInfoDialog(BuildContext context, WidgetRef ref, UserModel user) {
+    final accountController = TextEditingController();
+    final bankNameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bank Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: bankNameController, decoration: const InputDecoration(labelText: 'Bank/Wallet Name')),
+            TextField(controller: accountController, decoration: const InputDecoration(labelText: 'Account Number/IBAN')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          ElevatedButton(
+            onPressed: () async {
+              await ref.read(vendorServiceProvider).updateBankDetails(user.uid, {
+                'bankName': bankNameController.text,
+                'accountNumber': accountController.text,
+              });
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out of your Vendor account?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              ref.read(authServiceProvider).signOut();
+              context.go('/welcome');
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _Badge({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _StatBox({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+  @override
+  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 8), Text(title.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[400], letterSpacing: 1.5))]);
 }
 
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> children;
   const _SettingsGroup({required this.children});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
+  Widget build(BuildContext context) => Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(children: children),
-    );
-  }
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(children: children),
+        ),
+      );
 }
 
 class _SettingsTile extends StatelessWidget {
@@ -218,30 +350,7 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
+  const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF8B5CF6).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: const Color(0xFF8B5CF6), size: 22),
-      ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.4))),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-    );
-  }
+  Widget build(BuildContext context) => ListTile(onTap: onTap, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.vendor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppColors.vendor, size: 20)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[500])), trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20));
 }

@@ -99,21 +99,34 @@ class _HeroHeader extends StatelessWidget {
                     onTap: () => context.push('/admin/notifications'),
                   ),
                   const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => context.push('/admin/profile'),
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.accent, width: 2),
-                      ),
-                      child: const CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Color(0xFF1E293B),
-                        child: Text('AD', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
+              GestureDetector(
+                onTap: () => context.push('/admin/profile'),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.accent, width: 2),
                   ),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final user = ref.watch(userModelProvider).asData?.value;
+                      return CircleAvatar(
+                        radius: 18,
+                        backgroundColor: const Color(0xFF1E293B),
+                        backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                            ? NetworkImage(user.profilePicture!)
+                            : null,
+                        child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                            ? Text(
+                                user?.name.substring(0, 1).toUpperCase() ?? 'AD',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ),
                 ],
               ),
             ],
@@ -371,7 +384,7 @@ class _QuickActions extends StatelessWidget {
           children: const [
             Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/users?tab=0')),
             Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/users?tab=2')),
-            Expanded(child: _ActionItem(label: 'Approvals', icon: Icons.verified_user_rounded, color: Color(0xFF10B981), route: '/admin/approvals')),
+            Expanded(child: _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: Colors.blue, route: '/admin/support')),
             Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B), route: '/admin/payouts')),
             Expanded(child: _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B), route: '/admin/system')),
           ],
@@ -422,11 +435,13 @@ class _ActionItem extends StatelessWidget {
   }
 }
 
-class _RecentActivity extends StatelessWidget {
+class _RecentActivity extends ConsumerWidget {
   const _RecentActivity();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activityAsync = ref.watch(activityLogsProvider(null));
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -453,32 +468,43 @@ class _RecentActivity extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const _ActivityTile(
-            title: 'New Vendor Registration',
-            subtitle: 'Al-Madina Grocery requested approval',
-            time: '2m ago',
-            icon: Icons.store_mall_directory_rounded,
-            color: Color(0xFF6366F1),
-          ),
-          const Divider(height: 24),
-          const _ActivityTile(
-            title: 'Withdrawal Request',
-            subtitle: 'Rider #124 requested Rs 5,000',
-            time: '15m ago',
-            icon: Icons.account_balance_wallet_rounded,
-            color: Color(0xFFF59E0B),
-          ),
-          const Divider(height: 24),
-          const _ActivityTile(
-            title: 'System Alert',
-            subtitle: 'High traffic detected in Malakwal region',
-            time: '1h ago',
-            icon: Icons.bolt_rounded,
-            color: Color(0xFFEF4444),
+          activityAsync.when(
+            data: (logs) {
+              if (logs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: Text('No recent activity', style: TextStyle(color: Colors.grey))),
+                );
+              }
+              return Column(
+                children: logs.take(5).map((log) => Column(
+                  children: [
+                    _ActivityTile(
+                      title: log.title,
+                      subtitle: log.subtitle,
+                      time: _formatTime(log.timestamp),
+                      icon: log.icon,
+                      color: log.color,
+                    ),
+                    if (logs.indexOf(log) != logs.take(5).length - 1)
+                      const Divider(height: 24),
+                  ],
+                )).toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Center(child: Text('Error: $e')),
           ),
         ],
       ),
     );
+  }
+
+  String _formatTime(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }
 
@@ -505,6 +531,8 @@ class _ActivityTile extends StatelessWidget {
           context.push('/admin/approvals');
         } else if (title.contains('Withdrawal')) {
           context.push('/admin/payouts');
+        } else if (title.contains('Support')) {
+          context.push('/admin/support');
         } else {
           context.push('/admin/notifications');
         }
@@ -528,16 +556,21 @@ class _ActivityTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

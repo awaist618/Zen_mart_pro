@@ -36,7 +36,13 @@ class OfferDetailsScreen extends ConsumerWidget {
                 backgroundColor: Colors.white,
                 child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.black),
               ),
-              onPressed: () => context.pop(),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/customer');
+                }
+              },
             ),
           ),
           SliverToBoxAdapter(
@@ -166,16 +172,31 @@ class _SmallShopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: () => context.push('/customer/shop/${shop.id}'),
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundImage: NetworkImage(shop.imageUrl),
-        radius: 24,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.05)),
       ),
-      title: Text(shop.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(shop.category),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+      child: ListTile(
+        onTap: () => context.push('/customer/shop/${shop.id}'),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: const Color(0xFFF1F5F9), child: const Icon(Icons.storefront, color: Colors.grey))),
+        ),
+        title: Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A))),
+        subtitle: Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
+        trailing: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), shape: BoxShape.circle),
+          child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.accent),
+        ),
+      ),
     );
   }
 }
@@ -186,34 +207,64 @@ class _ProductOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity),
+    return InkWell(
+      onTap: () => context.push('/customer/product', extra: product),
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                child: Image.network(
+                  product.imageUrl, 
+                  fit: BoxFit.cover, 
+                  width: double.infinity,
+                  errorBuilder: (c,e,s) => Container(color: const Color(0xFFF1F5F9), child: const Icon(Icons.image, color: Colors.grey)),
+                ),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1),
-                Text('Rs ${product.price}', style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold)),
-              ],
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name, 
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A), letterSpacing: -0.2), 
+                    maxLines: 1, 
+                    overflow: TextOverflow.ellipsis
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Rs ${product.price.toStringAsFixed(0)}', 
+                        style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 16)
+                      ),
+                      if (product.discount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                          child: const Text('OFF', style: TextStyle(color: Colors.green, fontSize: 8, fontWeight: FontWeight.w900)),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

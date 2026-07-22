@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
+import '../../models/user_model.dart';
+import '../../models/order_model.dart';
+import '../../services/pdf_service.dart';
 
 class RiderEarningsScreen extends ConsumerWidget {
   const RiderEarningsScreen({super.key});
@@ -17,10 +20,21 @@ class RiderEarningsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("Earnings Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Earnings Summary", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () {
+              final history = ref.read(riderHistoryProvider).asData?.value ?? [];
+              PdfService.generateRiderEarningsReport(user, history);
+            },
+            tooltip: 'Export Statement',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -35,13 +49,7 @@ class RiderEarningsScreen extends ConsumerWidget {
             _EarningsGrid(user: user),
             
             const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Recent Payouts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton(onPressed: () {}, child: const Text('View History')),
-              ],
-            ),
+            _SectionHeader(title: 'Withdrawals'),
             const SizedBox(height: 12),
             _WithdrawalStatusCard(),
             
@@ -59,13 +67,13 @@ class RiderEarningsScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomSheet: _WithdrawalAction(balance: user.totalEarnings),
+      bottomSheet: _WithdrawalAction(balance: user.totalEarnings, user: user),
     );
   }
 }
 
 class _EarningSummaryCard extends StatelessWidget {
-  final dynamic user;
+  final UserModel user;
   const _EarningSummaryCard({required this.user});
 
   @override
@@ -87,16 +95,39 @@ class _EarningSummaryCard extends StatelessWidget {
           Text("AVAILABLE BALANCE", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
           const SizedBox(height: 8),
           Text('Rs ${user.totalEarnings.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 8),
-          Text('Total Lifetime: Rs ${user.totalEarnings.toStringAsFixed(0)}', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _MiniStat(label: 'Deliveries', value: user.totalDeliveries.toString()),
+              Container(width: 1, height: 20, color: Colors.white24),
+              _MiniStat(label: 'Rating', value: user.rating.toStringAsFixed(1)),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _MiniStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10)),
+      ],
+    );
+  }
+}
+
 class _EarningsGrid extends StatelessWidget {
-  final dynamic user;
+  final UserModel user;
   const _EarningsGrid({required this.user});
 
   @override
@@ -109,10 +140,10 @@ class _EarningsGrid extends StatelessWidget {
       crossAxisSpacing: 16,
       childAspectRatio: 1.6,
       children: [
-        _StatBox(label: 'Daily', value: 'Rs 1,250', color: Colors.blue),
-        _StatBox(label: 'Weekly', value: 'Rs 8,400', color: Colors.purple),
-        _StatBox(label: 'Monthly', value: 'Rs 32,150', color: Colors.orange),
-        _StatBox(label: 'Bonuses', value: 'Rs 2,500', color: Colors.green),
+        _StatBox(label: 'Today', value: 'Rs 1,200', color: Colors.blue),
+        _StatBox(label: 'This Week', value: 'Rs 8,450', color: Colors.purple),
+        _StatBox(label: 'This Month', value: 'Rs 28,000', color: Colors.orange),
+        _StatBox(label: 'Lifetime', value: 'Rs ${user.totalEarnings.toStringAsFixed(0)}', color: Colors.green),
       ],
     );
   }
@@ -174,7 +205,8 @@ class _WithdrawalStatusCard extends StatelessWidget {
 
 class _WithdrawalAction extends StatelessWidget {
   final double balance;
-  const _WithdrawalAction({required this.balance});
+  final UserModel user;
+  const _WithdrawalAction({required this.balance, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -185,14 +217,65 @@ class _WithdrawalAction extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
       ),
       child: ElevatedButton(
-        onPressed: balance < 500 ? null : () {},
+        onPressed: balance < 500 ? null : () => _showWithdrawalDialog(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.rider,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: const Text('Request Withdrawal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: const Text('Withdraw Earnings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _showWithdrawalDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Withdraw Funds', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Available Balance: Rs ${balance.toStringAsFixed(0)}', style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 32),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Amount',
+                prefixText: 'Rs ',
+                hintText: 'Enter amount to withdraw',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'Method', border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
+              items: const [
+                DropdownMenuItem(value: 'bank', child: Text('Bank Account')),
+                DropdownMenuItem(value: 'easypaisa', child: Text('Easypaisa')),
+                DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
+              ],
+              onChanged: (v) {},
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.rider,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Submit Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

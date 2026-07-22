@@ -23,7 +23,7 @@ class _AddVendorScreenState extends ConsumerState<AddVendorScreen> {
   
   // Shop Details
   final _shopNameController = TextEditingController();
-  final _shopCategoryController = TextEditingController();
+  String? _selectedCategory;
 
   bool _isLoading = false;
 
@@ -34,12 +34,11 @@ class _AddVendorScreenState extends ConsumerState<AddVendorScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _shopNameController.dispose();
-    _shopCategoryController.dispose();
     super.dispose();
   }
 
   Future<void> _createVendor() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || _selectedCategory == null) return;
 
     setState(() => _isLoading = true);
     try {
@@ -50,7 +49,7 @@ class _AddVendorScreenState extends ConsumerState<AddVendorScreen> {
         password: _passwordController.text.trim(),
         role: 'vendor',
         shopName: _shopNameController.text.trim(),
-        shopCategory: _shopCategoryController.text.trim(),
+        shopCategory: _selectedCategory!,
       );
 
       if (mounted) {
@@ -144,11 +143,25 @@ class _AddVendorScreenState extends ConsumerState<AddVendorScreen> {
                             validator: (v) => v!.isEmpty ? 'Required' : null,
                           ),
                           const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: _shopCategoryController,
-                            label: 'Category (e.g. Grocery, Food)',
-                            icon: Icons.category_outlined,
-                            validator: (v) => v!.isEmpty ? 'Required' : null,
+                          ref.watch(allCategoriesStreamProvider).when(
+                            data: (cats) => DropdownButtonFormField<String>(
+                              value: _selectedCategory,
+                              dropdownColor: const Color(0xFF1E293B),
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Category',
+                                labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                                prefixIcon: const Icon(Icons.category_outlined, color: AppColors.accent, size: 20),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.05),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                              ),
+                              items: cats.map((c) => DropdownMenuItem(value: c.name, child: Text(c.name))).toList(),
+                              onChanged: (v) => setState(() => _selectedCategory = v),
+                              validator: (v) => v == null ? 'Required' : null,
+                            ),
+                            loading: () => const LinearProgressIndicator(),
+                            error: (e, s) => const Text('Error loading categories', style: TextStyle(color: Colors.red)),
                           ),
                         ],
                       ),

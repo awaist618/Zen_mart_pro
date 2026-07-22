@@ -148,7 +148,16 @@ class _RiderHero extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.rider, width: 2)),
-                          child: CircleAvatar(radius: 18, backgroundColor: const Color(0xFF1E293B), child: Text(user.name.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
+                          child: CircleAvatar(
+                            radius: 18, 
+                            backgroundColor: const Color(0xFF1E293B), 
+                            backgroundImage: (user.profilePicture != null && user.profilePicture!.isNotEmpty) 
+                                ? NetworkImage(user.profilePicture!) 
+                                : null,
+                            child: (user.profilePicture == null || user.profilePicture!.isEmpty)
+                                ? Text(user.name.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))
+                                : null,
+                          ),
                         ),
                       ),
                     ],
@@ -166,7 +175,14 @@ class _RiderHero extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('Rs ${user.totalEarnings.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800)),
+                        ref.watch(todayRiderHistoryProvider).when(
+                          data: (orders) {
+                            final todayEarnings = orders.fold(0.0, (sum, order) => sum + order.deliveryFee);
+                            return Text('Rs ${todayEarnings.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800));
+                          },
+                          loading: () => const Text('...', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800)),
+                          error: (e, s) => const Text('Rs 0', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800)),
+                        ),
                         const SizedBox(width: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -427,7 +443,7 @@ class _OrderRequestTile extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Row(children: [Expanded(child: OutlinedButton(onPressed: () => ref.read(riderServiceProvider).rejectOrder(order.id, riderId), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), child: const Text('Decline'))), const SizedBox(width: 12), Expanded(flex: 2, child: ElevatedButton(onPressed: () => ref.read(riderServiceProvider).acceptOrder(order.id, riderId), style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))))]),
+          Row(children: [Expanded(child: OutlinedButton(onPressed: () => ref.read(riderServiceProvider).rejectOrder(order.id, riderId), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), child: const Text('Decline'))), const SizedBox(width: 12), Expanded(flex: 2, child: ElevatedButton(onPressed: () => ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.accepted, riderId: riderId), style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))))]),
         ],
       ),
     );
@@ -494,7 +510,7 @@ class _RiderBottomNav extends StatelessWidget {
           _BottomNavItem(
             icon: Icons.person_outline_rounded, 
             label: 'Profile', 
-            isActive: location == '/rider/profile', 
+            isActive: location == '/rider/profile' || location == '/rider/vehicle' || location == '/rider/documents',
             onTap: () => context.push('/rider/profile')
           )
         ]

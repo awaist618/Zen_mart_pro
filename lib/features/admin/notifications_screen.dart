@@ -71,6 +71,7 @@ class _NotificationTile extends ConsumerWidget {
       case NotificationType.lowStock: return Icons.warning_amber_rounded;
       case NotificationType.maintenance: return Icons.settings_rounded;
       case NotificationType.securityAlert: return Icons.security_rounded;
+      case NotificationType.supportTicket: return Icons.support_agent_rounded;
       default: return Icons.notifications_rounded;
     }
   }
@@ -85,6 +86,7 @@ class _NotificationTile extends ConsumerWidget {
       case NotificationType.lowStock: return Colors.amber;
       case NotificationType.maintenance: return Colors.blueGrey;
       case NotificationType.securityAlert: return Colors.deepOrange;
+      case NotificationType.supportTicket: return Colors.blue;
       default: return AppColors.primary;
     }
   }

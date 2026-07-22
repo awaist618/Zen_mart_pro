@@ -9,6 +9,7 @@ enum NotificationType {
   lowStock,
   maintenance,
   securityAlert,
+  supportTicket,
   general
 }
 

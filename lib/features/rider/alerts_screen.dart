@@ -98,38 +98,47 @@ class _NotificationTile extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
+        child: Material(
           color: notification.isRead ? Colors.white : AppColors.rider.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: notification.isRead ? Colors.transparent : AppColors.rider.withOpacity(0.1),
-          ),
-        ),
-        child: ListTile(
-          onTap: onTap,
-          leading: CircleAvatar(
-            backgroundColor: _getIconColor(notification.type).withOpacity(0.1),
-            child: Icon(_getIcon(notification.type), color: _getIconColor(notification.type), size: 20),
-          ),
-          title: Text(
-            notification.title,
-            style: TextStyle(
-              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-              fontSize: 14,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: notification.isRead ? Colors.transparent : AppColors.rider.withOpacity(0.1),
+                ),
+              ),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: _getIconColor(notification.type).withOpacity(0.1),
+                  child: Icon(_getIcon(notification.type), color: _getIconColor(notification.type), size: 20),
+                ),
+                title: Text(
+                  notification.title,
+                  style: TextStyle(
+                    fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(notification.message, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.6))),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('MMM dd, h:mm a').format(notification.timestamp),
+                      style: TextStyle(fontSize: 10, color: Colors.black.withOpacity(0.4)),
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
+              ),
             ),
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(notification.message, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.6))),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('MMM dd, h:mm a').format(notification.timestamp),
-                style: TextStyle(fontSize: 10, color: Colors.black.withOpacity(0.4)),
-              ),
-            ],
-          ),
-          isThreeLine: true,
         ),
       ),
     );

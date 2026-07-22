@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
+import '../../services/pdf_service.dart';
 
 class AnalyticsDashboardScreen extends ConsumerWidget {
   const AnalyticsDashboardScreen({super.key});
@@ -34,7 +35,21 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.picture_as_pdf_outlined),
-              onPressed: () => _showExportDialog(context, 'PDF'),
+              onPressed: () {
+                final shops = ref.read(totalShopsCountProvider).asData?.value ?? 0;
+                final riders = ref.read(totalRidersCountProvider).asData?.value ?? 0;
+                final customers = ref.read(totalCustomersCountProvider).asData?.value ?? 0;
+                final revenue = ref.read(monthlyRevenueProvider).asData?.value ?? 0.0;
+                final pending = ref.read(pendingOrdersCountProvider).asData?.value ?? 0;
+
+                PdfService.generatePlatformReport(
+                  totalShops: shops,
+                  totalRiders: riders,
+                  totalCustomers: customers,
+                  monthlyRevenue: revenue,
+                  pendingOrders: pending,
+                );
+              },
               tooltip: 'Export PDF',
             ),
             IconButton(

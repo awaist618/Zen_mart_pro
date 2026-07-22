@@ -7,6 +7,7 @@ enum ActivityType {
   newOrder,
   withdrawalRequest,
   systemAlert,
+  supportTicket,
   general
 }
 

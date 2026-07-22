@@ -32,17 +32,22 @@ migrate_working_dir/
 /coverage/
 local.properties
 
+# Environment variables and secrets
+.env*
+lib/core/secrets.dart
+
+# Keystore / Signing (Sensitive)
+*.jks
+*.keystore
+android/key.properties
+
 # Firebase configuration (Sensitive)
 lib/firebase_options*.dart
-lib/core/secrets.dart
 android/app/google-services*.json
-# ios/Runner/GoogleService-Info*.plist (Allowed for now to fix build)
-ios/firebase_app_id_file.json
+ios/Runner/GoogleService-Info*.plist
 macos/Runner/GoogleService-Info*.plist
+ios/firebase_app_id_file.json
 macos/firebase_app_id_file.json
-
-# Environment variables
-.env*
 
 # Symbolication/Obfuscation
 app.*.symbols

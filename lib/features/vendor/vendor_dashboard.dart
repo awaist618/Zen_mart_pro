@@ -128,10 +128,23 @@ class _VendorHero extends ConsumerWidget {
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFF8B5CF6), width: 2),
                           ),
-                          child: const CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Color(0xFF1E293B),
-                            child: Text('GB', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: Consumer(
+                            builder: (context, ref, child) {
+                              final user = ref.watch(userModelProvider).asData?.value;
+                              return CircleAvatar(
+                                radius: 18,
+                                backgroundColor: const Color(0xFF1E293B),
+                                backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                                    ? NetworkImage(user.profilePicture!)
+                                    : null,
+                                child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                                    ? Text(
+                                        user?.name.substring(0, 1).toUpperCase() ?? 'GB',
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                      )
+                                    : null,
+                              );
+                            },
                           ),
                         ),
                       ),

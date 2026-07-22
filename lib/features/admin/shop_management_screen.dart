@@ -49,7 +49,7 @@ class ShopManagementScreen extends ConsumerWidget {
             subtitle: 'Manage marketplace store categories',
             icon: Icons.category_rounded,
             color: Colors.purple,
-            onTap: () {}, // Implementation coming soon
+            onTap: () => context.push('/admin/categories'),
           ),
           _buildManagementCard(
             context,

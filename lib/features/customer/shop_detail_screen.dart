@@ -48,7 +48,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
               _buildSliverAppBar(context, shop),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -59,18 +59,22 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(shop.name, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                                Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 16)),
+                                Text(shop.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                                const SizedBox(height: 4),
+                                Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 16, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
                           _buildActionIcons(),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       _buildShopStats(shop),
                       const SizedBox(height: 24),
-                      Text(shop.description, style: TextStyle(color: Colors.black.withOpacity(0.6), height: 1.5)),
+                      Text(
+                        shop.description, 
+                        style: TextStyle(color: Colors.black.withOpacity(0.6), height: 1.5, fontSize: 14),
+                      ),
                       const SizedBox(height: 24),
                       _ContactBar(phone: shop.phone, address: shop.address),
                       const SizedBox(height: 12),
@@ -87,6 +91,9 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                     unselectedLabelColor: Colors.grey,
                     indicatorColor: AppColors.accent,
                     indicatorWeight: 3,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                     tabs: const [
                       Tab(text: 'Products'),
                       Tab(text: 'Reviews'),
@@ -122,14 +129,17 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
   }
 
   Widget _buildShopStats(ShopModel shop) {
-    return Row(
-      children: [
-        _InfoChip(icon: Icons.star_rounded, label: '${shop.rating} (124)', color: Colors.orange),
-        const SizedBox(width: 12),
-        _InfoChip(icon: Icons.access_time_rounded, label: shop.deliveryTime, color: Colors.blue),
-        const SizedBox(width: 12),
-        _InfoChip(icon: Icons.delivery_dining_rounded, label: shop.hasFreeDelivery ? 'Free' : 'Rs ${shop.deliveryFee}', color: Colors.green),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _InfoChip(icon: Icons.star_rounded, label: '${shop.rating} (124)', color: Colors.orange),
+          const SizedBox(width: 12),
+          _InfoChip(icon: Icons.access_time_rounded, label: shop.deliveryTime, color: Colors.blue),
+          const SizedBox(width: 12),
+          _InfoChip(icon: Icons.delivery_dining_rounded, label: shop.hasFreeDelivery ? 'Free' : 'Rs ${shop.deliveryFee}', color: Colors.green),
+        ],
+      ),
     );
   }
 
@@ -141,20 +151,21 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
                 ),
                 child: TextField(
                   onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
                   decoration: const InputDecoration(
-                    hintText: 'Search products in this store...',
+                    hintText: 'Search in store...',
+                    hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
                     border: InputBorder.none,
-                    icon: Icon(Icons.search, size: 20),
+                    icon: Icon(Icons.search_rounded, size: 22, color: AppColors.accent),
                   ),
                 ),
               ),
@@ -178,21 +189,37 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
   }
 
   Widget _buildReviewsTab() {
-    return const Center(child: Text('No reviews yet.'));
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.rate_review_outlined, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text('No reviews yet.', style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
   }
 
   Widget _buildSliverAppBar(BuildContext context, ShopModel shop) {
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 240,
       pinned: true,
       backgroundColor: AppColors.accent,
+      elevation: 0,
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
         child: CircleAvatar(
           backgroundColor: Colors.white,
           child: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/customer');
+              }
+            },
           ),
         ),
       ),
@@ -206,25 +233,44 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
 
   Widget _buildCartSummary(BuildContext context, dynamic cart) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -5))],
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () => context.push('/customer/cart'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 60),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          minimumSize: const Size(double.infinity, 64),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 8,
+          shadowColor: AppColors.accent.withOpacity(0.5),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('View Cart (${cart.totalQuantity} items)', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text('Rs ${cart.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${cart.totalQuantity} ITEMS', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                  Text('Rs ${cart.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                ],
+              ),
+              Row(
+                children: const [
+                  Text('VIEW CART', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                  SizedBox(width: 8),
+                  Icon(Icons.shopping_bag_outlined, size: 20),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -241,12 +287,13 @@ class _CircleIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Icon(icon, color: color ?? Colors.black, size: 20),
       ),
@@ -256,23 +303,25 @@ class _CircleIconButton extends StatelessWidget {
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar);
-
   final TabBar _tabBar;
-
   @override
-  double get minExtent => _tabBar.preferredSize.height;
+  double get minExtent => _tabBar.preferredSize.height + 1;
   @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
+  double get maxExtent => _tabBar.preferredSize.height + 1;
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: Colors.white, child: _tabBar);
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          _tabBar,
+          const Divider(height: 1, thickness: 1),
+        ],
+      ),
+    );
   }
-
   @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
 }
 
 class _InfoChip extends StatelessWidget {
@@ -280,20 +329,16 @@ class _InfoChip extends StatelessWidget {
   final String label;
   final Color color;
   const _InfoChip({required this.icon, required this.label, required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           Icon(icon, color: color, size: 16),
-          const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12)),
         ],
       ),
     );
@@ -304,32 +349,47 @@ class _ContactBar extends StatelessWidget {
   final String phone;
   final String address;
   const _ContactBar({required this.phone, required this.address});
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Address', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              Text(address, style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Location', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(address, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ],
+            ),
           ),
-        ),
-        IconButton(
-          onPressed: () => launchUrl(Uri.parse('tel:$phone')),
-          icon: const Icon(Icons.call_rounded, color: AppColors.accent),
-          style: IconButton.styleFrom(backgroundColor: AppColors.accent.withOpacity(0.1)),
-        ),
-        const SizedBox(width: 8),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.map_rounded, color: AppColors.accent),
-          style: IconButton.styleFrom(backgroundColor: AppColors.accent.withOpacity(0.1)),
-        ),
-      ],
+          const SizedBox(width: 12),
+          _SmallActionBtn(icon: Icons.call_rounded, onTap: () => launchUrl(Uri.parse('tel:$phone'))),
+          const SizedBox(width: 10),
+          _SmallActionBtn(icon: Icons.map_rounded, onTap: () {}),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallActionBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _SmallActionBtn({required this.icon, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+        child: Icon(icon, color: AppColors.accent, size: 20),
+      ),
     );
   }
 }
@@ -342,25 +402,29 @@ class _ProductTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
+      borderRadius: BorderRadius.circular(28),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black.withOpacity(0.03)),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.05)),
         ),
         child: Row(
           children: [
             Hero(
               tag: 'product_${product.id}',
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
                 child: Image.network(
                   product.imageUrl,
-                  width: 90,
-                  height: 90,
+                  width: 100,
+                  height: 100,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(width: 90, height: 90, color: Colors.grey[200], child: const Icon(Icons.image)),
+                  errorBuilder: (c, e, s) => Container(width: 100, height: 100, color: const Color(0xFFF1F5F9), child: const Icon(Icons.image, color: Colors.grey)),
                 ),
               ),
             ),
@@ -369,30 +433,52 @@ class _ProductTile extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    product.name, 
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A), letterSpacing: -0.2),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     product.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                    style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Rs ${product.price}', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent, fontSize: 16)),
-                      GestureDetector(
-                        onTap: () {
-                          ref.read(cartProvider.notifier).addItem(product);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${product.name} added to cart'), duration: const Duration(seconds: 1)),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                          child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      Text(
+                        'Rs ${product.price.toStringAsFixed(0)}', 
+                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.accent, fontSize: 19)
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            ref.read(cartProvider.notifier).addItem(product);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} added to cart'),
+                                backgroundColor: const Color(0xFF0F172A),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                            ),
+                            child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                          ),
                         ),
                       ),
                     ],

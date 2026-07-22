@@ -8,7 +8,10 @@ class ShopModel {
   final String address;
   final GeoPoint? location;
   final String category;
-  final String imageUrl;
+  final String imageUrl; // Kept for backward compatibility or as banner
+  final String? bannerImage;
+  final String? logoUrl;
+  final String? openingHours;
   final double rating;
   final String status; // active, disabled
   final int activeOrders;
@@ -30,6 +33,9 @@ class ShopModel {
     this.location,
     required this.category,
     required this.imageUrl,
+    this.bannerImage,
+    this.logoUrl,
+    this.openingHours,
     this.rating = 0.0,
     required this.status,
     this.activeOrders = 0,
@@ -53,7 +59,10 @@ class ShopModel {
       address: data['address'] ?? 'No Address',
       location: data['location'],
       category: data['category'] ?? 'General',
-      imageUrl: data['imageUrl'] ?? '',
+      imageUrl: data['imageUrl'] ?? data['bannerImage'] ?? '',
+      bannerImage: data['bannerImage'] ?? data['imageUrl'],
+      logoUrl: data['logoUrl'],
+      openingHours: data['openingHours'],
       rating: (data['rating'] ?? 0.0).toDouble(),
       status: data['status'] ?? 'active',
       activeOrders: data['activeOrders'] ?? 0,
@@ -79,6 +88,9 @@ class ShopModel {
       'location': location,
       'category': category,
       'imageUrl': imageUrl,
+      'bannerImage': bannerImage,
+      'logoUrl': logoUrl,
+      'openingHours': openingHours,
       'rating': rating,
       'status': status,
       'activeOrders': activeOrders,

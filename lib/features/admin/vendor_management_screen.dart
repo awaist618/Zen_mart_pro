@@ -79,127 +79,130 @@ class _VendorListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isSuspended = vendor.status == 'suspended';
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 32,
-                backgroundColor: Color(0xFFF1F5F9),
-                child: Icon(Icons.storefront_rounded, color: Color(0xFF8B5CF6), size: 32),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 32,
+                  backgroundColor: Color(0xFFF1F5F9),
+                  child: Icon(Icons.storefront_rounded, color: Color(0xFF8B5CF6), size: 32),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vendor.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Shop ID: ${vendor.shopId ?? "Not Assigned"}',
+                        style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        vendor.phone,
+                        style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      vendor.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isSuspended ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        vendor.status.toUpperCase(),
+                        style: TextStyle(
+                          color: isSuspended ? Colors.orange : Colors.green,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Shop ID: ${vendor.shopId ?? "Not Assigned"}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      vendor.phone,
-                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
+                        Text(' ${vendor.rating}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ],
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isSuspended ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      vendor.status.toUpperCase(),
-                      style: TextStyle(
-                        color: isSuspended ? Colors.orange : Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                      Text(' ${vendor.rating}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const Divider(height: 32),
-          Wrap(
-            spacing: 20,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: [
-              _ActionButton(
-                icon: Icons.edit_outlined,
-                label: 'Edit',
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: Icons.assignment_outlined,
-                label: 'Assign Shop',
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: Icons.inventory_2_outlined,
-                label: 'Products',
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: Icons.receipt_long_outlined,
-                label: 'Orders',
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: isSuspended ? Icons.check_circle_outline : Icons.block_rounded,
-                label: isSuspended ? 'Activate' : 'Suspend',
-                color: isSuspended ? Colors.green : Colors.orange,
-                onTap: () {
-                  ref.read(adminServiceProvider).updateUserStatus(
-                    vendor.uid, 
-                    isSuspended ? 'active' : 'suspended'
-                  );
-                },
-              ),
-              _ActionButton(
-                icon: Icons.lock_reset_rounded,
-                label: 'Reset Pwd',
-                color: Colors.blue,
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: Icons.delete_outline_rounded,
-                label: 'Delete',
-                color: Colors.red,
-                onTap: () => _showDeleteDialog(context, ref, vendor),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const Divider(height: 32),
+            Wrap(
+              spacing: 20,
+              runSpacing: 16,
+              alignment: WrapAlignment.center,
+              children: [
+                _ActionButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit',
+                  onTap: () {},
+                ),
+                _ActionButton(
+                  icon: Icons.assignment_outlined,
+                  label: 'Assign Shop',
+                  onTap: () {},
+                ),
+                _ActionButton(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Products',
+                  onTap: () {},
+                ),
+                _ActionButton(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Orders',
+                  onTap: () {},
+                ),
+                _ActionButton(
+                  icon: isSuspended ? Icons.check_circle_outline : Icons.block_rounded,
+                  label: isSuspended ? 'Activate' : 'Suspend',
+                  color: isSuspended ? Colors.green : Colors.orange,
+                  onTap: () {
+                    ref.read(adminServiceProvider).updateUserStatus(
+                      vendor.uid, 
+                      isSuspended ? 'active' : 'suspended'
+                    );
+                  },
+                ),
+                _ActionButton(
+                  icon: Icons.lock_reset_rounded,
+                  label: 'Reset Pwd',
+                  color: Colors.blue,
+                  onTap: () {},
+                ),
+                _ActionButton(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Delete',
+                  color: Colors.red,
+                  onTap: () => _showDeleteDialog(context, ref, vendor),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

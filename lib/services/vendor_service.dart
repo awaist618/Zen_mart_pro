@@ -17,6 +17,10 @@ class VendorService {
     });
   }
 
+  Future<void> updateShopData(String shopId, Map<String, dynamic> data) async {
+    await _db.collection('shops').doc(shopId).update(data);
+  }
+
   /// Toggle shop status (online/offline)
   Future<void> updateShopStatus(String shopId, String status) async {
     await _db.collection('shops').doc(shopId).update({'status': status});
@@ -65,10 +69,12 @@ class VendorService {
     return _db
         .collection('products')
         .where('shopId', isEqualTo: shopId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final products = snapshot.docs.map((doc) => ProductModel.fromFirestore(doc)).toList();
+      products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return products;
+    });
   }
 
   /// Get stream of low stock products for a specific shop
@@ -98,10 +104,12 @@ class VendorService {
         .collection('orders')
         .where('shopId', isEqualTo: shopId)
         .where('status', isEqualTo: OrderStatus.pending.name)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    });
   }
 
   /// Get stream of all orders for a shop
@@ -109,10 +117,12 @@ class VendorService {
     return _db
         .collection('orders')
         .where('shopId', isEqualTo: shopId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    });
   }
 
   /// Update Order Status (Accept/Reject/Complete)
@@ -172,5 +182,38 @@ class VendorService {
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => CouponModel.fromFirestore(doc)).toList());
+  }
+
+  /// Payout and Bank Account logic
+  Future<void> updateBankDetails(String vendorId, Map<String, dynamic> bankDetails) async {
+    await _db.collection('users').doc(vendorId).update({
+      'bankDetails': bankDetails,
+    });
+  }
+
+  Future<void> requestWithdrawal(String vendorId, double amount, String role) async {
+    // 1. Get user document
+    final userDoc = await _db.collection('users').doc(vendorId).get();
+    final earnings = (userDoc.data()?['totalEarnings'] ?? 0.0).toDouble();
+
+    if (amount > earnings) {
+      throw Exception('Insufficient balance');
+    }
+
+    // 2. Create withdrawal request
+    await _db.collection('payouts').add({
+      'userId': vendorId,
+      'userName': userDoc.data()?['name'] ?? 'Unknown',
+      'userRole': role,
+      'amount': amount,
+      'status': 'pending',
+      'requestedAt': FieldValue.serverTimestamp(),
+      'bankDetails': userDoc.data()?['bankDetails'] ?? {},
+    });
+
+    // 3. Deduct from totalEarnings
+    await _db.collection('users').doc(vendorId).update({
+      'totalEarnings': FieldValue.increment(-amount),
+    });
   }
 }

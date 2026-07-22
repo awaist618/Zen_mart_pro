@@ -201,7 +201,13 @@ class _NextStepButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => ref.read(riderServiceProvider).updateOrderStatus(order.id, next),
+        onPressed: () {
+          if (next == OrderStatus.delivered) {
+            context.push('/rider/order-details/${order.id}');
+          } else {
+            ref.read(orderServiceProvider).updateStatus(order.id, next);
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.rider,
           foregroundColor: Colors.white,

@@ -85,10 +85,13 @@ class CustomerService {
     return _db
         .collection('orders')
         .where('customerId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+      // Sort in memory to avoid index requirement for now
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    });
   }
 
   /// Get products by multiple IDs (for Offer details)
@@ -113,6 +116,46 @@ class CustomerService {
         .map((snapshot) => snapshot.docs
             .map((doc) => ShopModel.fromFirestore(doc))
             .toList());
+  }
+
+  /// Submit a review for an order
+  Future<void> submitReview({
+    required String orderId,
+    required String shopId,
+    required String? riderId,
+    required String customerName,
+    required double rating,
+    required String review,
+  }) async {
+    final batch = _db.batch();
+    
+    // 1. Add to shop reviews
+    final shopReviewRef = _db.collection('shops').doc(shopId).collection('reviews').doc();
+    batch.set(shopReviewRef, {
+      'orderId': orderId,
+      'customerName': customerName,
+      'rating': rating,
+      'review': review,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Add to rider reviews if rider assigned
+    if (riderId != null) {
+      final riderReviewRef = _db.collection('rider_reviews').doc();
+      batch.set(riderReviewRef, {
+        'orderId': orderId,
+        'riderId': riderId,
+        'customerName': customerName,
+        'rating': rating,
+        'review': review,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // 3. Update order record to mark as reviewed
+    batch.update(_db.collection('orders').doc(orderId), {'isReviewed': true});
+
+    await batch.commit();
   }
 
   Stream<List<AddressModel>> getSavedAddresses(String userId) {

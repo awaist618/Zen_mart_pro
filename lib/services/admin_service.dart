@@ -6,9 +6,28 @@ import '../models/order_model.dart';
 import '../models/approval_model.dart';
 import '../models/payout_model.dart';
 import '../models/activity_model.dart';
+import '../models/category_model.dart';
 
 class AdminService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  /// Manage Platform Categories
+  Stream<List<CategoryModel>> getCategories() {
+    return _db.collection('categories').snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => CategoryModel.fromFirestore(doc)).toList());
+  }
+
+  Future<void> addCategory(CategoryModel category) async {
+    await _db.collection('categories').add(category.toMap());
+  }
+
+  Future<void> updateCategory(String id, Map<String, dynamic> data) async {
+    await _db.collection('categories').doc(id).update(data);
+  }
+
+  Future<void> deleteCategory(String id) async {
+    await _db.collection('categories').doc(id).delete();
+  }
 
   /// Get stream of all activity logs
   Stream<List<ActivityModel>> getActivityLogs({DateTime? start}) {
@@ -178,7 +197,6 @@ class AdminService {
         .where('status', isEqualTo: 'delivered')
         .where('deliveredAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('deliveredAt', isLessThanOrEqualTo: Timestamp.fromDate(end))
-        .orderBy('deliveredAt', descending: true)
         .snapshots()
         .map((snapshot) {
       double total = 0;

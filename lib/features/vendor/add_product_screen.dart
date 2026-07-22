@@ -24,10 +24,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _unitController = TextEditingController(text: 'pcs');
   final _categoryController = TextEditingController();
   
-  File? _image;
   bool _isLoading = false;
   bool _isAvailable = true;
-  bool _isPickerActive = false;
+  String? _uploadedImageUrl;
 
   @override
   void dispose() {
@@ -42,24 +41,26 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_isPickerActive) return;
+    final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
+      context: context,
+      folder: 'products',
+    );
     
-    setState(() => _isPickerActive = true);
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() => _image = File(pickedFile.path));
-      }
-    } finally {
-      setState(() => _isPickerActive = false);
+    if (url != null) {
+      setState(() {
+        // We'll store the URL directly since it's already uploaded
+        _uploadedImageUrl = url;
+      });
     }
   }
 
   Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate() || _image == null) {
+    if (!_formKey.currentState!.validate() || _uploadedImageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and pick an image')),
+        const SnackBar(
+          content: Text('Please fill all fields and pick/upload an image'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -67,17 +68,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = ref.read(userModelProvider).asData?.value;
-      if (user == null || user.shopId == null) throw Exception('Shop information not found');
+      final user = ref.read(userModelProvider).value;
+      if (user == null) throw Exception('User session expired. Please log in again.');
+      if (user.shopId == null) throw Exception('Shop ID missing. Ensure your vendor account is set up.');
 
-      // 1. Upload to Cloudinary
-      final imageUrl = await ref.read(cloudinaryServiceProvider).uploadImage(_image!, folder: 'products');
-      
-      if (imageUrl == null) throw Exception('Image upload failed');
-
-      // 2. Save to Firestore
+      // 2. Save to Firestore (Image is already uploaded now)
       final product = ProductModel(
-        id: '', // Firestore will generate this
+        id: '', 
         vendorId: user.uid,
         shopId: user.shopId!,
         name: _nameController.text.trim(),
@@ -86,7 +83,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         discount: double.parse(_discountController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
         unit: _unitController.text.trim(),
-        imageUrl: imageUrl,
+        imageUrl: _uploadedImageUrl!,
         category: _categoryController.text.trim().isEmpty ? 'General' : _categoryController.text.trim(),
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
@@ -102,8 +99,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       }
     } catch (e) {
       if (mounted) {
+        debugPrint('Product Save Error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -141,13 +143,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.black.withOpacity(0.05)),
-                    image: _image != null ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover) : null,
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
-                  ),
-                  child: _image == null 
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  image: _uploadedImageUrl != null ? DecorationImage(image: NetworkImage(_uploadedImageUrl!), fit: BoxFit.cover) : null,
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+                ),
+                child: _uploadedImageUrl == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -167,7 +169,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 16),
               _buildTextField(_descriptionController, 'Description', Icons.description_outlined, maxLines: 3),
               const SizedBox(height: 16),
-              _buildTextField(_categoryController, 'Category (e.g. Dairy, Bakery)', Icons.category_outlined),
+              _buildTextField(_categoryController, 'Category (e.g. Dairy, Bakery)', Icons.category_outlined, isRequired: false),
               
               const SizedBox(height: 32),
               _buildSectionTitle('PRICING & INVENTORY'),
@@ -262,7 +264,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {int maxLines = 1, TextInputType? keyboardType, bool isRequired = true}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -282,7 +284,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
-        validator: (v) => v!.isEmpty ? 'Required' : null,
+        validator: (v) => (isRequired && (v == null || v.isEmpty)) ? 'Required' : null,
       ),
     );
   }

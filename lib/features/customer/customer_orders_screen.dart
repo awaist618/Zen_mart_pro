@@ -17,7 +17,7 @@ class CustomerOrdersScreen extends ConsumerStatefulWidget {
 class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<String> _tabs = ['Active', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
+  final List<String> _tabs = ['Ongoing', 'History', 'Cancelled'];
 
   @override
   void initState() {
@@ -33,11 +33,17 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
 
   List<OrderStatus> _getStatusListForTab(int index) {
     switch (index) {
-      case 0: return [OrderStatus.pending, OrderStatus.confirmed, OrderStatus.accepted];
-      case 1: return [OrderStatus.preparing];
-      case 2: return [OrderStatus.reachedVendor, OrderStatus.pickedUp, OrderStatus.outForDelivery];
-      case 3: return [OrderStatus.delivered];
-      case 4: return [OrderStatus.cancelled, OrderStatus.rejected];
+      case 0: return [
+        OrderStatus.pending, 
+        OrderStatus.confirmed, 
+        OrderStatus.accepted, 
+        OrderStatus.preparing, 
+        OrderStatus.reachedVendor, 
+        OrderStatus.pickedUp, 
+        OrderStatus.outForDelivery
+      ];
+      case 1: return [OrderStatus.delivered];
+      case 2: return [OrderStatus.cancelled, OrderStatus.rejected];
       default: return [];
     }
   }
@@ -49,34 +55,48 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.black,
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppColors.accent,
-          tabs: _tabs.map((t) => Tab(text: t)).toList(),
+        foregroundColor: const Color(0xFF0F172A),
+        centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1))),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.accent,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppColors.accent,
+              indicatorWeight: 3,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              tabs: _tabs.map((t) => Tab(text: t)).toList(),
+            ),
+          ),
         ),
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const BouncingScrollPhysics(),
         children: List.generate(_tabs.length, (index) {
           return ordersAsync.when(
             data: (orders) {
               final statusList = _getStatusListForTab(index);
-              final filtered = orders.where((o) => statusList.contains(orderStatusFromModel(o.status))).toList();
+              final filtered = orders.where((o) => statusList.contains(o.status)).toList();
 
               if (filtered.isEmpty) {
-                return _EmptyState(label: _tabs[index]);
+                return _EmptyOrdersState(label: _tabs[index]);
               }
 
               return ListView.separated(
                 padding: const EdgeInsets.all(20),
                 itemCount: filtered.length,
+                physics: const BouncingScrollPhysics(),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) => _OrderCard(order: filtered[index]),
               );
@@ -86,17 +106,14 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
           );
         }),
       ),
-      bottomNavigationBar: const CustomerBottomNav(currentIndex: 3),
+      bottomNavigationBar: const CustomerBottomNav(currentIndex: 2), // Index 2 for Orders
     );
   }
-
-  // Helper because OrderModel uses the enum but Firestore returns string
-  OrderStatus orderStatusFromModel(OrderStatus status) => status;
 }
 
-class _EmptyState extends StatelessWidget {
+class _EmptyOrdersState extends StatelessWidget {
   final String label;
-  const _EmptyState({required this.label});
+  const _EmptyOrdersState({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -104,9 +121,15 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_rounded, size: 64, color: Colors.grey.withOpacity(0.3)),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+            child: Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey[400]),
+          ),
           const SizedBox(height: 16),
-          Text('No $label orders', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+          Text('No $label orders found', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w700, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text('Orders you place will appear here', style: TextStyle(color: Colors.grey[400], fontSize: 13)),
         ],
       ),
     );
@@ -121,31 +144,47 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/order-details/${order.id}'),
+      borderRadius: BorderRadius.circular(32),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+          ],
+          border: Border.all(color: Colors.grey.withOpacity(0.05)),
         ),
         child: Column(
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.shopping_bag_outlined, color: AppColors.accent, size: 20),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.accent.withOpacity(0.15), AppColors.accent.withOpacity(0.05)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.storefront_rounded, color: AppColors.accent, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(order.shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       Text(
-                        '${order.items.length} items • Rs ${order.totalAmount.toStringAsFixed(0)}',
-                        style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                        order.shopName, 
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0F172A), letterSpacing: -0.2)
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Order #${order.id.substring(0, 8).toUpperCase()}',
+                        style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -153,15 +192,45 @@ class _OrderCard extends StatelessWidget {
                 _StatusBadge(status: order.status),
               ],
             ),
-            const Divider(height: 32),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Divider(height: 1, thickness: 1.2),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  DateFormat('MMM dd, h:mm a').format(order.createdAt),
-                  style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${order.items.length} ${order.items.length == 1 ? 'ITEM' : 'ITEMS'} • Rs ${order.totalAmount.toStringAsFixed(0)}',
+                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('MMM dd, yyyy • h:mm a').format(order.createdAt),
+                      style: TextStyle(color: Colors.black.withOpacity(0.2), fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
-                const Text('View Details', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
+                Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Track', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 13)),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF0F172A)),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -178,22 +247,45 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color;
+    String label = status.name.toUpperCase();
+    
     switch (status) {
-      case OrderStatus.pending: color = Colors.orange; break;
-      case OrderStatus.preparing: color = Colors.blue; break;
-      case OrderStatus.outForDelivery: color = Colors.purple; break;
-      case OrderStatus.delivered: color = Colors.green; break;
+      case OrderStatus.pending: 
+        color = Colors.orange; 
+        break;
+      case OrderStatus.confirmed:
+      case OrderStatus.accepted: 
+        color = Colors.blue; 
+        break;
+      case OrderStatus.preparing: 
+        color = Colors.indigo; 
+        break;
+      case OrderStatus.outForDelivery:
+      case OrderStatus.pickedUp: 
+        color = Colors.purple; 
+        label = status == OrderStatus.outForDelivery ? 'ON THE WAY' : 'PICKED UP';
+        break;
+      case OrderStatus.delivered: 
+        color = const Color(0xFF10B981); 
+        break;
       case OrderStatus.cancelled:
-      case OrderStatus.rejected: color = Colors.red; break;
-      default: color = AppColors.accent;
+      case OrderStatus.rejected: 
+        color = Colors.redAccent; 
+        break;
+      default: 
+        color = AppColors.accent;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12), 
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
       child: Text(
-        status.name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        label,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8),
       ),
     );
   }

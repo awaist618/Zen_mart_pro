@@ -161,4 +161,31 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  Future<void> updateUserProfile({required String uid, required String name, required String phone}) async {
+    await _db.collection('users').doc(uid).update({
+      'name': name,
+      'phone': phone,
+    });
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    User? user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      
+      // Re-authenticate user before updating password
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } else {
+      throw Exception('No user logged in or email missing');
+    }
+  }
 }

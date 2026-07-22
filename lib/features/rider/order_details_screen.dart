@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latlong;
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
@@ -30,7 +32,10 @@ class OrderDetailsScreen extends ConsumerWidget {
           return Column(
             children: [
               // LIVE TRACKING MAP AREA
-              _MapPlaceholder(order: order),
+              SizedBox(
+                height: 250,
+                child: _OSMMap(order: order),
+              ),
               
               Expanded(
                 child: SingleChildScrollView(
@@ -110,67 +115,57 @@ class OrderDetailsScreen extends ConsumerWidget {
   }
 }
 
-class _MapPlaceholder extends StatelessWidget {
+class _OSMMap extends StatelessWidget {
   final OrderModel order;
-  const _MapPlaceholder({required this.order});
+  const _OSMMap({required this.order});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        image: DecorationImage(
-          image: const NetworkImage('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+    // Default to Islamabad coordinates if not provided
+    final pickup = order.pickupLocation != null 
+      ? latlong.LatLng(order.pickupLocation!.latitude, order.pickupLocation!.longitude)
+      : latlong.LatLng(33.6844, 73.0479);
+      
+    final delivery = order.deliveryLocation != null
+      ? latlong.LatLng(order.deliveryLocation!.latitude, order.deliveryLocation!.longitude)
+      : latlong.LatLng(33.7000, 73.0600);
+
+    return FlutterMap(
+      options: MapOptions(
+        initialCenter: pickup,
+        initialZoom: 13.0,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.zen_mart_pro',
         ),
-      ),
-      child: Stack(
-        children: [
-          // Pickup Marker
-          const Positioned(
-            top: 40,
-            left: 60,
-            child: _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
-          ),
-          // Customer Marker
-          const Positioned(
-            bottom: 40,
-            right: 80,
-            child: _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
-          ),
-          // Route Line (SVG or simple Container)
-          Center(
-            child: CustomPaint(
-              size: const Size(200, 100),
-              painter: _RoutePainter(),
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: [pickup, delivery],
+              color: AppColors.rider,
+              strokeWidth: 4,
             ),
-          ),
-          // Tracking Info Overlay
-          Positioned(
-            bottom: 12,
-            left: 12,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _TrackingStat(label: 'DISTANCE', value: '2.4 km'),
-                  _TrackingStat(label: 'EST. TIME', value: '12 mins'),
-                  _TrackingStat(label: 'TRAFFIC', value: 'Moderate'),
-                ],
-              ),
+          ],
+        ),
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: pickup,
+              width: 40,
+              height: 40,
+              child: const _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
             ),
-          ),
-        ],
-      ),
+            Marker(
+              point: delivery,
+              width: 40,
+              height: 40,
+              child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -195,43 +190,6 @@ class _MapMarker extends StatelessWidget {
   }
 }
 
-class _TrackingStat extends StatelessWidget {
-  final String label;
-  final String value;
-  const _TrackingStat({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
-      ],
-    );
-  }
-}
-
-class _RoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    path.moveTo(0, 0);
-    path.quadraticBezierTo(size.width / 2, size.height, size.width, size.height / 2);
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _StatusTimeline extends StatelessWidget {
   final OrderStatus currentStatus;
   const _StatusTimeline({required this.currentStatus});
@@ -248,7 +206,6 @@ class _StatusTimeline extends StatelessWidget {
 
     return Row(
       children: steps.map((step) {
-        final index = steps.indexOf(step);
         final isActive = OrderStatus.values.indexOf(currentStatus) >= OrderStatus.values.indexOf(step['status'] as OrderStatus);
         
         return Expanded(
@@ -420,9 +377,10 @@ class _ActionPanel extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: () {
-          ref.read(riderServiceProvider).updateOrderStatus(order.id, nextStatus);
           if (nextStatus == OrderStatus.delivered) {
-             context.pop();
+            _showOtpDialog(context, order);
+          } else {
+            ref.read(orderServiceProvider).updateStatus(order.id, nextStatus);
           }
         },
         style: ElevatedButton.styleFrom(
@@ -440,6 +398,52 @@ class _ActionPanel extends StatelessWidget {
             const Icon(Icons.arrow_forward_rounded, size: 18),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showOtpDialog(BuildContext context, OrderModel order) {
+    final otpController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Verify Delivery'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Please ask the customer for the 4-digit verification code.'),
+            const SizedBox(height: 20),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 4,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+              decoration: InputDecoration(
+                hintText: '0000',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (otpController.text == order.deliveryOtp) {
+                await ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.delivered);
+                if (context.mounted) {
+                  Navigator.pop(context); // Close dialog
+                  context.pop(); // Go back to dashboard
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid Code. Please try again.'), backgroundColor: Colors.redAccent));
+              }
+            },
+            child: const Text('Confirm Delivery'),
+          ),
+        ],
       ),
     );
   }

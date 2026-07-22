@@ -10,8 +10,7 @@ class RiderReviewsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Reusing shop reviews logic for rider reviews stream (placeholder for rider-specific review model)
-    final reviewsAsync = ref.watch(shopReviewsProvider); 
+    final reviewsAsync = ref.watch(riderReviewsProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
