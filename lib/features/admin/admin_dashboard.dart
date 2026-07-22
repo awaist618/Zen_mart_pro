@@ -135,15 +135,26 @@ class _HeroHeader extends StatelessWidget {
                     Flexible(
                       child: Consumer(
                         builder: (context, ref, child) {
-                          final revenue = ref.watch(monthlyRevenueProvider).value ?? 0.0;
-                          return Text(
-                            'Rs ${NumberFormat.compact().format(revenue)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 36,
-                              fontWeight: FontWeight.w800,
+                          final revenueAsync = ref.watch(monthlyRevenueProvider);
+                          return revenueAsync.when(
+                            data: (revenue) => Text(
+                              'Rs ${NumberFormat.compact().format(revenue)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            loading: () => const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            ),
+                            error: (e, s) => const Text(
+                              'Rs 0',
+                              style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800),
                             ),
                           );
                         },
@@ -207,10 +218,10 @@ class _KpiGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final shopsCount = ref.watch(totalShopsCountProvider).value ?? 0;
-    final ridersCount = ref.watch(totalRidersCountProvider).value ?? 0;
-    final customersCount = ref.watch(totalCustomersCountProvider).value ?? 0;
-    final pendingCount = ref.watch(pendingOrdersCountProvider).value ?? 0;
+    final shopsCount = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
+    final ridersCount = ref.watch(totalRidersCountProvider).asData?.value ?? 0;
+    final customersCount = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
+    final pendingCount = ref.watch(pendingOrdersCountProvider).asData?.value ?? 0;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -226,6 +237,7 @@ class _KpiGrid extends ConsumerWidget {
           icon: Icons.storefront_rounded,
           color: const Color(0xFF6366F1),
           trend: 'Active on Platform',
+          onTap: () => context.push('/admin/all-shops'),
         ),
         _KpiCard(
           title: 'Active Riders',
@@ -233,6 +245,7 @@ class _KpiGrid extends ConsumerWidget {
           icon: Icons.two_wheeler_rounded,
           color: const Color(0xFFF59E0B),
           trend: 'Verified Fleet',
+          onTap: () => context.push('/admin/riders'),
         ),
         _KpiCard(
           title: 'Pending Orders',
@@ -240,6 +253,7 @@ class _KpiGrid extends ConsumerWidget {
           icon: Icons.pending_actions_rounded,
           color: const Color(0xFFEF4444),
           trend: 'Needs Action',
+          onTap: () => context.push('/admin/pending-orders'),
         ),
         _KpiCard(
           title: 'Total Customers',
@@ -247,6 +261,7 @@ class _KpiGrid extends ConsumerWidget {
           icon: Icons.people_alt_rounded,
           color: const Color(0xFF10B981),
           trend: 'Growth Stats',
+          onTap: () => context.push('/admin/customers'),
         ),
       ],
     );
@@ -259,6 +274,7 @@ class _KpiCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String trend;
+  final VoidCallback? onTap;
 
   const _KpiCard({
     required this.title,
@@ -266,63 +282,68 @@ class _KpiCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.trend,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
                 ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black.withOpacity(0.5),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -348,10 +369,11 @@ class _QuickActions extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: const [
-            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/add-vendor')),
-            Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/add-rider')),
-            Expanded(child: _ActionItem(label: 'Approvals', icon: Icons.verified_user_rounded, color: Color(0xFF10B981))),
-            Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B))),
+            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/vendors')),
+            Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/riders')),
+            Expanded(child: _ActionItem(label: 'Approvals', icon: Icons.verified_user_rounded, color: Color(0xFF10B981), route: '/admin/approvals')),
+            Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B), route: '/admin/payouts')),
+            Expanded(child: _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B), route: '/admin/system')),
           ],
         ),
       ],
@@ -477,38 +499,58 @@ class _ActivityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+    return InkWell(
+      onTap: () {
+        if (title.contains('Vendor')) {
+          context.push('/admin/approvals');
+        } else if (title.contains('Withdrawal')) {
+          context.push('/admin/payouts');
+        } else {
+          context.push('/admin/notifications');
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  time,
+                  style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.grey),
+              ],
+            ),
+          ],
         ),
-        Text(
-          time,
-          style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
-        ),
-      ],
+      ),
     );
   }
 }

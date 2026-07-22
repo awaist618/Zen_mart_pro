@@ -43,7 +43,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = ref.read(userModelProvider).value;
+      final user = ref.read(userModelProvider).asData?.value;
       if (user == null || user.shopId == null) throw Exception('Shop information not found');
 
       // 1. Upload to Cloudinary

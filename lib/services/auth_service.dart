@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
+import '../core/secrets.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -97,7 +100,31 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       });
       
-      // 5. Sign out from secondary instance
+      // 5. Automatically Email Credentials to the User
+      final smtpServer = gmail(AppSecrets.smtpEmail, AppSecrets.smtpPassword);
+      final message = Message()
+        ..from = const Address(AppSecrets.smtpEmail, 'Zen Mart Pro')
+        ..recipients.add(email)
+        ..subject = 'Welcome to Zen Mart Pro - Your Account Credentials'
+        ..html = '''
+          <div style="font-family: sans-serif; padding: 20px; color: #1E293B;">
+            <h2 style="color: #4F46E5;">Welcome to Zen Mart Pro!</h2>
+            <p>Hello $name,</p>
+            <p>Your account has been created as a <b>${role.toUpperCase()}</b>.</p>
+            <p>You can now log in to the app using the following credentials:</p>
+            <div style="background: #F1F5F9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><b>Email:</b> $email</p>
+              <p style="margin: 5px 0;"><b>Password:</b> $password</p>
+            </div>
+            <p>Please change your password after your first login for security.</p>
+            <br>
+            <p>Best Regards,<br>Management Team</p>
+          </div>
+        ''';
+      
+      await send(message, smtpServer);
+
+      // 6. Sign out from secondary instance
       await secondaryAuth.signOut();
     } finally {
       // 6. Delete the secondary app instance to clean up

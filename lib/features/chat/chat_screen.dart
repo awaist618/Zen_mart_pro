@@ -26,7 +26,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
-    final user = ref.read(userModelProvider).value;
+    final user = ref.read(userModelProvider).asData?.value;
     if (user == null) return;
 
     final text = _messageController.text.trim();
@@ -61,7 +61,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 }
                 
                 final docs = snapshot.data?.docs ?? [];
-                final user = ref.watch(userModelProvider).value;
+                final user = ref.watch(userModelProvider).asData?.value;
 
                 return ListView.builder(
                   reverse: true,

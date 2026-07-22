@@ -8,8 +8,8 @@ class RiderEarningsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userModelProvider).value;
-    final history = ref.watch(riderHistoryProvider).value ?? [];
+    final user = ref.watch(userModelProvider).asData?.value;
+    final history = ref.watch(riderHistoryProvider).asData?.value ?? [];
 
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 

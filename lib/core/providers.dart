@@ -9,6 +9,9 @@ import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../models/notification_model.dart';
+import '../models/shop_model.dart';
+import '../models/approval_model.dart';
+import '../models/payout_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -22,7 +25,7 @@ final authStateProvider = StreamProvider((ref) {
 
 final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   final authState = ref.watch(authStateProvider);
-  final user = authState.value;
+  final user = authState.asData?.value;
   if (user == null) {
     yield null;
   } else {
@@ -35,25 +38,53 @@ final availableOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
 });
 
 final activeRiderOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).value;
+  final user = ref.watch(userModelProvider).asData?.value;
   if (user == null) return Stream.value([]);
   return ref.watch(riderServiceProvider).getActiveRiderOrders(user.uid);
 });
 
 final riderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).value;
+  final user = ref.watch(userModelProvider).asData?.value;
   if (user == null) return Stream.value([]);
   return ref.watch(riderServiceProvider).getRiderHistory(user.uid);
 });
 
 final shopProductsProvider = StreamProvider<List<ProductModel>>((ref) {
-  final user = ref.watch(userModelProvider).value;
+  final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopProducts(user.shopId!);
 });
 
 final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {
   return ref.watch(adminServiceProvider).getNotifications();
+});
+
+final allShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  return ref.watch(adminServiceProvider).getAllShops();
+});
+
+final allRidersProvider = StreamProvider<List<UserModel>>((ref) {
+  return ref.watch(adminServiceProvider).getAllRiders();
+});
+
+final allPendingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  return ref.watch(adminServiceProvider).getPendingOrders();
+});
+
+final allCustomersProvider = StreamProvider<List<UserModel>>((ref) {
+  return ref.watch(adminServiceProvider).getAllCustomers();
+});
+
+final allVendorsProvider = StreamProvider<List<UserModel>>((ref) {
+  return ref.watch(adminServiceProvider).getAllVendors();
+});
+
+final pendingApprovalsProvider = StreamProvider<List<ApprovalModel>>((ref) {
+  return ref.watch(adminServiceProvider).getPendingApprovals();
+});
+
+final payoutRequestsProvider = StreamProvider<List<PayoutModel>>((ref) {
+  return ref.watch(adminServiceProvider).getPayoutRequests();
 });
 
 // Admin Stats Providers

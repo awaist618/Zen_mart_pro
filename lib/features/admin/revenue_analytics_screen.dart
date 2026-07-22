@@ -10,9 +10,9 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final daily = ref.watch(dailyRevenueProvider).value ?? 0.0;
-    final weekly = ref.watch(weeklyRevenueProvider).value ?? 0.0;
-    final monthly = ref.watch(monthlyRevenueProvider).value ?? 0.0;
+    final dailyAsync = ref.watch(dailyRevenueProvider);
+    final weeklyAsync = ref.watch(weeklyRevenueProvider);
+    final monthlyAsync = ref.watch(monthlyRevenueProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -30,13 +30,33 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
             // Revenue Grid
             Row(
               children: [
-                Expanded(child: _RevenueStatCard(title: 'Today', amount: daily, color: AppColors.accent)),
+                Expanded(
+                  child: _RevenueStatCard(
+                    title: 'Today',
+                    amount: dailyAsync.asData?.value ?? 0.0,
+                    color: AppColors.accent,
+                    isLoading: dailyAsync.isLoading,
+                  ),
+                ),
                 const SizedBox(width: 16),
-                Expanded(child: _RevenueStatCard(title: 'This Week', amount: weekly, color: Colors.indigo)),
+                Expanded(
+                  child: _RevenueStatCard(
+                    title: 'This Week',
+                    amount: weeklyAsync.asData?.value ?? 0.0,
+                    color: Colors.indigo,
+                    isLoading: weeklyAsync.isLoading,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            _RevenueStatCard(title: 'This Month', amount: monthly, color: AppColors.primary, isLarge: true),
+            _RevenueStatCard(
+              title: 'This Month',
+              amount: monthlyAsync.asData?.value ?? 0.0,
+              color: AppColors.primary,
+              isLarge: true,
+              isLoading: monthlyAsync.isLoading,
+            ),
             
             const SizedBox(height: 32),
             const Text('Revenue Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -103,8 +123,15 @@ class _RevenueStatCard extends StatelessWidget {
   final double amount;
   final Color color;
   final bool isLarge;
+  final bool isLoading;
 
-  const _RevenueStatCard({required this.title, required this.amount, required this.color, this.isLarge = false});
+  const _RevenueStatCard({
+    required this.title,
+    required this.amount,
+    required this.color,
+    this.isLarge = false,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,14 +147,16 @@ class _RevenueStatCard extends StatelessWidget {
         children: [
           Text(title, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
           const SizedBox(height: 4),
-          Text(
-            'Rs ${NumberFormat.compact().format(amount)}',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: isLarge ? 28 : 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          isLoading 
+            ? const SizedBox(height: 28, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : Text(
+                'Rs ${NumberFormat.compact().format(amount)}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isLarge ? 28 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         ],
       ),
     );

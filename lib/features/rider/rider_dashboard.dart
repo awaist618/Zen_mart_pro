@@ -36,7 +36,7 @@ class RiderDashboard extends ConsumerWidget {
                   delegate: SliverChildListDelegate([
                     Transform.translate(
                       offset: const Offset(0, -40),
-                      child: _RiderKpiGrid(user: user, activeOrders: activeOrdersAsync.value ?? []),
+                      child: _RiderKpiGrid(user: user, activeOrders: activeOrdersAsync.asData?.value ?? []),
                     ),
                     const SizedBox(height: 8),
                     

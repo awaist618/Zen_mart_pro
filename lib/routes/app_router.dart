@@ -13,9 +13,18 @@ import '../features/admin/add_rider_screen.dart';
 import '../features/admin/notifications_screen.dart';
 import '../features/admin/admin_profile_screen.dart';
 import '../features/admin/revenue_analytics_screen.dart';
+import '../features/admin/all_shops_screen.dart';
+import '../features/admin/rider_management_screen.dart';
+import '../features/admin/pending_orders_screen.dart';
+import '../features/admin/customer_management_screen.dart';
+import '../features/admin/vendor_management_screen.dart';
+import '../features/admin/approval_center_screen.dart';
+import '../features/admin/payout_management_screen.dart';
+import '../features/admin/system_settings_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/customer/customer_home.dart';
+import '../features/customer/shop_detail_screen.dart';
 import '../features/rider/rider_dashboard.dart';
 import '../features/rider/order_details_screen.dart';
 import '../features/rider/rider_profile_screen.dart';
@@ -42,14 +51,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      final user = authState.value;
+      final user = authState.asData?.value;
       
       // If no user is logged in
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
 
-      final model = userModel.value;
+      final model = userModel.asData?.value;
       
       // If user exists in Auth but document is missing in Firestore after loading
       if (model == null && !userModel.isLoading) {
@@ -87,9 +96,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
       GoRoute(path: '/admin/revenue', builder: (context, state) => const RevenueAnalyticsScreen()),
+      GoRoute(path: '/admin/all-shops', builder: (context, state) => const AllShopsScreen()),
+      GoRoute(path: '/admin/riders', builder: (context, state) => const RiderManagementScreen()),
+      GoRoute(path: '/admin/pending-orders', builder: (context, state) => const PendingOrdersScreen()),
+      GoRoute(path: '/admin/customers', builder: (context, state) => const CustomerManagementScreen()),
+      GoRoute(path: '/admin/vendors', builder: (context, state) => const VendorManagementScreen()),
+      GoRoute(path: '/admin/approvals', builder: (context, state) => const ApprovalCenterScreen()),
+      GoRoute(path: '/admin/payouts', builder: (context, state) => const PayoutManagementScreen()),
+      GoRoute(path: '/admin/system', builder: (context, state) => const SystemSettingsScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
       GoRoute(path: '/vendor/add-product', builder: (context, state) => const AddProductScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
+      GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
       GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
       GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
