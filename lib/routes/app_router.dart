@@ -59,6 +59,9 @@ import '../features/rider/rider_reviews_screen.dart';
 import '../features/rider/rider_profile_screen.dart';
 import '../features/rider/history_screen.dart';
 import '../features/rider/earnings_screen.dart';
+import '../features/rider/vehicle_details_screen.dart';
+import '../features/rider/support_center_screen.dart';
+import '../features/rider/alerts_screen.dart';
 import '../features/chat/chat_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -169,6 +172,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
       GoRoute(path: '/rider/history', builder: (context, state) => const RiderHistoryScreen()),
       GoRoute(path: '/rider/earnings', builder: (context, state) => const RiderEarningsScreen()),
+      GoRoute(path: '/rider/vehicle', builder: (context, state) => const VehicleDetailsScreen()),
+      GoRoute(path: '/rider/support', builder: (context, state) => const SupportCenterScreen()),
+      GoRoute(path: '/rider/alerts', builder: (context, state) => const AlertsScreen()),
       GoRoute(
         path: '/chat/:orderId/:name',
         builder: (context, state) => ChatScreen(

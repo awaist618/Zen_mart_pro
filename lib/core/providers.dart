@@ -11,6 +11,7 @@ import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../models/notification_model.dart';
 import '../models/vendor_notification_model.dart';
+import '../models/rider_notification_model.dart';
 import '../models/shop_model.dart';
 import '../models/approval_model.dart';
 import '../models/payout_model.dart';
@@ -43,7 +44,9 @@ final userModelProvider = StreamProvider<UserModel?>((ref) async* {
 });
 
 final availableOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  return ref.watch(riderServiceProvider).getAvailableOrders();
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getAvailableOrders(user.uid);
 });
 
 final activeRiderOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
@@ -92,6 +95,12 @@ final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getIncomingOrders(user.shopId!);
+});
+
+final riderNotificationsProvider = StreamProvider<List<RiderNotificationModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getNotifications(user.uid);
 });
 
 final allShopOrdersProvider = StreamProvider<List<OrderModel>>((ref) {

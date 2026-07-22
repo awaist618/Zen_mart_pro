@@ -353,7 +353,7 @@ class _QuickActions extends StatelessWidget {
             _ActionItem(label: 'History', icon: Icons.history_rounded, color: const Color(0xFF6366F1), onTap: () => context.push('/rider/history')),
             _ActionItem(label: 'Earnings', icon: Icons.account_balance_wallet_rounded, color: const Color(0xFF10B981), onTap: () => context.push('/rider/earnings')),
             _ActionItem(label: 'Tasks', icon: Icons.assignment_rounded, color: const Color(0xFFF59E0B), onTap: () => context.push('/rider/active-tasks')),
-            _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: AppColors.rider, onTap: () {}),
+            _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: AppColors.rider, onTap: () => context.push('/rider/support')),
           ],
         ),
       ],
@@ -398,14 +398,63 @@ class _OrderRequestTile extends ConsumerWidget {
             children: [
               Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.rider.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.shopping_bag_outlined, color: AppColors.rider, size: 24)),
               const SizedBox(width: 16),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Order ${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), const SizedBox(height: 4), Text('${order.shopName} → ${order.customerName}', style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13))])),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('Rs ${order.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF10B981))), const Text('2.4 km', style: TextStyle(color: Colors.black, fontSize: 11))]),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  children: [
+                    Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), 
+                    const SizedBox(height: 4), 
+                    Text(order.shopName, style: TextStyle(color: AppColors.rider, fontWeight: FontWeight.bold, fontSize: 13)),
+                  ]
+                )
+              ),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text('Rs ${order.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF10B981))), const Text('Est. Earnings', style: TextStyle(color: Colors.grey, fontSize: 10))]),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _LocationInfo(icon: Icons.storefront_rounded, address: order.pickupAddress, label: 'PICKUP'),
+          const SizedBox(height: 8),
+          _LocationInfo(icon: Icons.location_on_rounded, address: order.deliveryAddress, label: 'DELIVERY'),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Text('Payment: ', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(order.paymentMethod, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              const Spacer(),
+              const Icon(Icons.near_me_rounded, size: 14, color: Colors.blue),
+              const SizedBox(width: 4),
+              const Text('2.4 km', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 20),
-          Row(children: [Expanded(child: OutlinedButton(onPressed: () {}, style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), child: const Text('Decline'))), const SizedBox(width: 12), Expanded(flex: 2, child: ElevatedButton(onPressed: () => ref.read(riderServiceProvider).acceptOrder(order.id, riderId), style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))))]),
+          Row(children: [Expanded(child: OutlinedButton(onPressed: () => ref.read(riderServiceProvider).rejectOrder(order.id, riderId), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), child: const Text('Decline'))), const SizedBox(width: 12), Expanded(flex: 2, child: ElevatedButton(onPressed: () => ref.read(riderServiceProvider).acceptOrder(order.id, riderId), style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))))]),
         ],
       ),
+    );
+  }
+}
+
+class _LocationInfo extends StatelessWidget {
+  final IconData icon;
+  final String address;
+  final String label;
+  const _LocationInfo({required this.icon, required this.address, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              Text(address, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -414,7 +463,43 @@ class _RiderBottomNav extends StatelessWidget {
   const _RiderBottomNav();
   @override
   Widget build(BuildContext context) {
-    return Container(padding: const EdgeInsets.fromLTRB(16, 12, 16, 32), decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_BottomNavItem(icon: Icons.home_rounded, label: 'Home', isActive: true, onTap: () {}), _BottomNavItem(icon: Icons.list_alt_rounded, label: 'History', isActive: false, onTap: () => context.push('/rider/history')), _BottomNavItem(icon: Icons.notifications_none_rounded, label: 'Alerts', isActive: false, onTap: () {}), _BottomNavItem(icon: Icons.person_outline_rounded, label: 'Profile', isActive: false, onTap: () => context.push('/rider/profile'))]));
+    final location = GoRouterState.of(context).matchedLocation;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32), 
+      decoration: BoxDecoration(
+        color: Colors.white, 
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]
+      ), 
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround, 
+        children: [
+          _BottomNavItem(
+            icon: Icons.home_rounded, 
+            label: 'Home', 
+            isActive: location == '/rider', 
+            onTap: () => context.go('/rider')
+          ), 
+          _BottomNavItem(
+            icon: Icons.list_alt_rounded, 
+            label: 'History', 
+            isActive: location == '/rider/history', 
+            onTap: () => context.push('/rider/history')
+          ), 
+          _BottomNavItem(
+            icon: Icons.notifications_none_rounded, 
+            label: 'Alerts', 
+            isActive: location == '/rider/alerts', 
+            onTap: () => context.push('/rider/alerts')
+          ), 
+          _BottomNavItem(
+            icon: Icons.person_outline_rounded, 
+            label: 'Profile', 
+            isActive: location == '/rider/profile', 
+            onTap: () => context.push('/rider/profile')
+          )
+        ]
+      )
+    );
   }
 }
 
