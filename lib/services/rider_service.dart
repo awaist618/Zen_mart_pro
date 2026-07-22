@@ -88,6 +88,7 @@ class RiderService {
         .where('riderId', isEqualTo: riderId)
         .where('status', isEqualTo: OrderStatus.delivered.name)
         .where('deliveredAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .orderBy('deliveredAt', descending: true)
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());

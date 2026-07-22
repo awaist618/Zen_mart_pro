@@ -178,6 +178,7 @@ class AdminService {
         .where('status', isEqualTo: 'delivered')
         .where('deliveredAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('deliveredAt', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .orderBy('deliveredAt', descending: true)
         .snapshots()
         .map((snapshot) {
       double total = 0;
