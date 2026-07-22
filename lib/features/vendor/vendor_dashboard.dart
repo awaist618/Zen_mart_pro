@@ -41,12 +41,14 @@ class VendorDashboard extends ConsumerWidget {
   }
 }
 
-class _VendorHero extends StatelessWidget {
+class _VendorHero extends ConsumerWidget {
   final WidgetRef ref;
   const _VendorHero({required this.ref});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shopAsync = ref.watch(currentShopProvider);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 100),
       decoration: const BoxDecoration(
@@ -95,11 +97,11 @@ class _VendorHero extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Green Basket Store',
+                        Text(
+                          shopAsync.value?.name ?? 'Loading Shop...',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -113,11 +115,11 @@ class _VendorHero extends StatelessWidget {
                     children: [
                       _HeaderActionIcon(
                         icon: Icons.notifications_none_rounded,
-                        onTap: () {},
+                        onTap: () => context.push('/vendor/notifications'),
                       ),
                       const SizedBox(width: 12),
                       GestureDetector(
-                        onTap: () => ref.read(authServiceProvider).signOut(),
+                        onTap: () => context.push('/vendor/profile'),
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: BoxDecoration(
@@ -136,41 +138,51 @@ class _VendorHero extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 32),
-              Text(
-                "Today's Sales",
-                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
+              InkWell(
+                onTap: () => context.push('/vendor/analytics'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Today's Sales",
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Flexible(
+                          child: Text(
+                            'Rs 18,420',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          ),
+                          child: const Text(
+                            '24 Orders',
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Flexible(
-                    child: Text(
-                      'Rs 18,420',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    margin: const EdgeInsets.only(bottom: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: const Text(
-                      '24 Orders',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -202,11 +214,15 @@ class _HeaderActionIcon extends StatelessWidget {
   }
 }
 
-class _VendorKpiGrid extends StatelessWidget {
+class _VendorKpiGrid extends ConsumerWidget {
   const _VendorKpiGrid();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomingOrders = ref.watch(incomingOrdersProvider).asData?.value ?? [];
+    final totalItems = ref.watch(shopProductsProvider).asData?.value ?? [];
+    final lowStockItems = totalItems.where((p) => p.stock < 5).length;
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -214,34 +230,38 @@ class _VendorKpiGrid extends StatelessWidget {
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
       childAspectRatio: 1.3,
-      children: const [
+      children: [
         _KpiCard(
           title: 'New Orders',
-          value: '07',
+          value: incomingOrders.length.toString().padLeft(2, '0'),
           icon: Icons.shopping_bag_rounded,
-          color: Color(0xFF8B5CF6),
+          color: const Color(0xFF8B5CF6),
           subtitle: 'Awaiting Action',
+          onTap: () => context.push('/vendor/orders'),
         ),
         _KpiCard(
           title: 'Total Items',
-          value: '156',
+          value: totalItems.length.toString(),
           icon: Icons.inventory_2_rounded,
-          color: Color(0xFF6366F1),
+          color: const Color(0xFF6366F1),
           subtitle: 'Active Products',
+          onTap: () => context.push('/vendor/products'),
         ),
         _KpiCard(
           title: 'Low Stock',
-          value: '03',
+          value: lowStockItems.toString().padLeft(2, '0'),
           icon: Icons.warning_amber_rounded,
-          color: Color(0xFFEF4444),
+          color: const Color(0xFFEF4444),
           subtitle: 'Needs Attention',
+          onTap: () => context.push('/vendor/low-stock'),
         ),
         _KpiCard(
           title: 'Store Rating',
           value: '4.8',
           icon: Icons.star_rounded,
-          color: Color(0xFFF59E0B),
+          color: const Color(0xFFF59E0B),
           subtitle: '124 Reviews',
+          onTap: () => context.push('/vendor/reviews'),
         ),
       ],
     );
@@ -254,6 +274,7 @@ class _KpiCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String subtitle;
+  final VoidCallback? onTap;
 
   const _KpiCard({
     required this.title,
@@ -261,111 +282,136 @@ class _KpiCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.subtitle,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black.withOpacity(0.5),
-                  fontWeight: FontWeight.w600,
+              child: Icon(icon, color: color, size: 20),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black.withOpacity(0.5),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ShopStatusCard extends StatelessWidget {
+class _ShopStatusCard extends ConsumerWidget {
   const _ShopStatusCard();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8B5CF6).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Store Status: Online',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your shop is visible to customers',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
-                ),
-              ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shopAsync = ref.watch(currentShopProvider);
+
+    return shopAsync.when(
+      data: (shop) {
+        if (shop == null) return const SizedBox.shrink();
+        final bool isOnline = shop.status == 'active';
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isOnline 
+                  ? [const Color(0xFF8B5CF6), const Color(0xFF6366F1)]
+                  : [const Color(0xFF64748B), const Color(0xFF475569)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: (isOnline ? const Color(0xFF8B5CF6) : Colors.grey).withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          Switch(
-            value: true,
-            onChanged: (v) {},
-            activeColor: Colors.white,
-            activeTrackColor: Colors.white.withOpacity(0.3),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Store Status: ${isOnline ? "Online" : "Closed"}',
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isOnline 
+                          ? 'Your shop is visible to customers' 
+                          : 'Your shop is hidden from customers',
+                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: isOnline,
+                onChanged: (v) {
+                  ref.read(vendorServiceProvider).updateShopStatus(
+                    shop.id, 
+                    v ? 'active' : 'disabled'
+                  );
+                },
+                activeColor: Colors.white,
+                activeTrackColor: Colors.white.withOpacity(0.3),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }

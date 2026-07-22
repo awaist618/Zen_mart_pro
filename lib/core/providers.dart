@@ -9,10 +9,12 @@ import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
 import '../models/notification_model.dart';
+import '../models/vendor_notification_model.dart';
 import '../models/shop_model.dart';
 import '../models/approval_model.dart';
 import '../models/payout_model.dart';
 import '../models/activity_model.dart';
+import '../models/review_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -56,8 +58,38 @@ final shopProductsProvider = StreamProvider<List<ProductModel>>((ref) {
   return ref.watch(vendorServiceProvider).getShopProducts(user.shopId!);
 });
 
+final currentShopProvider = StreamProvider<ShopModel?>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value(null);
+  return ref.watch(vendorServiceProvider).getShopData(user.shopId!);
+});
+
+final lowStockProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getLowStockProducts(user.shopId!);
+});
+
+final shopReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getShopReviews(user.shopId!);
+});
+
+final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getIncomingOrders(user.shopId!);
+});
+
 final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {
   return ref.watch(adminServiceProvider).getNotifications();
+});
+
+final vendorNotificationsProvider = StreamProvider<List<VendorNotificationModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getNotifications(user.uid);
 });
 
 final allShopsProvider = StreamProvider<List<ShopModel>>((ref) {

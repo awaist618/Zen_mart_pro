@@ -26,6 +26,13 @@ import '../features/admin/shop_management_screen.dart';
 import '../features/admin/user_management_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
+import '../features/vendor/vendor_notifications_screen.dart';
+import '../features/vendor/vendor_profile_screen.dart';
+import '../features/vendor/sales_analytics_screen.dart';
+import '../features/vendor/vendor_orders_screen.dart';
+import '../features/vendor/product_management_screen.dart';
+import '../features/vendor/low_stock_screen.dart';
+import '../features/vendor/vendor_reviews_screen.dart';
 import '../features/customer/customer_home.dart';
 import '../features/customer/shop_detail_screen.dart';
 import '../features/rider/rider_dashboard.dart';
@@ -112,6 +119,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/activity-log', builder: (context, state) => const ActivityLogScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
       GoRoute(path: '/vendor/add-product', builder: (context, state) => const AddProductScreen()),
+      GoRoute(path: '/vendor/notifications', builder: (context, state) => const VendorNotificationsScreen()),
+      GoRoute(path: '/vendor/profile', builder: (context, state) => const VendorProfileScreen()),
+      GoRoute(path: '/vendor/analytics', builder: (context, state) => const VendorSalesAnalyticsScreen()),
+      GoRoute(path: '/vendor/orders', builder: (context, state) => const VendorOrdersScreen()),
+      GoRoute(path: '/vendor/products', builder: (context, state) => const ProductManagementScreen()),
+      GoRoute(path: '/vendor/low-stock', builder: (context, state) => const LowStockScreen()),
+      GoRoute(path: '/vendor/reviews', builder: (context, state) => const VendorReviewsScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),

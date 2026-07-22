@@ -7,7 +7,9 @@ class ProductModel {
   final String name;
   final String description;
   final double price;
+  final double discount;
   final int stock;
+  final String unit; // kg, liter, pcs, etc.
   final String imageUrl;
   final String category;
   final bool isAvailable;
@@ -20,7 +22,9 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.price,
+    this.discount = 0.0,
     required this.stock,
+    required this.unit,
     required this.imageUrl,
     required this.category,
     this.isAvailable = true,
@@ -36,7 +40,9 @@ class ProductModel {
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
+      discount: (data['discount'] ?? 0.0).toDouble(),
       stock: data['stock'] ?? 0,
+      unit: data['unit'] ?? 'pcs',
       imageUrl: data['imageUrl'] ?? '',
       category: data['category'] ?? 'General',
       isAvailable: data['isAvailable'] ?? true,
@@ -51,7 +57,9 @@ class ProductModel {
       'name': name,
       'description': description,
       'price': price,
+      'discount': discount,
       'stock': stock,
+      'unit': unit,
       'imageUrl': imageUrl,
       'category': category,
       'isAvailable': isAvailable,

@@ -2,13 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum OrderStatus {
   pending,      // Customer placed order
-  confirmed,    // Vendor accepted
+  preparing,    // Vendor accepted and preparing
+  confirmed,    // Vendor marked as ready for pickup (previously confirmed)
   accepted,     // Rider accepted
   reachedVendor,
   pickedUp,
   outForDelivery,
   delivered,
-  cancelled
+  cancelled,
+  rejected      // Vendor rejected
 }
 
 class OrderModel {
@@ -17,6 +19,7 @@ class OrderModel {
   final String customerName;
   final String customerPhone;
   final String vendorId;
+  final String shopId;
   final String shopName;
   final String vendorPhone;
   final String? riderId;
@@ -28,6 +31,7 @@ class OrderModel {
   final GeoPoint? pickupLocation;
   final GeoPoint? deliveryLocation;
   final List<dynamic> items;
+  final String paymentMethod;
   final DateTime createdAt;
   final DateTime? deliveredAt;
 
@@ -37,6 +41,7 @@ class OrderModel {
     required this.customerName,
     required this.customerPhone,
     required this.vendorId,
+    required this.shopId,
     required this.shopName,
     required this.vendorPhone,
     this.riderId,
@@ -48,6 +53,7 @@ class OrderModel {
     this.pickupLocation,
     this.deliveryLocation,
     required this.items,
+    required this.paymentMethod,
     required this.createdAt,
     this.deliveredAt,
   });
@@ -60,6 +66,7 @@ class OrderModel {
       customerName: data['customerName'] ?? '',
       customerPhone: data['customerPhone'] ?? '',
       vendorId: data['vendorId'] ?? '',
+      shopId: data['shopId'] ?? '',
       shopName: data['shopName'] ?? '',
       vendorPhone: data['vendorPhone'] ?? '',
       riderId: data['riderId'],
@@ -71,6 +78,7 @@ class OrderModel {
       pickupLocation: data['pickupLocation'],
       deliveryLocation: data['deliveryLocation'],
       items: data['items'] ?? [],
+      paymentMethod: data['paymentMethod'] ?? 'Cash on Delivery',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       deliveredAt: data['deliveredAt'] != null ? (data['deliveredAt'] as Timestamp).toDate() : null,
     );
@@ -89,6 +97,7 @@ class OrderModel {
       'customerName': customerName,
       'customerPhone': customerPhone,
       'vendorId': vendorId,
+      'shopId': shopId,
       'shopName': shopName,
       'vendorPhone': vendorPhone,
       'riderId': riderId,
@@ -100,6 +109,7 @@ class OrderModel {
       'pickupLocation': pickupLocation,
       'deliveryLocation': deliveryLocation,
       'items': items,
+      'paymentMethod': paymentMethod,
       'createdAt': Timestamp.fromDate(createdAt),
       'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
     };
