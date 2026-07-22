@@ -76,5 +76,15 @@
 	<string>Zen Mart Pro needs camera access to allow vendors to take product photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Zen Mart Pro needs library access to upload product and profile images.</string>
+
+	<!-- URL Schemes for External Apps -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
+		<string>googlechromes</string>
+		<string>comgooglemaps</string>
+	</array>
 </dict>
 </plist>

@@ -23,12 +23,12 @@ class RiderHistoryScreen extends ConsumerWidget {
       body: historyAsync.when(
         data: (orders) {
           if (orders.isEmpty) {
-            return const Center(child: Text('No completed deliveries yet'));
+            return const Center(child: Text('No completed deliveries yet.'));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: orders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _HistoryTile(order: orders[index]),
           );
         },
@@ -46,39 +46,61 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '${order.shopName} → ${order.customerName}',
+                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
               Text(
-                DateFormat('MMM dd, yyyy').format(order.deliveredAt ?? DateTime.now()),
-                style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                'Rs ${order.deliveryFee.toStringAsFixed(0)}',
+                style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
               ),
             ],
           ),
-          const Divider(height: 24),
+          const Divider(height: 32),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.storefront_rounded, size: 16, color: AppColors.rider),
-              const SizedBox(width: 8),
-              Expanded(child: Text(order.shopName, style: const TextStyle(fontSize: 14))),
-              Text('Rs ${order.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.person_rounded, size: 16, color: AppColors.rider),
-              const SizedBox(width: 8),
-              Expanded(child: Text(order.customerName, style: const TextStyle(fontSize: 14))),
-              const Text('Delivered', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    order.deliveredAt != null ? DateFormat('MMM dd, h:mm a').format(order.deliveredAt!) : 'N/A',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(Icons.route_outlined, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  const Text('2.4 km', style: TextStyle(fontSize: 11, color: Colors.grey)), // Placeholder for distance
+                ],
+              ),
             ],
           ),
         ],

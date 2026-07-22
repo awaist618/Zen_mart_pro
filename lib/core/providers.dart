@@ -58,6 +58,12 @@ final riderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
   return ref.watch(riderServiceProvider).getRiderHistory(user.uid);
 });
 
+final todayRiderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getTodayRiderHistory(user.uid);
+});
+
 final shopProductsProvider = StreamProvider<List<ProductModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.shopId == null) return Stream.value([]);

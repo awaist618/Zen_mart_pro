@@ -53,6 +53,9 @@ import '../models/offer_model.dart';
 import '../models/product_model.dart';
 import '../features/rider/rider_dashboard.dart';
 import '../features/rider/order_details_screen.dart';
+import '../features/rider/active_tasks_screen.dart';
+import '../features/rider/performance_details_screen.dart';
+import '../features/rider/rider_reviews_screen.dart';
 import '../features/rider/rider_profile_screen.dart';
 import '../features/rider/history_screen.dart';
 import '../features/rider/earnings_screen.dart';
@@ -160,6 +163,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
       GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(path: '/rider/active-tasks', builder: (context, state) => const ActiveTasksScreen()),
+      GoRoute(path: '/rider/performance', builder: (context, state) => const PerformanceDetailsScreen()),
+      GoRoute(path: '/rider/reviews', builder: (context, state) => const RiderReviewsScreen()),
       GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
       GoRoute(path: '/rider/history', builder: (context, state) => const RiderHistoryScreen()),
       GoRoute(path: '/rider/earnings', builder: (context, state) => const RiderEarningsScreen()),

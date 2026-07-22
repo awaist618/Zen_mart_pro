@@ -77,4 +77,19 @@ class RiderService {
         .map((snapshot) =>
             snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
   }
+
+  /// Get today's delivery history for a rider
+  Stream<List<OrderModel>> getTodayRiderHistory(String riderId) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    
+    return _db
+        .collection('orders')
+        .where('riderId', isEqualTo: riderId)
+        .where('status', isEqualTo: OrderStatus.delivered.name)
+        .where('deliveredAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
 }
