@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 
@@ -95,11 +96,11 @@ class _HeroHeader extends StatelessWidget {
                 children: [
                   _HeaderActionIcon(
                     icon: Icons.notifications_none_rounded,
-                    onTap: () {},
+                    onTap: () => context.push('/admin/notifications'),
                   ),
                   const SizedBox(width: 12),
                   GestureDetector(
-                    onTap: () => ref.read(authServiceProvider).signOut(),
+                    onTap: () => context.push('/admin/profile'),
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
@@ -118,47 +119,60 @@ class _HeroHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          Text(
-            'Total Revenue (Monthly)',
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Flexible(
-                child: Text(
-                  'Rs 2.48M',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                  ),
+          InkWell(
+            onTap: () => context.push('/admin/revenue'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Revenue (Monthly)',
+                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                margin: const EdgeInsets.only(bottom: 6),
-                decoration: BoxDecoration(
-                  color: Colors.greenAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      '+18%',
-                      style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final revenue = ref.watch(monthlyRevenueProvider).value ?? 0.0;
+                          return Text(
+                            'Rs ${NumberFormat.compact().format(revenue)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            '+18%',
+                            style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -188,11 +202,16 @@ class _HeaderActionIcon extends StatelessWidget {
   }
 }
 
-class _KpiGrid extends StatelessWidget {
+class _KpiGrid extends ConsumerWidget {
   const _KpiGrid();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shopsCount = ref.watch(totalShopsCountProvider).value ?? 0;
+    final ridersCount = ref.watch(totalRidersCountProvider).value ?? 0;
+    final customersCount = ref.watch(totalCustomersCountProvider).value ?? 0;
+    final pendingCount = ref.watch(pendingOrdersCountProvider).value ?? 0;
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -200,34 +219,34 @@ class _KpiGrid extends StatelessWidget {
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
       childAspectRatio: 1.3,
-      children: const [
+      children: [
         _KpiCard(
           title: 'Total Shops',
-          value: '154',
+          value: shopsCount.toString(),
           icon: Icons.storefront_rounded,
-          color: Color(0xFF6366F1),
-          trend: '+5 this week',
+          color: const Color(0xFF6366F1),
+          trend: 'Active on Platform',
         ),
         _KpiCard(
           title: 'Active Riders',
-          value: '42',
+          value: ridersCount.toString(),
           icon: Icons.two_wheeler_rounded,
-          color: Color(0xFFF59E0B),
-          trend: '82% online',
+          color: const Color(0xFFF59E0B),
+          trend: 'Verified Fleet',
         ),
         _KpiCard(
           title: 'Pending Orders',
-          value: '28',
+          value: pendingCount.toString(),
           icon: Icons.pending_actions_rounded,
-          color: Color(0xFFEF4444),
-          trend: 'Needs attention',
+          color: const Color(0xFFEF4444),
+          trend: 'Needs Action',
         ),
         _KpiCard(
           title: 'Total Customers',
-          value: '1.2k',
+          value: customersCount.toString(),
           icon: Icons.people_alt_rounded,
-          color: Color(0xFF10B981),
-          trend: '+12% growth',
+          color: const Color(0xFF10B981),
+          trend: 'Growth Stats',
         ),
       ],
     );

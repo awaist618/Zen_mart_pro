@@ -10,6 +10,9 @@ import '../features/auth/signup_screen.dart';
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/add_vendor_screen.dart';
 import '../features/admin/add_rider_screen.dart';
+import '../features/admin/notifications_screen.dart';
+import '../features/admin/admin_profile_screen.dart';
+import '../features/admin/revenue_analytics_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/customer/customer_home.dart';
@@ -81,6 +84,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
       GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
       GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),
+      GoRoute(path: '/admin/notifications', builder: (context, state) => const NotificationsScreen()),
+      GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
+      GoRoute(path: '/admin/revenue', builder: (context, state) => const RevenueAnalyticsScreen()),
       GoRoute(path: '/vendor', builder: (context, state) => const VendorDashboard()),
       GoRoute(path: '/vendor/add-product', builder: (context, state) => const AddProductScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
