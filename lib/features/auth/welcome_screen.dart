@@ -8,17 +8,30 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // 1. Background Gradient Base
-          Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F172A), 
+          // Background Glows
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [colorScheme.primary.withOpacity(isLight ? 0.1 : 0.05), Colors.transparent],
+                ),
+              ),
             ),
           ),
 
-          // 2. Main Content
           SafeArea(
             child: SingleChildScrollView(
               child: ConstrainedBox(
@@ -35,65 +48,70 @@ class WelcomeScreen extends StatelessWidget {
                       // Logo Container
                       Center(
                         child: Container(
-                          width: 140,
-                          height: 140,
+                          width: 150,
+                          height: 150,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(36),
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(36),
-                            child: Image.asset(
-                              'assets/images/image.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 72,
-                                color: Colors.white,
+                            color: colorScheme.surface,
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+                                blurRadius: isLight ? 40 : 30, 
+                                offset: const Offset(0, 10)
                               ),
+                            ],
+                            border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+                          ),
+                          padding: const EdgeInsets.all(32),
+                          child: Image.asset(
+                            'assets/images/image.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.shopping_bag_rounded,
+                              size: 64,
+                              color: colorScheme.primary,
                             ),
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Hero Text
-                      Text(
-                        'Zen MArt Pro',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              color: Colors.white,
-                              fontSize: 42,
-                              letterSpacing: -1,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text(
-                          'Experience the next generation of multi-vendor shopping & management.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Colors.white.withOpacity(0.7),
-                                height: 1.5,
-                              ),
                         ),
                       ),
 
                       const SizedBox(height: 40),
 
+                      Text(
+                        'Zen Mart Pro',
+                        style: TextStyle(
+                          color: colorScheme.onBackground,
+                          fontSize: 38,
+                          letterSpacing: -1.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 48),
+                        child: Text(
+                          'The next generation of multi-vendor shopping & management experience.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: colorScheme.onSurface.withOpacity(0.7),
+                            height: 1.6,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 48),
+
                       // Feature Chips
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Row(
                           children: const [
-                            _FeatureChip(icon: Icons.storefront, label: 'Vendors'),
-                            _FeatureChip(icon: Icons.bolt, label: 'Fast Delivery'),
-                            _FeatureChip(icon: Icons.shield_outlined, label: 'Secure'),
-                            _FeatureChip(icon: Icons.support_agent, label: '24/7 Support'),
+                            _FeatureChip(icon: Icons.storefront_rounded, label: 'PREMIUM VENDORS'),
+                            _FeatureChip(icon: Icons.bolt_rounded, label: 'EXPRESS DELIVERY'),
+                            _FeatureChip(icon: Icons.shield_moon_rounded, label: 'SECURE PAY'),
                           ],
                         ),
                       ),
@@ -110,35 +128,21 @@ class WelcomeScreen extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
+                                color: isLight ? colorScheme.surface.withOpacity(0.8) : colorScheme.surface.withOpacity(0.7),
                                 borderRadius: BorderRadius.circular(32),
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
+                                boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40)] : null,
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   ElevatedButton(
                                     onPressed: () => context.push('/signup'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: AppColors.primary,
-                                      minimumSize: const Size(double.infinity, 64),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      elevation: 0,
-                                    ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: const [
-                                        Text(
-                                          'Get Started',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
+                                        Text('GET STARTED'),
+                                        SizedBox(width: 12),
                                         Icon(Icons.arrow_forward_rounded, size: 20),
                                       ],
                                     ),
@@ -148,15 +152,18 @@ class WelcomeScreen extends StatelessWidget {
                                     onTap: () => context.push('/login'),
                                     child: RichText(
                                       text: TextSpan(
-                                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 15),
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface.withOpacity(0.7), 
+                                          fontSize: 14, 
+                                          fontWeight: FontWeight.w500
+                                        ),
                                         children: [
                                           const TextSpan(text: 'Already a member? '),
                                           TextSpan(
                                             text: 'Login',
                                             style: TextStyle(
-                                              color: AppColors.accent,
-                                              fontWeight: FontWeight.bold,
-                                              decoration: TextDecoration.underline,
+                                              color: colorScheme.primary,
+                                              fontWeight: FontWeight.w800,
                                             ),
                                           ),
                                         ],
@@ -172,24 +179,25 @@ class WelcomeScreen extends StatelessWidget {
 
                       // Powered By
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(bottom: 20),
                         child: Column(
                           children: [
                             Text(
-                              'POWERED BY',
+                              'DESIGNED BY',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
-                                fontSize: 10,
+                                color: colorScheme.onSurface.withOpacity(0.3),
+                                fontSize: 9,
                                 letterSpacing: 2,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Text(
-                              'Zenvyro Labs X Awais',
+                              'Zenvyro Labs',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                color: colorScheme.onBackground,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -214,22 +222,31 @@ class _FeatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Container(
       margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.accent, size: 18),
-          const SizedBox(width: 8),
+          Icon(icon, color: colorScheme.primary, size: 18),
+          const SizedBox(width: 10),
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13),
+            style: TextStyle(
+              color: colorScheme.onSurface, 
+              fontWeight: FontWeight.w800, 
+              fontSize: 11, 
+              letterSpacing: 0.5
+            ),
           ),
         ],
       ),

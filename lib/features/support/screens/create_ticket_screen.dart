@@ -78,7 +78,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating ticket: $e')),
+          SnackBar(content: Text('Error creating ticket: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -90,101 +90,186 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(userModelProvider).asData?.value;
     final categories = _getCategoriesForRole(user?.role ?? UserRole.customer);
+    
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    
+    final bgColor = isLight ? AppColors.lightBackground : AppColors.supportDarkBackground;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.supportDarkSurface;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.supportDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.supportDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.supportDarkTextSecondary;
+    final dividerColor = isLight ? AppColors.lightBorder : AppColors.supportDarkDivider;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Create New Ticket', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text('Create New Ticket', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)),
+        backgroundColor: bgColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.close_rounded, color: textColor),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: categories.contains(_selectedCategory) ? _selectedCategory : categories.last,
-                items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val!),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text('Priority', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                children: TicketPriority.values.map((p) {
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(p.name.toUpperCase()),
-                        selected: _priority == p,
-                        onSelected: (selected) {
-                          if (selected) setState(() => _priority = p);
-                        },
-                        selectedColor: AppColors.primary.withOpacity(0.2),
-                        labelStyle: TextStyle(
-                          color: _priority == p ? AppColors.primary : Colors.grey,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              const Text('Title', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
+              _buildSectionTitle('ISSUE CATEGORY', primaryColor),
+              const SizedBox(height: 12),
+              _buildDropdown(categories, cardColor, textColor, dividerColor),
+              
+              const SizedBox(height: 32),
+              _buildSectionTitle('PRIORITY LEVEL', primaryColor),
+              const SizedBox(height: 12),
+              _buildPrioritySelector(primaryColor, cardColor, textColor, dividerColor),
+              
+              const SizedBox(height: 32),
+              _buildSectionTitle('SUBJECT', primaryColor),
+              const SizedBox(height: 12),
+              _buildTextField(
                 controller: _titleController,
-                validator: (val) => val!.isEmpty ? 'Please enter a title' : null,
-                decoration: InputDecoration(
-                  hintText: 'e.g. Order not received',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
+                hint: 'Briefly describe your issue',
+                cardColor: cardColor,
+                textColor: textColor,
+                dividerColor: dividerColor,
+                secondaryTextColor: secondaryTextColor,
               ),
-              const SizedBox(height: 20),
-              const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextFormField(
+              
+              const SizedBox(height: 32),
+              _buildSectionTitle('DESCRIPTION', primaryColor),
+              const SizedBox(height: 12),
+              _buildTextField(
                 controller: _descriptionController,
-                maxLines: 5,
-                validator: (val) => val!.isEmpty ? 'Please describe your issue' : null,
-                decoration: InputDecoration(
-                  hintText: 'Provide as much detail as possible...',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
+                hint: 'Provide as much detail as possible so we can help you faster...',
+                maxLines: 6,
+                cardColor: cardColor,
+                textColor: textColor,
+                dividerColor: dividerColor,
+                secondaryTextColor: secondaryTextColor,
               ),
-              const SizedBox(height: 40),
+              
+              const SizedBox(height: 48),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitTicket,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  minimumSize: const Size(double.infinity, 60),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  shadowColor: primaryColor.withOpacity(0.4),
                 ),
                 child: _isLoading 
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Submit Ticket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                  : const Text('SUBMIT TICKET', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
               ),
+              const SizedBox(height: 40),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color color) {
+    return Text(
+      title,
+      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 2),
+    );
+  }
+
+  Widget _buildDropdown(List<String> categories, Color cardColor, Color textColor, Color divider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: divider),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButtonFormField<String>(
+          value: categories.contains(_selectedCategory) ? _selectedCategory : categories.last,
+          dropdownColor: cardColor,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: textColor.withOpacity(0.5)),
+          items: categories.map((c) => DropdownMenuItem(
+            value: c, 
+            child: Text(c, style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15))
+          )).toList(),
+          onChanged: (val) => setState(() => _selectedCategory = val!),
+          decoration: const InputDecoration(border: InputBorder.none),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrioritySelector(Color primary, Color cardColor, Color textColor, Color divider) {
+    return Row(
+      children: TicketPriority.values.map((p) {
+        final isSelected = _priority == p;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: InkWell(
+              onTap: () => setState(() => _priority = p),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? primary : cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: isSelected ? primary : divider),
+                ),
+                child: Center(
+                  child: Text(
+                    p.name.toUpperCase(),
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : textColor.withOpacity(0.6),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+    required Color cardColor,
+    required Color textColor,
+    required Color dividerColor,
+    required Color secondaryTextColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: dividerColor),
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 15),
+        validator: (val) => val!.isEmpty ? 'Field required' : null,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.4), fontWeight: FontWeight.w500, fontSize: 14),
+          contentPadding: const EdgeInsets.all(16),
+          border: InputBorder.none,
         ),
       ),
     );

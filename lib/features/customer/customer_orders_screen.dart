@@ -18,7 +18,7 @@ class CustomerOrdersScreen extends ConsumerStatefulWidget {
 class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<String> _tabs = ['Ongoing', 'History', 'Cancelled'];
+  final List<String> _tabs = ['ONGOING', 'HISTORY', 'CANCELLED'];
 
   @override
   void initState() {
@@ -54,28 +54,28 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
     final ordersAsync = ref.watch(customerOrdersProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('order_history'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+        title: const Text('Track My Orders', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: Colors.white)),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        foregroundColor: Theme.of(context).textTheme.displayLarge?.color,
         centerTitle: false,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
+          preferredSize: const Size.fromHeight(60),
           child: Container(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1))),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
             ),
             child: TabBar(
               controller: _tabController,
-              labelColor: AppColors.accent,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppColors.accent,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textHint,
+              indicatorColor: AppColors.primary,
               indicatorWeight: 3,
               indicatorSize: TabBarIndicatorSize.label,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 1),
               tabs: _tabs.map((t) => Tab(text: t)).toList(),
             ),
           ),
@@ -102,12 +102,12 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
                 itemBuilder: (context, index) => _OrderCard(order: filtered[index]),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text('Error: $e')),
+            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
           );
         }),
       ),
-      bottomNavigationBar: const CustomerBottomNav(currentIndex: 2), // Index 2 for Orders
+      bottomNavigationBar: const CustomerBottomNav(currentIndex: 2),
     );
   }
 }
@@ -123,14 +123,14 @@ class _EmptyOrdersState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-            child: Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey[400]),
+            padding: const EdgeInsets.all(32),
+            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+            child: const Icon(Icons.receipt_long_rounded, size: 48, color: Colors.white24),
           ),
-          const SizedBox(height: 16),
-          Text('No $label orders found', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w700, fontSize: 16)),
+          const SizedBox(height: 24),
+          Text('No ${label.toLowerCase()} orders', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 8),
-          Text('Orders you place will appear here', style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+          const Text('Place your first order to start tracking', style: TextStyle(color: AppColors.textHint, fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -145,33 +145,24 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/order-details/${order.id}'),
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
-          ],
-          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.accent.withOpacity(0.15), AppColors.accent.withOpacity(0.05)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.storefront_rounded, color: AppColors.accent, size: 28),
+                  child: const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -180,12 +171,12 @@ class _OrderCard extends StatelessWidget {
                     children: [
                       Text(
                         order.shopName, 
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.2)
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Order #${order.id.substring(0, 8).toUpperCase()}',
-                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                        '#${order.id.substring(0, 8).toUpperCase()}',
+                        style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -195,7 +186,7 @@ class _OrderCard extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: Divider(height: 1, thickness: 1.2),
+              child: Divider(color: AppColors.border, thickness: 1),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,31 +196,28 @@ class _OrderCard extends StatelessWidget {
                   children: [
                     Text(
                       '${order.items.length} ${order.items.length == 1 ? 'ITEM' : 'ITEMS'} • Rs ${order.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w800),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      DateFormat('MMM dd, yyyy • h:mm a').format(order.createdAt),
-                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.2), fontSize: 11, fontWeight: FontWeight.w600),
+                      DateFormat('MMM dd • h:mm a').format(order.createdAt),
+                      style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
-                Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Track', style: TextStyle(color: Theme.of(context).textTheme.displayLarge?.color, fontWeight: FontWeight.w900, fontSize: 13)),
-                        const SizedBox(width: 6),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Theme.of(context).textTheme.displayLarge?.color),
-                      ],
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text('TRACK', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
+                      SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.primary),
+                    ],
                   ),
                 ),
               ],
@@ -251,42 +239,28 @@ class _StatusBadge extends StatelessWidget {
     String label = status.name.toUpperCase();
     
     switch (status) {
-      case OrderStatus.pending: 
-        color = Colors.orange; 
-        break;
+      case OrderStatus.pending: color = AppColors.warning; break;
       case OrderStatus.confirmed:
-      case OrderStatus.accepted: 
-        color = Colors.blue; 
-        break;
-      case OrderStatus.preparing: 
-        color = Colors.indigo; 
-        break;
+      case OrderStatus.accepted: color = AppColors.info; break;
+      case OrderStatus.preparing: color = Colors.indigoAccent; break;
       case OrderStatus.outForDelivery:
       case OrderStatus.pickedUp: 
-        color = Colors.purple; 
+        color = Colors.purpleAccent; 
         label = status == OrderStatus.outForDelivery ? 'ON THE WAY' : 'PICKED UP';
         break;
-      case OrderStatus.delivered: 
-        color = const Color(0xFF10B981); 
-        break;
-      case OrderStatus.cancelled:
-      case OrderStatus.rejected: 
-        color = Colors.redAccent; 
-        break;
-      default: 
-        color = AppColors.accent;
+      case OrderStatus.delivered: color = AppColors.success; break;
+      default: color = AppColors.error;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12), 
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        color: color.withOpacity(0.1), 
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
     );
   }

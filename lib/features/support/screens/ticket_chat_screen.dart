@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/providers.dart';
@@ -64,115 +66,59 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     final user = ref.watch(userModelProvider).asData?.value;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    
+    final bgColor = isLight ? AppColors.lightBackground : AppColors.supportDarkBackground;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.supportDarkSurface;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.supportDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.supportDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.supportDarkTextSecondary;
+    final dividerColor = isLight ? AppColors.lightBorder : AppColors.supportDarkDivider;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: cardColor,
+        elevation: 0.5,
+        centerTitle: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: textColor),
+          onPressed: () => context.pop(),
+        ),
         title: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance.collection('support_tickets').doc(widget.ticketId).snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Text('Support Chat');
-            }
+            if (!snapshot.hasData || !snapshot.data!.exists) return const Text('Support');
             final ticket = SupportTicketModel.fromFirestore(snapshot.data!);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(ticket.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('#${ticket.id.substring(0, 8).toUpperCase()} • ${ticket.status.name.toUpperCase()}', 
-                  style: TextStyle(fontSize: 10, color: _getStatusColor(ticket.status))),
+                Text(
+                  ticket.title, 
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'TICKET #${ticket.id.substring(0, 8).toUpperCase()}', 
+                  style: TextStyle(fontSize: 10, color: secondaryTextColor, fontWeight: FontWeight.w700),
+                ),
               ],
             );
           }
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black,
         actions: [
-          // If admin, show status update options
-          if (user.role == UserRole.superAdmin)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: PopupMenuButton<TicketStatus>(
-                onSelected: (status) {
-                  ref.read(supportServiceProvider).updateTicketStatus(widget.ticketId, status);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Status updated to ${status.name.toUpperCase()}')),
-                  );
-                },
-                offset: const Offset(0, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                itemBuilder: (context) => TicketStatus.values.map((s) => PopupMenuItem(
-                  value: s, 
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(s.name.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                )).toList(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 18),
-                      const SizedBox(width: 4),
-                      const Text('STATUS', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          IconButton(
+            icon: Icon(Icons.info_outline_rounded, color: textColor),
+            onPressed: () => _showTicketDetails(context, widget.ticketId, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
-          // Admin Status Bar
-          if (user.role == UserRole.superAdmin)
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection('support_tickets').doc(widget.ticketId).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox.shrink();
-                final ticket = SupportTicketModel.fromFirestore(snapshot.data!);
-                if (ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed) return const SizedBox.shrink();
-                
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  color: Colors.green.withOpacity(0.05),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Issue resolved? Mark it as solved to notify the user.',
-                          style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => ref.read(supportServiceProvider).updateTicketStatus(widget.ticketId, TicketStatus.resolved),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: const Text('Resolve Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            ),
+          _buildStatusBanner(widget.ticketId, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
           Expanded(
             child: StreamBuilder<List<SupportMessageModel>>(
               stream: ref.watch(supportServiceProvider).getTicketMessages(widget.ticketId),
@@ -184,53 +130,116 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isMe = message.senderId == user.uid;
-                    return _ChatBubble(message: message, isMe: isMe);
+                    return _ChatBubble(
+                      message: message, 
+                      isMe: isMe,
+                      primary: primaryColor,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      secondaryTextColor: secondaryTextColor,
+                      isLight: isLight,
+                    );
                   },
                 );
               },
             ),
           ),
-          _buildInputArea(),
+          _buildInputArea(isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor),
         ],
       ),
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildStatusBanner(String ticketId, bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('support_tickets').doc(ticketId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox.shrink();
+        final ticket = SupportTicketModel.fromFirestore(snapshot.data!);
+        
+        Color statusColor;
+        switch (ticket.status) {
+          case TicketStatus.open: statusColor = AppColors.info; break;
+          case TicketStatus.resolved: statusColor = AppColors.success; break;
+          case TicketStatus.closed: statusColor = AppColors.textDisabled; break;
+          default: statusColor = AppColors.warning;
+        }
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.08),
+            border: Border(bottom: BorderSide(color: statusColor.withOpacity(0.1))),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'STATUS: ${ticket.status.name.toUpperCase()}',
+                  style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                ),
+              ),
+              if (ticket.status != TicketStatus.closed && ticket.status != TicketStatus.resolved)
+                Text(
+                  'Avg. reply: 2 min',
+                  style: TextStyle(fontSize: 10, color: secondaryTextColor, fontWeight: FontWeight.bold),
+                ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildInputArea(bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider, Color primary) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+        color: cardColor,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(Icons.add_circle_outline_rounded, color: secondaryTextColor),
+            onPressed: () {},
+          ),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isLight ? AppColors.lightSecondaryBackground : AppColors.supportDarkSecondaryBackground,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: TextField(
                 controller: _messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
+                style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Type your message here...',
+                  hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 14),
                   border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 8),
           CircleAvatar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: primary,
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
+              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
               onPressed: _sendMessage,
             ),
           ),
@@ -239,58 +248,242 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
     );
   }
 
-  Color _getStatusColor(TicketStatus status) {
-    switch (status) {
-      case TicketStatus.open: return Colors.blue;
-      case TicketStatus.inProgress: return Colors.orange;
-      case TicketStatus.resolved: return Colors.green;
-      case TicketStatus.closed: return Colors.grey;
-      default: return Colors.blue;
-    }
+  void _showTicketDetails(BuildContext context, String ticketId, bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _TicketDetailsSheet(
+        ticketId: ticketId,
+        isLight: isLight,
+        cardColor: cardColor,
+        textColor: textColor,
+        secondaryTextColor: secondaryTextColor,
+        divider: divider,
+      ),
+    );
   }
 }
 
 class _ChatBubble extends StatelessWidget {
   final SupportMessageModel message;
   final bool isMe;
-  const _ChatBubble({required this.message, required this.isMe});
+  final Color primary;
+  final Color cardColor;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final bool isLight;
+
+  const _ChatBubble({
+    required this.message, 
+    required this.isMe, 
+    required this.primary,
+    required this.cardColor,
+    required this.textColor,
+    required this.secondaryTextColor,
+    required this.isLight,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bubbleColor = isMe 
+        ? primary 
+        : (isLight ? AppColors.lightSecondaryBackground : AppColors.supportDarkElevatedSurface);
+    
+    final bubbleTextColor = isMe ? Colors.white : textColor;
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isMe ? 20 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 20),
-          ),
-          boxShadow: [if (!isMe) BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isMe)
-              Text(message.senderName, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
-            const SizedBox(height: 4),
-            Text(
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          if (!isMe)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 4),
+              child: Text(
+                message.senderName, 
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: secondaryTextColor.withOpacity(0.7))
+              ),
+            ),
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            decoration: BoxDecoration(
+              color: bubbleColor,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft: Radius.circular(isMe ? 20 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 20),
+              ),
+              boxShadow: [
+                if (isMe) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))
+                else if (isLight) BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5)
+              ],
+            ),
+            child: Text(
               message.message,
-              style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 14),
+              style: TextStyle(color: bubbleTextColor, fontSize: 14, fontWeight: FontWeight.w500, height: 1.4),
             ),
-            const SizedBox(height: 4),
-            Text(
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
               DateFormat('hh:mm a').format(message.timestamp),
-              style: TextStyle(color: isMe ? Colors.white70 : Colors.grey, fontSize: 10),
+              style: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 9, fontWeight: FontWeight.bold),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
+    );
+  }
+}
+
+class _TicketDetailsSheet extends StatelessWidget {
+  final String ticketId;
+  final bool isLight;
+  final Color cardColor;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final Color divider;
+
+  const _TicketDetailsSheet({
+    required this.ticketId,
+    required this.isLight,
+    required this.cardColor,
+    required this.textColor,
+    required this.secondaryTextColor,
+    required this.divider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      padding: const EdgeInsets.all(28),
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('support_tickets').doc(ticketId).snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || !snapshot.data!.exists) return const Center(child: CircularProgressIndicator());
+          final ticket = SupportTicketModel.fromFirestore(snapshot.data!);
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: secondaryTextColor.withOpacity(0.2), borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Ticket Overview', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: textColor)),
+                  _StatusChip(status: ticket.status),
+                ],
+              ),
+              const SizedBox(height: 32),
+              _buildDetailItem('SUBJECT', ticket.title),
+              const SizedBox(height: 20),
+              _buildDetailItem('CATEGORY', ticket.category),
+              const SizedBox(height: 20),
+              _buildDetailItem('PRIORITY', ticket.priority.name.toUpperCase()),
+              const SizedBox(height: 20),
+              _buildDetailItem('CREATED ON', DateFormat('MMM dd, yyyy • hh:mm a').format(ticket.createdAt)),
+              const SizedBox(height: 40),
+              
+              const Text('TIMELINE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.info, letterSpacing: 2)),
+              const SizedBox(height: 20),
+              _buildTimeline(ticket.status, secondaryTextColor),
+              
+              const SizedBox(height: 40),
+              if (ticket.status != TicketStatus.closed)
+                ElevatedButton(
+                  onPressed: () {
+                    FirebaseFirestore.instance.collection('support_tickets').doc(ticketId).update({'status': 'closed'});
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('CLOSE TICKET', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                ),
+              const SizedBox(height: 12),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: secondaryTextColor.withOpacity(0.5), letterSpacing: 1.5)),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textColor)),
+      ],
+    );
+  }
+
+  Widget _buildTimeline(TicketStatus status, Color secondary) {
+    final steps = ['Created', 'Assigned', 'In Progress', 'Resolved'];
+    int currentStep = 0;
+    if (status == TicketStatus.assigned) currentStep = 1;
+    if (status == TicketStatus.inProgress || status == TicketStatus.waitingForUser) currentStep = 2;
+    if (status == TicketStatus.resolved || status == TicketStatus.closed) currentStep = 3;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(steps.length, (i) {
+        final isActive = i <= currentStep;
+        return Column(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.success : secondary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: i < currentStep 
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : Center(child: Text('${i + 1}', style: TextStyle(color: isActive ? Colors.white : secondary, fontSize: 10, fontWeight: FontWeight.bold))),
+            ),
+            const SizedBox(height: 8),
+            Text(steps[i], style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isActive ? AppColors.success : secondary.withOpacity(0.5))),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final TicketStatus status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (status) {
+      case TicketStatus.open: color = AppColors.info; break;
+      case TicketStatus.resolved: color = AppColors.success; break;
+      case TicketStatus.closed: color = AppColors.textDisabled; break;
+      default: color = AppColors.warning;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+      child: Text(status.name.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900)),
     );
   }
 }

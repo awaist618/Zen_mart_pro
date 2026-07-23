@@ -17,9 +17,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
   }
 
@@ -31,15 +31,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), 
+      backgroundColor: theme.scaffoldBackgroundColor, 
       body: Stack(
         children: [
-          // Background Glows
+          // Background Aesthetic Glow
           Positioned(
-            top: -100,
-            left: -100,
-            child: _GlowCircle(color: AppColors.primary.withOpacity(0.1), size: 400),
+            top: -150,
+            right: -150,
+            child: _GlowCircle(
+              color: colorScheme.primary.withOpacity(isLight ? 0.08 : 0.05), 
+              size: 500
+            ),
           ),
 
           Center(
@@ -48,46 +55,61 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Glassmorphism Logo Container
+                  // Premium Logo Container
                   Container(
-                    width: 160,
-                    height: 160,
+                    width: 150,
+                    height: 150,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(40),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(40),
-                      child: Image.asset(
-                        'assets/images/image.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Center(
-                          child: Icon(
-                            Icons.shopping_bag_outlined,
-                            size: 60,
-                            color: Colors.white,
-                          ),
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(44),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+                          blurRadius: 40, 
+                          offset: const Offset(0, 20)
                         ),
+                      ],
+                      border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+                    ),
+                    padding: const EdgeInsets.all(32),
+                    child: Image.asset(
+                      'assets/images/image.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.shopping_bag_rounded,
+                        size: 64,
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
                   
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
 
                   Text(
-                    'Zen MArt Pro',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 38,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.5,
+                    'Zen Mart Pro',
+                    style: TextStyle(
+                      color: colorScheme.onBackground,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
                     ),
                   ),
                   
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 10),
+                  
+                  Text(
+                    'PREMIUM MARKETPLACE',
+                    style: TextStyle(
+                      color: colorScheme.primary.withOpacity(0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 120),
 
-                  // MODERN PREMIUM LOADER
+                  // SaaS-style Loader
                   const _ModernLoader(),
                 ],
               ),
@@ -114,7 +136,7 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 1500),
     )..repeat();
   }
 
@@ -126,31 +148,37 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (index) {
-            double opacity = 0.2 + ((_controller.value + (index * 0.33)) % 1.0) * 0.8;
-            return Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accent.withOpacity(opacity),
-                boxShadow: [
-                  if (opacity > 0.6)
-                    BoxShadow(
-                      color: AppColors.accent.withOpacity(0.4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                ],
+        return Container(
+          width: 200,
+          height: 4,
+          decoration: BoxDecoration(
+            color: isLight ? colorScheme.primary.withOpacity(0.1) : colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: _controller.value * 150,
+                child: Container(
+                  width: 50,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(color: colorScheme.primary.withOpacity(0.5), blurRadius: 10),
+                    ],
+                  ),
+                ),
               ),
-            );
-          }),
+            ],
+          ),
         );
       },
     );
@@ -169,13 +197,9 @@ class _GlowCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: color,
-            blurRadius: 100,
-            spreadRadius: 50,
-          ),
-        ],
+        gradient: RadialGradient(
+          colors: [color, Colors.transparent],
+        ),
       ),
     );
   }

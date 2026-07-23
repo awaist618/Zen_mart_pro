@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/providers.dart';
 import '../../models/address_model.dart';
 import '../../theme/app_colors.dart';
@@ -12,24 +11,20 @@ class AddressManagementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final addressesAsync = ref.watch(customerAddressesProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Saved Addresses', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-        backgroundColor: Colors.white,
+        title: const Text('Saved Locations', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: const Color(0xFF0F172A),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/customer/profile');
-            }
-          },
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/profile'),
         ),
       ),
       body: addressesAsync.when(
@@ -42,30 +37,27 @@ class AddressManagementScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-                      child: Icon(Icons.location_off_rounded, size: 64, color: Colors.grey[300]),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text('No addresses saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add your delivery addresses to make checkout faster and easier.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.black.withOpacity(0.4), fontWeight: FontWeight.w500),
+                      padding: const EdgeInsets.all(40),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface, 
+                        shape: BoxShape.circle,
+                        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40)] : null,
+                      ),
+                      child: Icon(Icons.location_off_rounded, size: 64, color: colorScheme.primary.withOpacity(0.2)),
                     ),
                     const SizedBox(height: 32),
+                    Text('No addresses found', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Add your delivery locations to speed up your checkout process.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500, height: 1.5),
+                    ),
+                    const SizedBox(height: 40),
                     ElevatedButton.icon(
                       onPressed: () => _showAddressDialog(context, ref),
                       icon: const Icon(Icons.add_location_alt_rounded, size: 20),
-                      label: const Text('Add New Address', style: TextStyle(fontWeight: FontWeight.w800)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
+                      label: const Text('ADD NEW ADDRESS'),
                     ),
                   ],
                 ),
@@ -80,15 +72,13 @@ class AddressManagementScreen extends ConsumerWidget {
             itemBuilder: (context, index) => _AddressTile(address: addresses[index]),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+        loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+        error: (e, s) => Center(child: Text('Error: $e', style: TextStyle(color: colorScheme.error))),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddressDialog(context, ref),
-        backgroundColor: AppColors.accent,
-        elevation: 8,
-        label: const Text('New Address', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
+        backgroundColor: colorScheme.primary,
+        child: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
       ),
     );
   }
@@ -98,6 +88,8 @@ class AddressManagementScreen extends ConsumerWidget {
     final addressController = TextEditingController(text: address?.fullAddress);
     final cityController = TextEditingController(text: address?.city);
     bool isDefault = address?.isDefault ?? false;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     showModalBottomSheet(
       context: context,
@@ -105,103 +97,84 @@ class AddressManagementScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+          decoration: BoxDecoration(
+            color: isLight ? Colors.white : AppColors.dialog,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
           ),
           padding: EdgeInsets.fromLTRB(28, 20, 28, MediaQuery.of(context).viewInsets.bottom + 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 44, height: 5, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)))),
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 32),
               Text(
                 address == null ? 'New Location' : 'Update Address',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Enter details for your delivery point',
-                style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
               ),
               const SizedBox(height: 32),
-              _buildField(labelController, 'Label (e.g. Home, Office, Gym)', Icons.bookmark_rounded),
+              TextField(
+                controller: labelController,
+                decoration: const InputDecoration(
+                  hintText: 'Label (e.g. Home, Office)',
+                  prefixIcon: Icon(Icons.bookmark_rounded, size: 20),
+                ),
+              ),
               const SizedBox(height: 16),
-              _buildField(addressController, 'Full Street Address', Icons.location_on_rounded),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(
+                  hintText: 'Full Delivery Address',
+                  prefixIcon: Icon(Icons.location_on_rounded, size: 20),
+                ),
+              ),
               const SizedBox(height: 16),
-              _buildField(cityController, 'City', Icons.location_city_rounded),
-              const SizedBox(height: 20),
+              TextField(
+                controller: cityController,
+                decoration: const InputDecoration(
+                  hintText: 'City',
+                  prefixIcon: Icon(Icons.location_city_rounded, size: 20),
+                ),
+              ),
+              const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.withOpacity(0.05)),
+                  color: isLight ? AppColors.lightSecondaryBackground : AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Primary Delivery Address', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B))),
-                  subtitle: const Text('Use this as default for all orders', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12)),
+                  title: Text('Primary Address', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colorScheme.onSurface)),
+                  subtitle: Text('Use as default for orders', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: colorScheme.onSurface.withOpacity(0.5))),
                   value: isDefault,
-                  activeColor: AppColors.accent,
+                  activeColor: colorScheme.primary,
                   onChanged: (v) => setState(() => isDefault = v),
                 ),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final user = ref.read(userModelProvider).asData?.value;
-                    if (user == null) return;
-                    final newAddress = AddressModel(
-                      id: address?.id ?? '',
-                      label: labelController.text.trim(),
-                      fullAddress: addressController.text.trim(),
-                      city: cityController.text.trim(),
-                      isDefault: isDefault,
-                    );
-                    if (address == null) {
-                      ref.read(customerServiceProvider).addAddress(user.uid, newAddress);
-                    } else {
-                      ref.read(customerServiceProvider).updateAddress(user.uid, newAddress);
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 22),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    elevation: 0,
-                  ),
-                  child: Text(address == null ? 'Save Location' : 'Save Changes', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                ),
+              ElevatedButton(
+                onPressed: () {
+                  final user = ref.read(userModelProvider).asData?.value;
+                  if (user == null) return;
+                  final newAddress = AddressModel(
+                    id: address?.id ?? '',
+                    label: labelController.text.trim(),
+                    fullAddress: addressController.text.trim(),
+                    city: cityController.text.trim(),
+                    isDefault: isDefault,
+                  );
+                  if (address == null) {
+                    ref.read(customerServiceProvider).addAddress(user.uid, newAddress);
+                  } else {
+                    ref.read(customerServiceProvider).updateAddress(user.uid, newAddress);
+                  }
+                  Navigator.pop(context);
+                },
+                child: Text(address == null ? 'SAVE LOCATION' : 'SAVE CHANGES'),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildField(TextEditingController ctrl, String hint, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC), 
-        borderRadius: BorderRadius.circular(20), 
-        border: Border.all(color: Colors.grey.withOpacity(0.1))
-      ),
-      child: TextField(
-        controller: ctrl,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF1E293B)),
-        decoration: InputDecoration(
-          hintText: hint, 
-          border: InputBorder.none, 
-          prefixIcon: Icon(icon, size: 20, color: AppColors.accent), 
-          hintStyle: TextStyle(fontSize: 14, color: Colors.black.withOpacity(0.2), fontWeight: FontWeight.w600)
         ),
       ),
     );
@@ -214,39 +187,33 @@ class _AddressTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
     final bool isHome = address.label.toLowerCase().contains('home');
     final bool isOffice = address.label.toLowerCase().contains('office') || address.label.toLowerCase().contains('work');
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(28),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
         border: address.isDefault 
-          ? Border.all(color: AppColors.accent.withOpacity(0.3), width: 1.5) 
-          : Border.all(color: Colors.grey.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
-        ],
+            ? Border.all(color: colorScheme.primary.withOpacity(0.4), width: 1.5) 
+            : (isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: address.isDefault 
-                  ? [AppColors.accent.withOpacity(0.15), AppColors.accent.withOpacity(0.05)]
-                  : [Colors.grey.withOpacity(0.1), Colors.grey.withOpacity(0.05)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: address.isDefault ? colorScheme.primary.withOpacity(0.1) : (isLight ? AppColors.lightSecondaryBackground : AppColors.background),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               isHome ? Icons.home_rounded : isOffice ? Icons.business_center_rounded : Icons.location_on_rounded,
-              color: address.isDefault ? AppColors.accent : Colors.grey[400], 
+              color: address.isDefault ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.3), 
               size: 26,
             ),
           ),
@@ -259,43 +226,36 @@ class _AddressTile extends ConsumerWidget {
                   children: [
                     Text(
                       address.label, 
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.2)
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)
                     ),
                     if (address.isDefault) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                        child: const Text('DEFAULT', style: TextStyle(color: Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                        child: const Text('DEFAULT', style: TextStyle(color: AppColors.success, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   address.fullAddress, 
-                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
+                  style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  address.city, 
-                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3), fontSize: 12, fontWeight: FontWeight.w700)
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          PopupMenuButton(
-            icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
-            elevation: 8,
-            shadowColor: Colors.black26,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded, color: colorScheme.onSurface.withOpacity(0.3)),
+            color: isLight ? Colors.white : AppColors.dialog,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'edit', child: _PopupItem(label: 'Edit', icon: Icons.edit_rounded)),
-              const PopupMenuItem(value: 'delete', child: _PopupItem(label: 'Delete', icon: Icons.delete_rounded, color: Colors.redAccent)),
-              if (!address.isDefault) const PopupMenuItem(value: 'default', child: _PopupItem(label: 'Set Default', icon: Icons.check_circle_rounded)),
+              PopupMenuItem(value: 'edit', child: Text('Edit', style: TextStyle(color: colorScheme.onSurface))),
+              const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: AppColors.error))),
+              if (!address.isDefault) PopupMenuItem(value: 'default', child: Text('Set Default', style: TextStyle(color: colorScheme.onSurface))),
             ],
             onSelected: (val) {
               final user = ref.read(userModelProvider).asData?.value;
@@ -313,13 +273,4 @@ class _AddressTile extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _PopupItem extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color? color;
-  const _PopupItem({required this.label, required this.icon, this.color});
-  @override
-  Widget build(BuildContext context) => Row(children: [Icon(icon, size: 18, color: color ?? Colors.black87), const SizedBox(width: 12), Text(label, style: TextStyle(color: color ?? Colors.black87, fontWeight: FontWeight.w600))]);
 }

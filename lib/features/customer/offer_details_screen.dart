@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,34 +16,32 @@ class OfferDetailsScreen extends ConsumerWidget {
     final productsAsync = ref.watch(offerProductsProvider(offer.applicableProductIds));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
+            backgroundColor: AppColors.background,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: AppColors.surface.withOpacity(0.8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
+                  onPressed: () => context.canPop() ? context.pop() : context.go('/customer'),
+                ),
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Image.network(
                 offer.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (c, e, s) => Container(
-                  color: const Color(0xFF0F172A),
-                  child: const Icon(Icons.local_offer_rounded, size: 80, color: Colors.white24),
+                  color: AppColors.surface,
+                  child: const Icon(Icons.local_offer_rounded, size: 80, color: Colors.white10),
                 ),
               ),
-            ),
-            leading: IconButton(
-              icon: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.black),
-              ),
-              onPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/customer');
-                }
-              },
             ),
           ),
           SliverToBoxAdapter(
@@ -55,10 +54,10 @@ class OfferDetailsScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           offer.offerType == 'percentage' 
@@ -66,45 +65,40 @@ class OfferDetailsScreen extends ConsumerWidget {
                               : offer.offerType == 'free_delivery' 
                                   ? 'FREE DELIVERY' 
                                   : 'Rs ${offer.value.round()} OFF',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(color: AppColors.background, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
                         ),
                       ),
                       if (offer.couponCode != null)
-                        GestureDetector(
-                          onTap: () {
-                            // Copy to clipboard or set in state
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Coupon ${offer.couponCode} applied!')),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.accent, width: 1.5, style: BorderStyle.solid),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.content_copy_rounded, size: 14, color: AppColors.accent),
-                                const SizedBox(width: 8),
-                                Text(
-                                  offer.couponCode!,
-                                  style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.qr_code_rounded, size: 16, color: AppColors.primary),
+                              const SizedBox(width: 10),
+                              Text(
+                                offer.couponCode!,
+                                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
+                              ),
+                            ],
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(offer.title, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
+                  Text(offer.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -1)),
+                  const SizedBox(height: 12),
                   Text(
                     offer.description,
-                    style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 15, height: 1.5),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.6, fontWeight: FontWeight.w500),
                   ),
-                  const Divider(height: 48),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Divider(color: AppColors.border),
+                  ),
                 ],
               ),
             ),
@@ -114,7 +108,7 @@ class OfferDetailsScreen extends ConsumerWidget {
             const SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               sliver: SliverToBoxAdapter(
-                child: Text('Participating Shops', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text('PARTICIPATING STORES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1.5)),
               ),
             ),
             SliverPadding(
@@ -126,17 +120,17 @@ class OfferDetailsScreen extends ConsumerWidget {
                     childCount: shops.length,
                   ),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-                error: (e, s) => SliverToBoxAdapter(child: Text('Error: $e')),
+                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+                error: (e, s) => const SliverToBoxAdapter(child: Center(child: Text('Error loading shops'))),
               ),
             ),
           ],
 
           if (offer.applicableProductIds.isNotEmpty) ...[
             const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: Text('Eligible Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text('ELIGIBLE PRODUCTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1.5)),
               ),
             ),
             SliverPadding(
@@ -147,15 +141,15 @@ class OfferDetailsScreen extends ConsumerWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: 0.8,
+                    childAspectRatio: 0.82,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _ProductOfferCard(product: products[index]),
                     childCount: products.length,
                   ),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-                error: (e, s) => SliverToBoxAdapter(child: Text('Error: $e')),
+                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+                error: (e, s) => const SliverToBoxAdapter(child: Center(child: Text('Error loading products'))),
               ),
             ),
           ],
@@ -175,26 +169,22 @@ class _SmallShopTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-        border: Border.all(color: Colors.grey.withOpacity(0.05)),
       ),
       child: ListTile(
         onTap: () => context.push('/customer/shop/${shop.id}'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: const Color(0xFFF1F5F9), child: const Icon(Icons.storefront, color: Colors.grey))),
+          borderRadius: BorderRadius.circular(14),
+          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: AppColors.textHint, size: 20))),
         ),
-        title: Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A))),
-        subtitle: Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
+        title: Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
+        subtitle: Text(shop.category, style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)),
         trailing: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), shape: BoxShape.circle),
-          child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.accent),
+          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
         ),
       ),
     );
@@ -209,28 +199,21 @@ class _ProductOfferCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
-          ],
-          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                child: Image.network(
-                  product.imageUrl, 
-                  fit: BoxFit.cover, 
-                  width: double.infinity,
-                  errorBuilder: (c,e,s) => Container(color: const Color(0xFFF1F5F9), child: const Icon(Icons.image, color: Colors.grey)),
-                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: product.imageUrl.isNotEmpty 
+                  ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
+                  : Container(color: AppColors.secondaryBackground, child: const Icon(Icons.image, color: Colors.white10)),
               ),
             ),
             Padding(
@@ -240,25 +223,14 @@ class _ProductOfferCard extends StatelessWidget {
                 children: [
                   Text(
                     product.name, 
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A), letterSpacing: -0.2), 
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white), 
                     maxLines: 1, 
                     overflow: TextOverflow.ellipsis
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Rs ${product.price.toStringAsFixed(0)}', 
-                        style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w900, fontSize: 16)
-                      ),
-                      if (product.discount > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                          child: const Text('OFF', style: TextStyle(color: Colors.green, fontSize: 8, fontWeight: FontWeight.w900)),
-                        ),
-                    ],
+                  const SizedBox(height: 6),
+                  Text(
+                    'Rs ${product.price.toStringAsFixed(0)}', 
+                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 15)
                   ),
                 ],
               ),

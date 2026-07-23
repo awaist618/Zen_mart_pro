@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/notification_model.dart';
@@ -13,21 +12,22 @@ class CustomerNotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userModelProvider).asData?.value;
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null) return const Scaffold(backgroundColor: AppColors.background, body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('notifications'.tr(ref), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+        backgroundColor: AppColors.background,
         elevation: 0,
       ),
       body: StreamBuilder<List<NotificationModel>>(
         stream: ref.read(customerServiceProvider).getNotifications(user.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
           }
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.error)));
           
           final notifications = snapshot.data ?? [];
 
@@ -36,9 +36,9 @@ class CustomerNotificationsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: Colors.grey.withOpacity(0.5)),
+                  const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.surface),
                   const SizedBox(height: 16),
-                  Text('no_notifications'.tr(ref), style: const TextStyle(color: Colors.grey)),
+                  Text('no_notifications'.tr(ref), style: const TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w600)),
                 ],
               ),
             );
@@ -70,22 +70,22 @@ class _NotificationTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isRead ? Theme.of(context).cardTheme.color : AppColors.accent.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isRead ? Colors.grey.withOpacity(0.1) : AppColors.accent.withOpacity(0.2)),
+        color: isRead ? AppColors.surface.withOpacity(0.5) : AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: isRead ? null : Border.all(color: AppColors.primary.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isRead ? Colors.grey.withOpacity(0.1) : AppColors.accent.withOpacity(0.1),
+              color: isRead ? AppColors.background : AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getIcon(notif.type), 
-              color: isRead ? Colors.grey : AppColors.accent, 
+              color: isRead ? AppColors.textDisabled : AppColors.primary, 
               size: 20
             ),
           ),
@@ -96,23 +96,37 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 Text(
                   notif.title, 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isRead ? Colors.grey[600] : null)
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800, 
+                    fontSize: 15, 
+                    color: isRead ? AppColors.textSecondary : Colors.white
+                  )
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   notif.message, 
-                  style: TextStyle(color: isRead ? Colors.grey : Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13, height: 1.4)
+                  style: TextStyle(
+                    color: isRead ? AppColors.textDisabled : AppColors.textSecondary, 
+                    fontSize: 13, 
+                    height: 1.5,
+                    fontWeight: FontWeight.w500,
+                  )
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
-                  DateFormat('MMM dd, h:mm a').format(notif.timestamp),
-                  style: TextStyle(color: Colors.grey[400], fontSize: 11, fontWeight: FontWeight.w600),
+                  DateFormat('MMM dd • h:mm a').format(notif.timestamp),
+                  style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
           ),
           if (!isRead)
-            Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle)),
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              width: 8, 
+              height: 8, 
+              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)
+            ),
         ],
       ),
     );
@@ -122,7 +136,7 @@ class _NotificationTile extends StatelessWidget {
     switch (type) {
       case NotificationType.orderStatus: return Icons.shopping_bag_rounded;
       case NotificationType.offer: return Icons.local_offer_rounded;
-      case NotificationType.supportTicket: return Icons.info_rounded;
+      case NotificationType.supportTicket: return Icons.forum_rounded;
       default: return Icons.notifications_rounded;
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -67,55 +68,82 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
     final shopsAsync = ref.watch(searchShopsProvider(_query));
     final userAddress = ref.watch(defaultAddressProvider);
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.8),
         elevation: 0,
-        toolbarHeight: 80,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 20),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/customer');
-            }
-          },
+        toolbarHeight: 90,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: colorScheme.onBackground),
+              onPressed: () => context.canPop() ? context.pop() : context.go('/customer'),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surface,
+                fixedSize: const Size(45, 45),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.1)) : null,
+              ),
+            ),
+          ),
         ),
         title: Container(
-          height: 52,
+          height: 45,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.06)),
           ),
           child: TextField(
             controller: _searchController,
             autofocus: true,
             onChanged: (v) => setState(() => _query = v),
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            textAlignVertical: TextAlignVertical.center,
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: colorScheme.onSurface),
             decoration: InputDecoration(
-              hintText: 'Search foods or stores...',
-              hintStyle: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 14, fontWeight: FontWeight.w500),
-              prefixIcon: const Icon(Icons.search_rounded, size: 22, color: AppColors.accent),
-              suffixIcon: _query.isNotEmpty ? IconButton(icon: const Icon(Icons.close_rounded, size: 18), onPressed: () {
-                _searchController.clear();
-                setState(() => _query = '');
-              }) : null,
+              hintText: 'Search products or shops...',
+              hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 13, fontWeight: FontWeight.w500),
+              prefixIcon: Icon(Icons.search_rounded, size: 20, color: colorScheme.primary.withOpacity(0.8)),
+              suffixIcon: _query.isNotEmpty ? IconButton(
+                icon: Icon(Icons.close_rounded, size: 16, color: colorScheme.onSurface.withOpacity(0.4)), 
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _query = '');
+                }
+              ) : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              isCollapsed: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
             child: IconButton(
               onPressed: _openFilters,
               icon: Icon(
                 Icons.tune_rounded,
-                color: (_selectedCategory != null || _minRating > 0 || _freeDelivery || _onlyOffers || _onlyOpen) ? AppColors.accent : const Color(0xFF0F172A),
+                size: 20,
+                color: (_selectedCategory != null || _minRating > 0 || _freeDelivery || _onlyOffers || _onlyOpen) ? colorScheme.primary : colorScheme.onBackground,
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surface,
+                fixedSize: const Size(45, 45),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.1)) : null,
               ),
             ),
           ),
@@ -125,7 +153,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
           ? const _SearchPlaceholder() 
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -147,7 +175,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const _ResultHeader(title: 'Available Stores'),
+                          const _ResultHeader(title: 'Top Shops'),
                           const SizedBox(height: 16),
                           ...filteredShops.map((shop) => _ShopSearchCard(shop: shop)),
                           const SizedBox(height: 32),
@@ -176,7 +204,7 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const _ResultHeader(title: 'Top Matches'),
+                          const _ResultHeader(title: 'Premium Products'),
                           const SizedBox(height: 16),
                           ListView.separated(
                             shrinkWrap: true,
@@ -188,8 +216,11 @@ class _CustomerSearchScreenState extends ConsumerState<CustomerSearchScreen> {
                         ],
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    error: (e, s) => Text('Error: $e'),
+                    loading: () => const Center(child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    )),
+                    error: (e, s) => const Center(child: Text('Error loading results', style: TextStyle(color: AppColors.error))),
                   ),
                 ],
               ),
@@ -202,28 +233,87 @@ class _ResultHeader extends StatelessWidget {
   final String title;
   const _ResultHeader({required this.title});
   @override
-  Widget build(BuildContext context) => Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)));
+  Widget build(BuildContext context) => Text(
+    title.toUpperCase(), 
+    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1.5)
+  );
 }
 
 class _SearchPlaceholder extends StatelessWidget {
   const _SearchPlaceholder();
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.05), shape: BoxShape.circle),
-            child: Icon(Icons.search_rounded, size: 64, color: AppColors.accent.withOpacity(0.3)),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
+    return Stack(
+      children: [
+        // Background Glow
+        Positioned(
+          top: MediaQuery.of(context).size.height * 0.1,
+          left: MediaQuery.of(context).size.width * 0.2,
+          child: Container(
+            width: 250,
+            height: 250,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [colorScheme.primary.withOpacity(isLight ? 0.12 : 0.08), Colors.transparent],
+              ),
+            ),
           ),
-          const SizedBox(height: 24),
-          const Text('Search Zen Mart Pro', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-          const SizedBox(height: 8),
-          const Text('Find foods, stores and daily essentials\naround your location.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w500, height: 1.4)),
-        ],
-      ),
+        ),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(36),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withOpacity(isLight ? 1.0 : 0.5),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+                        blurRadius: 40, 
+                        spreadRadius: -10
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.search_rounded, size: 72, color: colorScheme.primary.withOpacity(0.4)),
+                ),
+                const SizedBox(height: 40),
+                Text(
+                  'What are you looking for?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24, 
+                    fontWeight: FontWeight.w900, 
+                    color: colorScheme.onBackground, 
+                    letterSpacing: -0.5
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Explore premium shops and products instantly through our smart search.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 15, 
+                    fontWeight: FontWeight.w500,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -231,7 +321,18 @@ class _SearchPlaceholder extends StatelessWidget {
 class _NoResultsFound extends StatelessWidget {
   const _NoResultsFound();
   @override
-  Widget build(BuildContext context) => Center(child: Column(children: [const SizedBox(height: 40), Icon(Icons.search_off_rounded, size: 64, color: Colors.grey[300]), const SizedBox(height: 16), const Text('No results found matching your search.', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600))]));
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      children: [
+        const SizedBox(height: 60),
+        const Icon(Icons.search_off_rounded, size: 64, color: Colors.white10),
+        const SizedBox(height: 20),
+        const Text('No matches found.', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 16)),
+        const SizedBox(height: 8),
+        const Text('Try adjusting your filters or keywords.', style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+      ],
+    ),
+  );
 }
 
 class _ShopSearchCard extends StatelessWidget {
@@ -242,41 +343,48 @@ class _ShopSearchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(shop.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 64, height: 64, color: Theme.of(context).scaffoldBackgroundColor, child: const Icon(Icons.storefront, color: Colors.grey))),
+              borderRadius: BorderRadius.circular(16),
+              child: shop.imageUrl.isNotEmpty 
+                ? Image.network(shop.imageUrl, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 70, height: 70, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: Colors.white10)))
+                : Container(width: 70, height: 70, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: Colors.white10)),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(shop.category, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(shop.category, style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
-                      const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                      Text(' ${shop.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.star_rounded, color: AppColors.warning, size: 14),
+                      Text(' ${shop.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white)),
                     ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
+            ),
           ],
         ),
       ),
@@ -292,28 +400,20 @@ class _ProductSearchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
-          ],
-          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.network(
-                product.imageUrl, 
-                width: 80, 
-                height: 80, 
-                fit: BoxFit.cover, 
-                errorBuilder: (c, e, s) => Container(width: 80, height: 80, color: const Color(0xFFF1F5F9), child: const Icon(Icons.image, color: Colors.grey))
-              ),
+              borderRadius: BorderRadius.circular(18),
+              child: product.imageUrl.isNotEmpty 
+                ? Image.network(product.imageUrl, width: 85, height: 85, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 85, height: 85, color: AppColors.elevatedSurface, child: const Icon(Icons.image, color: Colors.white10)))
+                : Container(width: 85, height: 85, color: AppColors.elevatedSurface, child: const Icon(Icons.image, color: Colors.white10)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -322,27 +422,27 @@ class _ProductSearchCard extends StatelessWidget {
                 children: [
                   Text(
                     product.name, 
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF0F172A), letterSpacing: -0.2),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white, letterSpacing: -0.2),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     '${product.brand} • ${product.category}', 
-                    style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 11, fontWeight: FontWeight.w700)
+                    style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Text(
                         'Rs ${product.price.toStringAsFixed(0)}', 
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.accent, fontSize: 16)
+                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 17)
                       ),
                       if (product.discount > 0) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Text(
                           'Rs ${product.price + product.discount}', 
-                          style: TextStyle(color: Colors.grey[400], fontSize: 11, decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600)
+                          style: const TextStyle(color: AppColors.textDisabled, fontSize: 12, decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600)
                         ),
                       ],
                     ],
@@ -350,14 +450,7 @@ class _ProductSearchCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (product.discount > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Text('OFFER', style: TextStyle(color: Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-              ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textDisabled),
           ],
         ),
       ),
@@ -404,40 +497,40 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor, 
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(36))
+      decoration: const BoxDecoration(
+        color: AppColors.dialog, 
+        borderRadius: BorderRadius.vertical(top: Radius.circular(36))
       ),
       padding: const EdgeInsets.all(28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(2)))),
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border.withOpacity(0.5), borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 24),
-          Text('Search Filters', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.displayLarge?.color)),
+          const Text('Refine Search', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
           const SizedBox(height: 32),
-          const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white)),
           RangeSlider(
             values: _priceRange, 
             min: 0, 
             max: 5000, 
             divisions: 25, 
-            activeColor: AppColors.accent, 
-            inactiveColor: AppColors.accent.withOpacity(0.1), 
+            activeColor: AppColors.primary, 
+            inactiveColor: AppColors.primary.withOpacity(0.1), 
             labels: RangeLabels('Rs ${_priceRange.start.round()}', 'Rs ${_priceRange.end.round()}'), 
             onChanged: (v) => setState(() => _priceRange = v)
           ),
           const SizedBox(height: 24),
-          const Text('Quick Filters', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          const Text('Quick Selection', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white)),
           const SizedBox(height: 12),
           Wrap(spacing: 10, children: [
             _QuickChip(label: 'Free Delivery', selected: _freeDelivery, onToggle: (v) => setState(() => _freeDelivery = v)),
             _QuickChip(label: 'On Offer', selected: _onlyOffers, onToggle: (v) => setState(() => _onlyOffers = v)),
-            _QuickChip(label: 'Open Stores', selected: _onlyOpen, onToggle: (v) => setState(() => _onlyOpen = v)),
+            _QuickChip(label: 'Open Now', selected: _onlyOpen, onToggle: (v) => setState(() => _onlyOpen = v)),
           ]),
           const SizedBox(height: 24),
-          const Text('Customer Rating', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          const Text('Minimum Rating', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white)),
           const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -452,11 +545,11 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSel ? Colors.orange : Theme.of(context).cardTheme.color, 
+                        color: isSel ? AppColors.primary : AppColors.surface, 
                         borderRadius: BorderRadius.circular(12), 
-                        border: Border.all(color: isSel ? Colors.orange : Colors.grey.withOpacity(0.1))
+                        border: Border.all(color: isSel ? AppColors.primary : AppColors.border)
                       ),
-                      child: Text('$r+ ★', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isSel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color))
+                      child: Text('$r+ ★', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isSel ? AppColors.background : Colors.white))
                     ),
                   ),
                 );
@@ -464,13 +557,12 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
             ),
           ),
           const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity, 
-            child: ElevatedButton(
-              onPressed: () { widget.onApply(_selectedCategory, _priceRange, _minRating, _maxDistance, _freeDelivery, _onlyOffers, _onlyOpen); Navigator.pop(context); }, 
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 0), 
-              child: const Text('Apply Selection', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
-            )
+          ElevatedButton(
+            onPressed: () { 
+              widget.onApply(_selectedCategory, _priceRange, _minRating, _maxDistance, _freeDelivery, _onlyOffers, _onlyOpen); 
+              Navigator.pop(context); 
+            }, 
+            child: const Text('Apply Filters')
           ),
           const SizedBox(height: 12),
         ],
@@ -489,10 +581,10 @@ class _QuickChip extends StatelessWidget {
     label: Text(label), 
     selected: selected, 
     onSelected: onToggle, 
-    selectedColor: AppColors.accent.withOpacity(0.1), 
-    checkmarkColor: AppColors.accent, 
-    labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: selected ? AppColors.accent : Theme.of(context).textTheme.bodyLarge?.color), 
-    backgroundColor: Theme.of(context).cardTheme.color, 
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: selected ? AppColors.accent : Colors.grey.withOpacity(0.1)))
+    selectedColor: AppColors.primary.withOpacity(0.1), 
+    checkmarkColor: AppColors.primary, 
+    labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: selected ? AppColors.primary : AppColors.textSecondary), 
+    backgroundColor: AppColors.surface, 
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: selected ? AppColors.primary : AppColors.border))
   );
 }

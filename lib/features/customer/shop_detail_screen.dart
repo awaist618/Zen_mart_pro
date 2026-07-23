@@ -37,19 +37,22 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
     final shopAsync = ref.watch(shopDetailProvider(widget.shopId));
     final productsAsync = ref.watch(shopProductsByIdProvider(widget.shopId));
     final cart = ref.watch(cartProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return shopAsync.when(
       data: (shop) {
         if (shop == null) return const Scaffold(body: Center(child: Text('Shop not found')));
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: theme.scaffoldBackgroundColor,
           body: NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
               _buildSliverAppBar(context, shop),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -60,25 +63,27 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(shop.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                                const SizedBox(height: 4),
-                                Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 16, fontWeight: FontWeight.w600)),
+                                Text(
+                                  shop.name, 
+                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1)
+                                ),
+                                const SizedBox(height: 6),
+                                Text(shop.category.toUpperCase(), style: TextStyle(color: colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                               ],
                             ),
                           ),
                           _buildActionIcons(),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       _buildShopStats(shop),
                       const SizedBox(height: 24),
                       Text(
                         shop.description, 
-                        style: TextStyle(color: Colors.black.withOpacity(0.6), height: 1.5, fontSize: 14),
+                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), height: 1.6, fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 24),
                       _ContactBar(phone: shop.phone, address: shop.address),
-                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -86,18 +91,20 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SliverAppBarDelegate(
+                  theme.scaffoldBackgroundColor,
                   TabBar(
                     controller: _tabController,
-                    labelColor: AppColors.accent,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: AppColors.accent,
+                    labelColor: colorScheme.primary,
+                    unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
+                    indicatorColor: colorScheme.primary,
                     indicatorWeight: 3,
                     indicatorSize: TabBarIndicatorSize.label,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    dividerColor: Colors.transparent,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     tabs: const [
-                      Tab(text: 'Products'),
-                      Tab(text: 'Reviews'),
+                      Tab(text: 'PRODUCTS'),
+                      Tab(text: 'REVIEWS'),
                     ],
                   ),
                 ),
@@ -114,37 +121,35 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
           bottomNavigationBar: cart.itemCount > 0 ? _buildCartSummary(context, cart) : null,
         );
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, s) => Scaffold(body: Center(child: Text('Error: $e'))),
+      loading: () => Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: colorScheme.primary))),
+      error: (e, s) => Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: Text('Error: $e'))),
     );
   }
 
   Widget _buildActionIcons() {
     return Row(
       children: [
-        _CircleIconButton(icon: Icons.share_outlined, onTap: () {}),
+        _CircleIconButton(icon: Icons.share_rounded, onTap: () {}),
         const SizedBox(width: 12),
-        _CircleIconButton(icon: Icons.favorite_border_rounded, color: Colors.redAccent, onTap: () {}),
+        _CircleIconButton(icon: Icons.favorite_rounded, color: AppColors.error, onTap: () {}),
       ],
     );
   }
 
   Widget _buildShopStats(ShopModel shop) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _InfoChip(icon: Icons.star_rounded, label: '${shop.rating} (124)', color: Colors.orange),
-          const SizedBox(width: 12),
-          _InfoChip(icon: Icons.access_time_rounded, label: shop.deliveryTime, color: Colors.blue),
-          const SizedBox(width: 12),
-          _InfoChip(icon: Icons.delivery_dining_rounded, label: shop.hasFreeDelivery ? 'Free' : 'Rs ${shop.deliveryFee}', color: Colors.green),
-        ],
-      ),
+    return Row(
+      children: [
+        _InfoChip(icon: Icons.star_rounded, label: '${shop.rating}', color: AppColors.warning),
+        const SizedBox(width: 12),
+        _InfoChip(icon: Icons.timer_rounded, label: shop.deliveryTime, color: AppColors.info),
+        const SizedBox(width: 12),
+        _InfoChip(icon: Icons.delivery_dining_rounded, label: shop.hasFreeDelivery ? 'Free' : 'Paid', color: AppColors.success),
+      ],
     );
   }
 
   Widget _buildProductsTab(AsyncValue<List<ProductModel>> productsAsync) {
+    final colorScheme = Theme.of(context).colorScheme;
     return productsAsync.when(
       data: (products) {
         final filtered = products.where((p) => p.name.toLowerCase().contains(_searchQuery)).toList();
@@ -152,30 +157,20 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-                ),
-                child: TextField(
-                  onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                  decoration: const InputDecoration(
-                    hintText: 'Search in store...',
-                    hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search_rounded, size: 22, color: AppColors.accent),
-                  ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: TextField(
+                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search inside store...',
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: colorScheme.primary),
                 ),
               ),
             ),
             Expanded(
               child: filtered.isEmpty 
-                ? const Center(child: Text('No products found.'))
+                ? Center(child: Text('No products available.', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4))))
                 : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.all(20),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
                     itemBuilder: (context, index) => _ProductTile(product: filtered[index]),
@@ -184,74 +179,76 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Center(child: Text('Error: $e')),
+      loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+      error: (e, s) => const Center(child: Text('Error loading products')),
     );
   }
 
   Widget _buildReviewsTab() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.rate_review_outlined, size: 64, color: Colors.grey[300]),
+          Icon(Icons.rate_review_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.05)),
           const SizedBox(height: 16),
-          Text('No reviews yet.', style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.w600)),
+          Text('No ratings yet.', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
   Widget _buildSliverAppBar(BuildContext context, ShopModel shop) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return SliverAppBar(
-      expandedHeight: 240,
+      expandedHeight: 250,
       pinned: true,
-      backgroundColor: AppColors.accent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
+      scrolledUnderElevation: 0,
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
         child: CircleAvatar(
-          backgroundColor: Colors.white,
+          backgroundColor: isLight ? Colors.white.withOpacity(0.8) : AppColors.surface.withOpacity(0.8),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/customer');
-              }
-            },
+            icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: colorScheme.onSurface),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/customer'),
           ),
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: shop.imageUrl.isNotEmpty 
             ? Image.network(shop.imageUrl, fit: BoxFit.cover)
-            : Container(color: const Color(0xFF0F172A), child: const Icon(Icons.storefront, size: 80, color: Colors.white24)),
+            : Container(color: colorScheme.surface, child: Icon(Icons.storefront, size: 80, color: colorScheme.onSurface.withOpacity(0.05))),
       ),
     );
   }
 
   Widget _buildCartSummary(BuildContext context, dynamic cart) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -5))],
+        color: isLight ? Colors.white : AppColors.bottomNav,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.2), 
+            blurRadius: 30
+          )
+        ],
+        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
       child: ElevatedButton(
         onPressed: () => context.push('/customer/cart'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 64),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 8,
-          shadowColor: AppColors.accent.withOpacity(0.5),
-        ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -259,15 +256,15 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${cart.totalQuantity} ITEMS', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
-                  Text('Rs ${cart.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                  Text('${cart.totalQuantity} ITEMS', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  Text('Rs ${cart.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white)),
                 ],
               ),
               Row(
                 children: const [
-                  Text('VIEW CART', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                  Text('VIEW CART', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
                   SizedBox(width: 8),
-                  Icon(Icons.shopping_bag_outlined, size: 20),
+                  Icon(Icons.arrow_forward_rounded, size: 18),
                 ],
               ),
             ],
@@ -286,39 +283,39 @@ class _CircleIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : null,
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
         ),
-        child: Icon(icon, color: color ?? Colors.black, size: 20),
+        child: Icon(icon, color: color ?? colorScheme.onSurface, size: 20),
       ),
     );
   }
 }
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
+  _SliverAppBarDelegate(this.backgroundColor, this._tabBar);
+  final Color backgroundColor;
   final TabBar _tabBar;
   @override
-  double get minExtent => _tabBar.preferredSize.height + 1;
+  double get minExtent => _tabBar.preferredSize.height;
   @override
-  double get maxExtent => _tabBar.preferredSize.height + 1;
+  double get maxExtent => _tabBar.preferredSize.height;
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        children: [
-          _tabBar,
-          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.1)),
-        ],
-      ),
+      color: backgroundColor,
+      child: _tabBar,
     );
   }
   @override
@@ -334,7 +331,7 @@ class _InfoChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           Icon(icon, color: color, size: 16),
@@ -352,44 +349,40 @@ class _ContactBar extends StatelessWidget {
   const _ContactBar({required this.phone, required this.address});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
+        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Location', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                Text('Location', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: colorScheme.onSurface)),
                 const SizedBox(height: 2),
-                Text(address, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(address, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          _SmallActionBtn(icon: Icons.call_rounded, onTap: () => launchUrl(Uri.parse('tel:$phone'))),
-          const SizedBox(width: 10),
-          _SmallActionBtn(icon: Icons.map_rounded, onTap: () {}),
+          IconButton(
+            onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+            icon: Icon(Icons.call_rounded, color: colorScheme.primary, size: 20),
+            style: IconButton.styleFrom(
+              backgroundColor: isLight ? colorScheme.primary.withOpacity(0.08) : AppColors.background, 
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))
+            ),
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _SmallActionBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _SmallActionBtn({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
-        child: Icon(icon, color: AppColors.accent, size: 20),
       ),
     );
   }
@@ -401,32 +394,30 @@ class _ProductTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8)),
-          ],
-          border: Border.all(color: Colors.grey.withOpacity(0.05)),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
         ),
         child: Row(
           children: [
             Hero(
               tag: 'product_${product.id}',
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  product.imageUrl,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(width: 100, height: 100, color: const Color(0xFFF1F5F9), child: const Icon(Icons.image, color: Colors.grey)),
-                ),
+                borderRadius: BorderRadius.circular(18),
+                child: product.imageUrl.isNotEmpty 
+                  ? Image.network(product.imageUrl, width: 90, height: 90, fit: BoxFit.cover)
+                  : Container(width: 90, height: 90, color: colorScheme.onSurface.withOpacity(0.05), child: Icon(Icons.image, color: colorScheme.onSurface.withOpacity(0.1))),
               ),
             ),
             const SizedBox(width: 16),
@@ -436,16 +427,15 @@ class _ProductTile extends ConsumerWidget {
                 children: [
                   Text(
                     product.name, 
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A), letterSpacing: -0.2),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     product.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
+                    maxLines: 1,
+                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -453,33 +443,27 @@ class _ProductTile extends ConsumerWidget {
                     children: [
                       Text(
                         'Rs ${product.price.toStringAsFixed(0)}', 
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.accent, fontSize: 19)
+                        style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.primary, fontSize: 18)
                       ),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            ref.read(cartProvider.notifier).addItem(product);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${product.name} added to cart'),
-                                backgroundColor: const Color(0xFF0F172A),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 1),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                      InkWell(
+                        onTap: () {
+                          ref.read(cartProvider.notifier).addItem(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${product.name} added to cart'),
+                              backgroundColor: colorScheme.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          child: Icon(Icons.add_rounded, color: isLight ? Colors.white : AppColors.background, size: 20),
                         ),
                       ),
                     ],
