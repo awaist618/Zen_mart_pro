@@ -28,6 +28,7 @@ import '../features/admin/category_management_screen.dart';
 import '../features/admin/user_management_screen.dart';
 import '../features/admin/support_list_screen.dart';
 import '../features/admin/support_chat_detail_screen.dart';
+import '../features/admin/order_management_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/vendor/vendor_notifications_screen.dart';
@@ -153,6 +154,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/system', builder: (context, state) => const SystemSettingsScreen()),
       GoRoute(path: '/admin/system-info', builder: (context, state) => const SystemInfoScreen()),
       GoRoute(path: '/admin/activity-log', builder: (context, state) => const ActivityLogScreen()),
+      GoRoute(path: '/admin/orders', builder: (context, state) => const OrderManagementScreen()),
       GoRoute(path: '/admin/support', builder: (context, state) => const SupportListScreen()),
       GoRoute(
         path: '/admin/support-chat/:userId/:userName',

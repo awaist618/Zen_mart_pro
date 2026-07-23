@@ -81,6 +81,14 @@ class CustomerService {
     return docRef.id;
   }
 
+  /// Get stream of a single order
+  Stream<OrderModel?> getOrderStream(String orderId) {
+    return _db.collection('orders').doc(orderId).snapshots().map((doc) {
+      if (doc.exists) return OrderModel.fromFirestore(doc);
+      return null;
+    });
+  }
+
   /// Get stream of orders for a specific customer
   Stream<List<OrderModel>> getCustomerOrders(String userId) {
     return _db

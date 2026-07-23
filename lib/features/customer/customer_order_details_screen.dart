@@ -30,8 +30,8 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
         actions: [
-          FutureBuilder<OrderModel?>(
-            future: ref.read(vendorServiceProvider).getOrder(orderId),
+          StreamBuilder<OrderModel?>(
+            stream: ref.read(customerServiceProvider).getOrderStream(orderId),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
                 return IconButton(
@@ -46,8 +46,8 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: FutureBuilder<OrderModel?>(
-        future: ref.read(vendorServiceProvider).getOrder(orderId),
+      body: StreamBuilder<OrderModel?>(
+        stream: ref.read(customerServiceProvider).getOrderStream(orderId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -70,6 +70,53 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatusTracker(order.status),
+                      
+                      // IMPROVED OTP DISPLAY: Show for all active delivery phases
+                      if (order.status != OrderStatus.delivered && 
+                          order.status != OrderStatus.cancelled && 
+                          order.status != OrderStatus.rejected) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withOpacity(0.08), 
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(color: AppColors.accent.withOpacity(0.15), width: 1.5),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'DELIVERY OTP', 
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.accent, letterSpacing: 1.5)
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Give this to your rider', 
+                                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w600)
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.1), blurRadius: 10)],
+                                ),
+                                child: Text(
+                                  order.deliveryOtp ?? '----', 
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 28, color: AppColors.accent, letterSpacing: 4)
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       const SizedBox(height: 32),
                       _SectionHeader(title: 'Delivery Address', icon: Icons.location_on_rounded),
                       const SizedBox(height: 16),
@@ -250,21 +297,6 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _SummaryLine(label: 'Delivery Fee', value: 'Rs ${order.deliveryFee.toStringAsFixed(0)}', isFree: order.deliveryFee == 0),
           
-          if (order.status != OrderStatus.delivered && order.deliveryOtp != null) ...[
-            const Divider(height: 32, thickness: 1),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(16)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Delivery OTP', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF64748B))),
-                  Text(order.deliveryOtp!, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.accent, letterSpacing: 2)),
-                ],
-              ),
-            ),
-          ],
-          
           const Divider(height: 32, thickness: 1),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -392,11 +424,14 @@ class _CustomProgressBar extends StatelessWidget {
   double _getVal() {
     switch (status) {
       case OrderStatus.pending: return 0.1;
-      case OrderStatus.confirmed: return 0.25;
-      case OrderStatus.preparing: return 0.5;
-      case OrderStatus.pickedUp: return 0.75;
+      case OrderStatus.preparing: return 0.3;
+      case OrderStatus.confirmed: return 0.45;
+      case OrderStatus.accepted: return 0.6;
+      case OrderStatus.reachedVendor: return 0.7;
+      case OrderStatus.pickedUp: return 0.8;
+      case OrderStatus.outForDelivery: return 0.9;
       case OrderStatus.delivered: return 1.0;
-      default: return 0.25;
+      default: return 0.1;
     }
   }
 
@@ -409,7 +444,7 @@ class _CustomProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: _getVal(),
             minHeight: 8,
-            backgroundColor: const Color(0xFFF1F5F9),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             color: AppColors.accent,
           ),
         ),
@@ -417,10 +452,10 @@ class _CustomProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _StepDot(label: 'Pending', active: true),
-            _StepDot(label: 'Prep', active: _getVal() >= 0.5),
-            _StepDot(label: 'Pickup', active: _getVal() >= 0.75),
-            _StepDot(label: 'Done', active: _getVal() == 1.0),
+            _StepDot(label: 'Placed', active: true),
+            _StepDot(label: 'Preparing', active: _getVal() >= 0.3),
+            _StepDot(label: 'Rider', active: _getVal() >= 0.6),
+            _StepDot(label: 'Delivered', active: _getVal() == 1.0),
           ],
         ),
       ],
@@ -441,15 +476,40 @@ class _OSMMap extends StatelessWidget {
   const _OSMMap({required this.order});
   @override
   Widget build(BuildContext context) {
-    final pickup = order.pickupLocation != null ? latlong.LatLng(order.pickupLocation!.latitude, order.pickupLocation!.longitude) : latlong.LatLng(33.6844, 73.0479);
-    final delivery = order.deliveryLocation != null ? latlong.LatLng(order.deliveryLocation!.latitude, order.deliveryLocation!.longitude) : latlong.LatLng(33.7000, 73.0600);
+    final pickupRaw = order.pickupLocation;
+    final deliveryRaw = order.deliveryLocation;
+    
+    final pickup = (pickupRaw != null && pickupRaw.latitude.isFinite && pickupRaw.longitude.isFinite) 
+        ? latlong.LatLng(pickupRaw.latitude, pickupRaw.longitude) 
+        : const latlong.LatLng(33.6844, 73.0479);
+        
+    final delivery = (deliveryRaw != null && deliveryRaw.latitude.isFinite && deliveryRaw.longitude.isFinite) 
+        ? latlong.LatLng(deliveryRaw.latitude, deliveryRaw.longitude) 
+        : const latlong.LatLng(33.7000, 73.0600);
+        
     return FlutterMap(
-      options: MapOptions(initialCenter: delivery, initialZoom: 14.0),
+      options: MapOptions(
+        initialCenter: delivery, 
+        initialZoom: 14.0,
+      ),
       children: [
-        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.example.zen_mart_pro'),
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', 
+          userAgentPackageName: 'com.example.zen_mart_pro',
+        ),
         MarkerLayer(markers: [
-          Marker(point: pickup, width: 40, height: 40, child: const Icon(Icons.storefront_rounded, color: Colors.blue, size: 32)),
-          Marker(point: delivery, width: 40, height: 40, child: const Icon(Icons.location_on_rounded, color: AppColors.accent, size: 32)),
+          Marker(
+            point: pickup, 
+            width: 40, 
+            height: 40, 
+            child: const Icon(Icons.storefront_rounded, color: Colors.blue, size: 32)
+          ),
+          Marker(
+            point: delivery, 
+            width: 40, 
+            height: 40, 
+            child: const Icon(Icons.location_on_rounded, color: AppColors.accent, size: 32)
+          ),
         ]),
       ],
     );

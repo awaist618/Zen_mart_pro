@@ -188,7 +188,7 @@ class _OSMMapState extends State<_OSMMap> {
       children: [
         FlutterMap(
           options: MapOptions(
-            initialCenter: pickup,
+            initialCenter: pickup.latitude.isFinite ? pickup : const latlong.LatLng(33.6844, 73.0479),
             initialZoom: 14.0,
           ),
           children: [
@@ -207,18 +207,20 @@ class _OSMMapState extends State<_OSMMap> {
             ),
             MarkerLayer(
               markers: [
-                Marker(
-                  point: pickup,
-                  width: 40,
-                  height: 40,
-                  child: const _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
-                ),
-                Marker(
-                  point: delivery,
-                  width: 40,
-                  height: 40,
-                  child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
-                ),
+                if (pickup.latitude.isFinite)
+                  Marker(
+                    point: pickup,
+                    width: 40,
+                    height: 40,
+                    child: const _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
+                  ),
+                if (delivery.latitude.isFinite)
+                  Marker(
+                    point: delivery,
+                    width: 40,
+                    height: 40,
+                    child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
+                  ),
               ],
             ),
           ],

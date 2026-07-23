@@ -19,8 +19,13 @@ class OrderService {
     // 2. Prepare Update Data
     Map<String, dynamic> updateData = {'status': newStatus.name};
     
-    if (newStatus == OrderStatus.accepted && riderId != null) {
+    // HEALER: If order lacks OTP when accepted, generate one now
+    if (newStatus == OrderStatus.accepted) {
       updateData['riderId'] = riderId;
+      if (order.deliveryOtp == null || order.deliveryOtp!.isEmpty) {
+        final newOtp = (1000 + (DateTime.now().millisecondsSinceEpoch % 9000)).toString();
+        updateData['deliveryOtp'] = newOtp;
+      }
     }
     
     if (newStatus == OrderStatus.delivered) {
@@ -81,7 +86,7 @@ class OrderService {
         break;
       case OrderStatus.accepted:
         customerTitle = 'Rider Assigned';
-        customerMsg = 'A rider has been assigned to your order and is heading to the shop.';
+        customerMsg = 'A rider has been assigned to your order. Give OTP ${order.deliveryOtp} to the rider upon arrival.';
         break;
       case OrderStatus.pickedUp:
         customerTitle = 'Out for Delivery';

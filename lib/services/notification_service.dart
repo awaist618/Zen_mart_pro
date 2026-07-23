@@ -20,7 +20,7 @@ class NotificationService {
       debugPrint('User granted notification permission');
     }
 
-    // 2. Local Notifications Initialization (For Foreground Messages)
+    // 2. Local Notifications Initialization
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
     const InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
@@ -28,28 +28,28 @@ class NotificationService {
     await _localNotifications.initialize(initSettings);
 
     // 3. Create Android Notification Channel
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'zen_mart_high_importance_channel',
-      'High Importance Notifications',
-      description: 'This channel is used for important order updates.',
-      importance: Importance.high,
-    );
-
     if (Platform.isAndroid) {
-      await (_localNotifications as dynamic)
-          .resolvePlatformSpecificPlugin<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-    }
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'zen_mart_high_importance_channel',
+        'High Importance Notifications',
+        description: 'This channel is used for important order updates.',
+        importance: Importance.high,
+      );
 
-    // 4. Listen for Messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Foreground Message: ${message.notification?.title}');
-      _showLocalNotification(message, channel);
-    });
+      final dynamic plugin = _localNotifications;
+      final dynamic androidPlugin = plugin.resolvePlatformSpecificPlugin<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(channel);
+      }
+
+      // 4. Listen for Messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _showLocalNotification(message, channel);
+      });
+    }
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification opened app: ${message.data}');
-      // Handle navigation if needed
     });
   }
 

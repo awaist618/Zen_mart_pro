@@ -149,6 +149,25 @@ class AdminService {
             .toList());
   }
 
+  /// Get a single order by ID
+  Future<OrderModel?> getOrderById(String orderId) async {
+    final doc = await _db.collection('orders').doc(orderId).get();
+    if (doc.exists) return OrderModel.fromFirestore(doc);
+    return null;
+  }
+
+  /// Get all orders
+  Stream<List<OrderModel>> getAllOrders() {
+    return _db
+        .collection('orders')
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => OrderModel.fromFirestore(doc))
+            .toList());
+  }
+
   /// Cancel order
   Future<void> cancelOrder(String orderId) async {
     await _db.collection('orders').doc(orderId).update({'status': 'cancelled'});

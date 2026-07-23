@@ -342,7 +342,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'customerPhone': user.phone,
         'vendorId': firstItem.product.vendorId,
         'shopId': firstItem.product.shopId,
-        'shopName': 'Zen Mart Store', 
+        'shopName': firstItem.product.shopName,
         'vendorPhone': '03001234567',
         'status': 'pending',
         'totalAmount': cart.totalAmount + 100,

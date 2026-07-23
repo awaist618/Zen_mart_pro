@@ -379,15 +379,23 @@ class _QuickActions extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Expanded(child: _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/users?tab=0')),
-            Expanded(child: _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/users?tab=2')),
-            Expanded(child: _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: Colors.blue, route: '/admin/support')),
-            Expanded(child: _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B), route: '/admin/payouts')),
-            Expanded(child: _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B), route: '/admin/system')),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: const [
+              _ActionItem(label: 'Orders', icon: Icons.receipt_long_rounded, color: Colors.deepPurple, route: '/admin/orders'),
+              SizedBox(width: 12),
+              _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/users?tab=0'),
+              SizedBox(width: 12),
+              _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/users?tab=2'),
+              SizedBox(width: 12),
+              _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: Colors.blue, route: '/admin/support'),
+              SizedBox(width: 12),
+              _ActionItem(label: 'Payouts', icon: Icons.payments_rounded, color: Color(0xFFF59E0B), route: '/admin/payouts'),
+              SizedBox(width: 12),
+              _ActionItem(label: 'System', icon: Icons.settings_suggest_rounded, color: Color(0xFF64748B), route: '/admin/system'),
+            ],
+          ),
         ),
       ],
     );

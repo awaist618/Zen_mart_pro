@@ -242,6 +242,12 @@ final allPendingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
   return ref.watch(adminServiceProvider).getPendingOrders();
 });
 
+final allOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllOrders();
+});
+
 final allCustomersProvider = StreamProvider<List<UserModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
