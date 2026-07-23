@@ -48,7 +48,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     
     if (url != null) {
       setState(() {
-        // We'll store the URL directly since it's already uploaded
         _uploadedImageUrl = url;
       });
     }
@@ -58,8 +57,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     if (!_formKey.currentState!.validate() || _uploadedImageUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all fields and pick/upload an image'),
-          backgroundColor: Colors.orange,
+          content: Text('Please fill all fields and upload an image'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -69,10 +69,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     try {
       final user = ref.read(userModelProvider).value;
-      if (user == null) throw Exception('User session expired. Please log in again.');
-      if (user.shopId == null) throw Exception('Shop ID missing. Ensure your vendor account is set up.');
+      if (user == null || user.shopId == null) throw Exception('Session error. Please log in again.');
 
-      // 2. Save to Firestore (Image is already uploaded now)
       final product = ProductModel(
         id: '', 
         vendorId: user.uid,
@@ -93,19 +91,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product added successfully!')),
+          const SnackBar(content: Text('Product added successfully!'), backgroundColor: AppColors.success),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        debugPrint('Product Save Error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -115,135 +108,133 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Add New Product', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Add New Product', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image Picker
-              _buildSectionTitle('PRODUCT IMAGE'),
-              const SizedBox(height: 12),
+              _buildSectionHeader('PRODUCT VISUALS', colorScheme),
+              const SizedBox(height: 16),
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
-                  height: 200,
+                  height: 220,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
-                  image: _uploadedImageUrl != null ? DecorationImage(image: NetworkImage(_uploadedImageUrl!), fit: BoxFit.cover) : null,
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
-                ),
-                child: _uploadedImageUrl == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_a_photo_outlined, size: 48, color: AppColors.vendor.withOpacity(0.5)),
-                          const SizedBox(height: 12),
-                          const Text('Tap to upload product photo', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        ],
-                      ) 
-                    : const SizedBox.shrink(),
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.1)),
+                    image: _uploadedImageUrl != null ? DecorationImage(image: NetworkImage(_uploadedImageUrl!), fit: BoxFit.cover) : null,
+                    boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
+                  ),
+                  child: _uploadedImageUrl == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                              child: Icon(Icons.add_a_photo_rounded, size: 32, color: colorScheme.primary),
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Upload product photo', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w600)),
+                          ],
+                        ) 
+                      : Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black.withOpacity(0.45),
+                              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                            ),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              _buildSectionTitle('BASIC INFORMATION'),
-              const SizedBox(height: 12),
-              _buildTextField(_nameController, 'Product Name', Icons.shopping_bag_outlined),
+              _buildSectionHeader('PRODUCT DETAILS', colorScheme),
               const SizedBox(height: 16),
-              _buildTextField(_descriptionController, 'Description', Icons.description_outlined, maxLines: 3),
+              _buildModernField(_nameController, 'Product Name', Icons.shopping_bag_rounded, colorScheme, isLight),
               const SizedBox(height: 16),
-              _buildTextField(_categoryController, 'Category (e.g. Dairy, Bakery)', Icons.category_outlined, isRequired: false),
+              _buildModernField(_descriptionController, 'Description', Icons.description_rounded, colorScheme, isLight, maxLines: 4),
+              const SizedBox(height: 16),
+              _buildModernField(_categoryController, 'Category (e.g. Dairy, Fruits)', Icons.category_rounded, colorScheme, isLight, isRequired: false),
               
               const SizedBox(height: 32),
-              _buildSectionTitle('PRICING & INVENTORY'),
-              const SizedBox(height: 12),
+              _buildSectionHeader('PRICING & STOCK', colorScheme),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildTextField(_priceController, 'Price (Rs)', Icons.payments_outlined, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildModernField(_priceController, 'Price (Rs)', Icons.payments_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildTextField(_discountController, 'Discount (%)', Icons.percent_rounded, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildModernField(_discountController, 'Discount %', Icons.percent_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildTextField(_stockController, 'Stock Qty', Icons.inventory_2_outlined, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildModernField(_stockController, 'Initial Stock', Icons.inventory_2_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildTextField(_unitController, 'Unit (kg, pcs)', Icons.scale_outlined)),
+                  Expanded(child: _buildModernField(_unitController, 'Unit (pcs, kg)', Icons.scale_rounded, colorScheme, isLight)),
                 ],
               ),
               
-              const SizedBox(height: 24),
-              // Availability Switch
+              const SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Product Available', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('Product is Available', style: TextStyle(fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
                     Switch.adaptive(
                       value: _isAvailable,
                       onChanged: (v) => setState(() => _isAvailable = v),
-                      activeColor: AppColors.vendor,
+                      activeColor: AppColors.success,
                     ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 48),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => context.pop(),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text('Cancel'),
+              _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _saveProduct,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 64),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 0,
                     ),
+                    child: const Text('PUBLISH PRODUCT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveProduct,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.vendor,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white) 
-                        : const Text('Save Product', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 40),
             ],
           ),
@@ -252,39 +243,47 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionHeader(String title, ColorScheme colorScheme) {
     return Text(
       title,
       style: TextStyle(
-        color: Colors.black.withOpacity(0.4),
+        color: colorScheme.primary.withOpacity(0.7),
         fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.2,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.5,
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {int maxLines = 1, TextInputType? keyboardType, bool isRequired = true}) {
+  Widget _buildModernField(TextEditingController controller, String label, IconData icon, ColorScheme colorScheme, bool isLight, {int maxLines = 1, TextInputType? keyboardType, bool isRequired = true}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
       ),
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 14),
-          prefixIcon: Icon(icon, color: AppColors.vendor, size: 20),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+          prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
           filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
-        validator: (v) => (isRequired && (v == null || v.isEmpty)) ? 'Required' : null,
+        validator: (v) => (isRequired && (v == null || v.isEmpty)) ? 'Required field' : null,
       ),
     );
   }

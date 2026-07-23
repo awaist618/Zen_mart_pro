@@ -10,23 +10,46 @@ class LowStockScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
     final lowStockAsync = ref.watch(lowStockProductsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Low Stock Alert', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Low Stock Alerts', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: lowStockAsync.when(
         data: (products) {
           if (products.isEmpty) {
-            return const Center(child: Text('All products are well stocked!'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle),
+                    child: const Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.success),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Inventory lookin\' good!', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text('All products are well stocked.', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
+                ],
+              ),
+            );
           }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            physics: const BouncingScrollPhysics(),
             itemCount: products.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _LowStockTile(product: products[index]),
@@ -45,14 +68,17 @@ class _LowStockTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
       ),
       child: Column(
         children: [
@@ -62,10 +88,10 @@ class _LowStockTile extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
                   product.imageUrl,
-                  width: 64,
-                  height: 64,
+                  width: 68,
+                  height: 68,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(width: 64, height: 64, color: Colors.grey[200], child: const Icon(Icons.image)),
+                  errorBuilder: (c, e, s) => Container(width: 68, height: 68, color: colorScheme.onSurface.withOpacity(0.05), child: Icon(Icons.image, color: colorScheme.onSurface.withOpacity(0.1))),
                 ),
               ),
               const SizedBox(width: 16),
@@ -73,35 +99,44 @@ class _LowStockTile extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Remaining: ${product.stock} units',
-                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 14),
+                    Text(product.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      child: Text(
+                        'REMAINING: ${product.stock} UNITS',
+                        style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 0.5),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const Divider(height: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: colorScheme.outline.withOpacity(0.1)),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _StockActionButton(
-                icon: Icons.add_circle_outline,
-                label: 'Increase',
-                onTap: () => _showUpdateStockDialog(context, ref, 25),
+                icon: Icons.add_circle_outline_rounded,
+                label: 'Restock',
+                onTap: () => _showUpdateStockDialog(context, ref, 50, colorScheme),
+                color: colorScheme.primary,
               ),
               _StockActionButton(
-                icon: Icons.edit_outlined,
-                label: 'Edit Qty',
-                onTap: () => _showUpdateStockDialog(context, ref, null),
+                icon: Icons.edit_rounded,
+                label: 'Exact Qty',
+                onTap: () => _showUpdateStockDialog(context, ref, null, colorScheme),
+                color: colorScheme.onSurface,
               ),
               _StockActionButton(
                 icon: Icons.block_rounded,
-                label: 'Disable',
-                color: Colors.orange,
+                label: 'Unlist',
+                color: AppColors.warning,
                 onTap: () {
                   ref.read(vendorServiceProvider).updateProduct(product.id, {'isAvailable': false});
                 },
@@ -113,19 +148,20 @@ class _LowStockTile extends ConsumerWidget {
     );
   }
 
-  void _showUpdateStockDialog(BuildContext context, WidgetRef ref, int? preset) {
+  void _showUpdateStockDialog(BuildContext context, WidgetRef ref, int? preset, ColorScheme colorScheme) {
     final controller = TextEditingController(text: preset?.toString() ?? product.stock.toString());
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Update Stock'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text('Restock Inventory', style: TextStyle(fontWeight: FontWeight.w900)),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(suffixText: ' Units'),
+          decoration: const InputDecoration(suffixText: ' Units', labelText: 'New Count'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
           ElevatedButton(
             onPressed: () {
               final newStock = int.tryParse(controller.text);
@@ -134,7 +170,8 @@ class _LowStockTile extends ConsumerWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Update'),
+            style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
+            child: const Text('UPDATE'),
           ),
         ],
       ),
@@ -154,12 +191,16 @@ class _StockActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Column(
-        children: [
-          Icon(icon, size: 20, color: color ?? Colors.black.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: color ?? Colors.black.withOpacity(0.6))),
-        ],
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            Icon(icon, size: 22, color: color?.withOpacity(0.8)),
+            const SizedBox(height: 6),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color?.withOpacity(0.8))),
+          ],
+        ),
       ),
     );
   }

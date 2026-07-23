@@ -15,6 +15,7 @@ class CartScreen extends ConsumerWidget {
     final cart = ref.watch(cartProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -25,10 +26,14 @@ class CartScreen extends ConsumerWidget {
             slivers: [
               SliverAppBar(
                 pinned: true,
-                backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.8),
+                backgroundColor: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                title: Text('my_cart'.tr(ref), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: colorScheme.onBackground)),
+                centerTitle: false,
+                title: Text(
+                  'my_cart'.tr(ref), 
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: colorScheme.onBackground, letterSpacing: -0.5)
+                ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -41,18 +46,23 @@ class CartScreen extends ConsumerWidget {
                 ),
                 actions: [
                   if (cart.itemCount > 0)
-                    TextButton(
-                      onPressed: () => _showClearCartDialog(context, ref),
-                      child: Text('clear'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: TextButton(
+                        onPressed: () => _showClearCartDialog(context, ref),
+                        child: Text(
+                          'clear'.tr(ref).toUpperCase(), 
+                          style: TextStyle(color: AppColors.error.withValues(alpha: 0.7), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)
+                        ),
+                      ),
                     ),
-                  const SizedBox(width: 10),
                 ],
               ),
               if (cart.itemCount == 0)
                 SliverFillRemaining(child: _buildEmptyCart(context, ref))
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 150),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 280),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -97,7 +107,7 @@ class CartScreen extends ConsumerWidget {
         backgroundColor: isLight ? Colors.white : AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         title: Text('clear'.tr(ref) + '?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
-        content: Text('This will remove all premium items from your bag.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+        content: Text('This will remove all premium items from your bag.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text('cancel'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.textHint))),
           TextButton(
@@ -122,14 +132,14 @@ class CartScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: colorScheme.surface, 
               shape: BoxShape.circle,
-              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40)] : null,
+              boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40)] : null,
             ),
-            child: Icon(Icons.shopping_bag_outlined, size: 70, color: colorScheme.primary.withOpacity(0.3)),
+            child: Icon(Icons.shopping_bag_outlined, size: 70, color: colorScheme.primary.withValues(alpha: 0.3)),
           ),
           const SizedBox(height: 32),
           Text('empty_cart'.tr(ref), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
           const SizedBox(height: 12),
-          Text('Discover premium products and add them here.', textAlign: TextAlign.center, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 14)),
+          Text('Discover premium products and add them here.', textAlign: TextAlign.center, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14)),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () => context.go('/customer'),
@@ -145,45 +155,58 @@ class CartScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final colorScheme = theme.colorScheme;
-    double total = cart.totalAmount + 100.0; // Simplification
+    const double deliveryFee = 100.0;
+    double total = cart.totalAmount + deliveryFee;
 
     return ClipRRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
           decoration: BoxDecoration(
-            color: isLight ? Colors.white.withOpacity(0.9) : AppColors.bottomNav.withOpacity(0.9),
+            color: isLight ? Colors.white.withValues(alpha: 0.9) : AppColors.bottomNav.withValues(alpha: 0.9),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
             boxShadow: [
               BoxShadow(
-                color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.4), 
-                blurRadius: 40
+                color: isLight ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.4), 
+                blurRadius: 40,
+                offset: const Offset(0, -10),
               )
             ],
-            border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
+            border: Border.all(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05)),
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('grand_total'.tr(ref).toUpperCase(), style: TextStyle(color: colorScheme.primary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                    const SizedBox(height: 4),
-                    Text('Rs ${total.toStringAsFixed(0)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
-                  ],
-                ),
+              // Detailed Bill Breakdown
+              _SummaryRow(label: 'item_total'.tr(ref), value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
+              const SizedBox(height: 12),
+              _SummaryRow(label: 'delivery_fee'.tr(ref), value: 'Rs ${deliveryFee.toStringAsFixed(0)}', colorScheme: colorScheme, isHighlight: true),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Divider(height: 1, color: Colors.black26),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('grand_total'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+                  Text('Rs ${total.toStringAsFixed(0)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Full Width Checkout Button
               ElevatedButton(
                 onPressed: () => context.push('/customer/checkout'),
-                style: ElevatedButton.styleFrom(minimumSize: const Size(160, 60)),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 64),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('checkout'.tr(ref).toUpperCase()),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 18),
+                    Text('checkout'.tr(ref).toUpperCase(), style: const TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
                   ],
                 ),
               ),
@@ -191,6 +214,26 @@ class CartScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final ColorScheme colorScheme;
+  final bool isHighlight;
+
+  const _SummaryRow({required this.label, required this.value, required this.colorScheme, this.isHighlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(value, style: TextStyle(color: isHighlight ? AppColors.success : colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w800)),
+      ],
     );
   }
 }
@@ -206,28 +249,63 @@ class _CartItemTile extends ConsumerWidget {
     final isLight = theme.brightness == Brightness.light;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: isLight ? Colors.black.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.15), 
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          )
+        ],
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.network(item.product.imageUrl, width: 85, height: 85, fit: BoxFit.cover),
+          // Product Image with Shadow
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.network(item.product.imageUrl, width: 90, height: 90, fit: BoxFit.cover),
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
+          // Product Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.product.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: colorScheme.onSurface), maxLines: 1),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.product.name, 
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface), 
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => ref.read(cartProvider.notifier).removeItem(item.product.id),
+                      icon: Icon(Icons.close_rounded, color: colorScheme.onSurface.withValues(alpha: 0.2), size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
-                Text('Rs ${item.product.price.round()}', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 16)),
-                const SizedBox(height: 12),
+                Text(
+                  'Rs ${item.product.price.toStringAsFixed(0)}', 
+                  style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 17)
+                ),
+                const SizedBox(height: 14),
                 _QuantitySelector(
                   quantity: item.quantity,
                   onAdd: () => ref.read(cartProvider.notifier).addItem(item.product),
@@ -235,10 +313,6 @@ class _CartItemTile extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: () => ref.read(cartProvider.notifier).removeItem(item.product.id),
-            icon: Icon(Icons.close_rounded, color: colorScheme.onSurface.withOpacity(0.3), size: 20),
           ),
         ],
       ),
@@ -259,39 +333,51 @@ class _QuantitySelector extends StatelessWidget {
     final isLight = theme.brightness == Brightness.light;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
         color: isLight ? AppColors.lightSecondaryBackground : AppColors.background, 
-        borderRadius: BorderRadius.circular(12)
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _CircleAction(icon: Icons.remove_rounded, onTap: onRemove),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text('$quantity', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface, fontSize: 13)),
+          _ActionButton(icon: Icons.remove_rounded, onTap: onRemove, isLight: isLight),
+          Container(
+            constraints: const BoxConstraints(minWidth: 40),
+            alignment: Alignment.center,
+            child: Text(
+              '$quantity', 
+              style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 15)
+            ),
           ),
-          _CircleAction(icon: Icons.add_rounded, onTap: onAdd),
+          _ActionButton(icon: Icons.add_rounded, onTap: onAdd, isLight: isLight, isPrimary: true),
         ],
       ),
     );
   }
 }
 
-class _CircleAction extends StatelessWidget {
+class _ActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _CircleAction({required this.icon, required this.onTap});
+  final bool isLight;
+  final bool isPrimary;
+  const _ActionButton({required this.icon, required this.onTap, required this.isLight, this.isPrimary = false});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, color: colorScheme.primary, size: 18),
+        decoration: BoxDecoration(
+          color: isPrimary ? colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: isPrimary ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3), size: 20),
       ),
     );
   }

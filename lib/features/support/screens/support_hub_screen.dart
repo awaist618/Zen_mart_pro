@@ -19,6 +19,15 @@ class SupportHubScreen extends ConsumerStatefulWidget {
 
 class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  final List<Map<String, String>> _faqs = [
+    {'q': 'How do refunds work?', 'a': 'Refunds are processed to your original payment method within 5-7 business days after the vendor approves the return.'},
+    {'q': 'How can I cancel an order?', 'a': 'You can cancel your order from the My Orders section as long as the vendor hasn\'t started preparing it.'},
+    {'q': 'How long does delivery take?', 'a': 'Delivery times vary by vendor and distance, but most local orders arrive within 30-45 minutes.'},
+    {'q': 'Is my payment secure?', 'a': 'Yes, we use enterprise-grade encryption and secure payment gateways to process all transactions.'},
+    {'q': 'How to contact a vendor?', 'a': 'You can find the vendor\'s contact details on the shop detail page or via the Order Tracking screen.'},
+  ];
 
   @override
   void dispose() {
@@ -56,59 +65,33 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                 children: [
                   const SizedBox(height: 24),
                   _buildSearchBar(isLight, cardColor, secondaryTextColor, dividerColor, ref),
-                  const SizedBox(height: 32),
-                  _SectionHeader(
-                    title: 'quick_help'.tr(ref), 
-                    textColor: textColor,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildActionGrid(context, user.role, isLight, cardColor, primaryColor, textColor, secondaryTextColor, dividerColor, ref),
                   
-                  const SizedBox(height: 32),
-                  _LiveChatCard(
-                    user: user,
-                    ref: ref,
-                    isLight: isLight, 
-                    primary: primaryColor, 
-                    cardColor: cardColor, 
-                    textColor: textColor, 
-                    secondaryTextColor: secondaryTextColor, 
-                    divider: dividerColor
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  _EmergencyCard(
-                    isLight: isLight,
-                    onTap: () => context.push('/support/emergency'),
-                    ref: ref,
-                  ),
-
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _SectionHeader(
-                        title: 'my_tickets'.tr(ref), 
-                        textColor: textColor,
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/support/tickets'),
-                        child: Text(
-                          'view_all'.tr(ref), 
-                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 13)
-                        ),
-                      ),
-                    ],
-                  ),
-                  _buildRecentTickets(ref, user.uid, isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor),
-                  
-                  const SizedBox(height: 40),
-                  _SectionHeader(
-                    title: 'common_questions'.tr(ref), 
-                    textColor: textColor,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFAQList(isLight, cardColor, textColor, secondaryTextColor, dividerColor),
+                  if (_searchQuery.isEmpty) ...[
+                    const SizedBox(height: 32),
+                    _SectionHeader(title: 'quick_help'.tr(ref), textColor: textColor),
+                    const SizedBox(height: 16),
+                    _buildActionGrid(context, user.role, isLight, cardColor, primaryColor, textColor, secondaryTextColor, dividerColor, ref),
+                    const SizedBox(height: 32),
+                    _LiveChatCard(user: user, ref: ref, isLight: isLight, primary: primaryColor, cardColor: cardColor, textColor: textColor, secondaryTextColor: secondaryTextColor, divider: dividerColor),
+                    const SizedBox(height: 32),
+                    _EmergencyCard(isLight: isLight, onTap: () => context.push('/support/emergency'), ref: ref),
+                    const SizedBox(height: 40),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _SectionHeader(title: 'my_tickets'.tr(ref), textColor: textColor),
+                        TextButton(onPressed: () => context.push('/support/tickets'), child: Text('view_all'.tr(ref), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 13))),
+                      ],
+                    ),
+                    _buildRecentTickets(ref, user.uid, isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor),
+                    const SizedBox(height: 40),
+                    _SectionHeader(title: 'common_questions'.tr(ref), textColor: textColor),
+                    const SizedBox(height: 16),
+                    _buildFAQList(_faqs, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
+                  ] else ...[
+                    const SizedBox(height: 32),
+                    _buildSearchResults(user.uid, isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor),
+                  ],
                   const SizedBox(height: 120),
                 ],
               ),
@@ -123,6 +106,71 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text('new_ticket'.tr(ref), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
       ),
+    );
+  }
+
+  Widget _buildSearchResults(String userId, bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider, Color primary) {
+    final filteredFaqs = _faqs.where((faq) => 
+      faq['q']!.toLowerCase().contains(_searchQuery.toLowerCase()) || 
+      faq['a']!.toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
+
+    return StreamBuilder<List<SupportTicketModel>>(
+      stream: ref.watch(supportServiceProvider).getUserTickets(userId),
+      builder: (context, snapshot) {
+        final tickets = snapshot.data ?? [];
+        final filteredTickets = tickets.where((t) => 
+          t.title.toLowerCase().contains(_searchQuery.toLowerCase()) || 
+          t.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          t.id.toLowerCase().contains(_searchQuery.toLowerCase())
+        ).toList();
+
+        if (filteredFaqs.isEmpty && filteredTickets.isEmpty) {
+          return Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
+                Icon(Icons.search_off_rounded, size: 80, color: secondaryTextColor.withOpacity(0.1)),
+                const SizedBox(height: 24),
+                Text('No results found', style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18)),
+                const SizedBox(height: 8),
+                Text('Try searching with different keywords', style: TextStyle(color: secondaryTextColor, fontSize: 14)),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (filteredFaqs.isNotEmpty) ...[
+              _SectionHeader(title: 'Matching FAQs', textColor: textColor),
+              const SizedBox(height: 16),
+              _buildFAQList(filteredFaqs, isLight, cardColor, textColor, secondaryTextColor, divider),
+              const SizedBox(height: 32),
+            ],
+            if (filteredTickets.isNotEmpty) ...[
+              _SectionHeader(title: 'Matching Tickets', textColor: textColor),
+              const SizedBox(height: 16),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredTickets.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) => _TicketCard(
+                  ticket: filteredTickets[index],
+                  isLight: isLight,
+                  cardColor: cardColor,
+                  textColor: textColor,
+                  secondaryTextColor: secondaryTextColor,
+                  divider: divider,
+                  primary: primary,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -235,11 +283,22 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
       ),
       child: TextField(
+        controller: _searchController,
+        onChanged: (v) => setState(() => _searchQuery = v),
         style: TextStyle(color: isLight ? Colors.black : Colors.white, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           hintText: 'search_support_hint'.tr(ref),
           hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 14),
           prefixIcon: Icon(Icons.search_rounded, color: secondaryTextColor.withOpacity(0.7)),
+          suffixIcon: _searchQuery.isNotEmpty 
+            ? IconButton(
+                icon: Icon(Icons.close_rounded, color: secondaryTextColor, size: 20),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
+              )
+            : Icon(Icons.tune_rounded, color: secondaryTextColor.withOpacity(0.7)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -327,13 +386,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
     );
   }
 
-  Widget _buildFAQList(bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider) {
-    final faqs = [
-      {'q': 'How do refunds work?', 'a': 'Refunds are processed to your original payment method within 5-7 business days after the vendor approves the return.'},
-      {'q': 'How can I cancel an order?', 'a': 'You can cancel your order from the My Orders section as long as the vendor hasn\'t started preparing it.'},
-      {'q': 'How long does delivery take?', 'a': 'Delivery times vary by vendor and distance, but most local orders arrive within 30-45 minutes.'},
-    ];
-
+  Widget _buildFAQList(List<Map<String, String>> faqs, bool isLight, Color cardColor, Color textColor, Color secondaryTextColor, Color divider) {
     return Column(
       children: faqs.map((faq) => _FAQTile(
         question: faq['q']!, 

@@ -185,11 +185,13 @@ class CustomerService {
 
     await batch.commit();
 
-    // 5. Update Aggregate Ratings (Calculated after commit to simplify batch)
-    _updateShopRating(shopId, rating);
-    if (riderId != null) _updateRiderRating(riderId, rating);
+    // 5. Update Aggregate Ratings (Await these to ensure they complete)
+    await _updateShopRating(shopId, rating);
+    if (riderId != null) await _updateRiderRating(riderId, rating);
     for (var prodRate in productRatings) {
-      _updateProductRating(prodRate['productId'], prodRate['rating']);
+      final pId = prodRate['productId'] as String;
+      final pRating = (prodRate['rating'] ?? 0.0).toDouble();
+      await _updateProductRating(pId, pRating);
     }
   }
 
@@ -200,14 +202,14 @@ class CustomerService {
       if (!snapshot.exists) return;
       
       double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
-      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      double currentCount = (snapshot.data()?['reviewCount'] ?? 0).toDouble();
       
-      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1.0);
       transaction.update(docRef, {
         'rating': double.parse(avg.toStringAsFixed(1)),
-        'reviewCount': currentCount + 1,
+        'reviewCount': (currentCount + 1).toInt(),
       });
-    });
+    }, maxAttempts: 5);
   }
 
   Future<void> _updateProductRating(String productId, double newRating) async {
@@ -217,14 +219,14 @@ class CustomerService {
       if (!snapshot.exists) return;
       
       double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
-      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      double currentCount = (snapshot.data()?['reviewCount'] ?? 0).toDouble();
       
-      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1.0);
       transaction.update(docRef, {
         'rating': double.parse(avg.toStringAsFixed(1)),
-        'reviewCount': currentCount + 1,
+        'reviewCount': (currentCount + 1).toInt(),
       });
-    });
+    }, maxAttempts: 5);
   }
 
   Future<void> _updateRiderRating(String riderId, double newRating) async {
@@ -234,14 +236,14 @@ class CustomerService {
       if (!snapshot.exists) return;
       
       double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
-      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      double currentCount = (snapshot.data()?['reviewCount'] ?? 0).toDouble();
       
-      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1.0);
       transaction.update(docRef, {
         'rating': double.parse(avg.toStringAsFixed(1)),
-        'reviewCount': currentCount + 1,
+        'reviewCount': (currentCount + 1).toInt(),
       });
-    });
+    }, maxAttempts: 5);
   }
 
   /// Get reviews for a specific product

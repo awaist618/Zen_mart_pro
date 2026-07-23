@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             top: -150,
             right: -150,
             child: _GlowCircle(
-              color: colorScheme.primary.withOpacity(isLight ? 0.08 : 0.05), 
+              color: colorScheme.primary.withValues(alpha: isLight ? 0.08 : 0.05), 
               size: 500
             ),
           ),
@@ -64,18 +63,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       borderRadius: BorderRadius.circular(54),
                       boxShadow: [
                         BoxShadow(
-                          color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.3), 
+                          color: isLight ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.3), 
                           blurRadius: 60, 
                           offset: const Offset(0, 30)
                         ),
                         if (!isLight)
                           BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                             blurRadius: 30,
                             spreadRadius: -10,
                           ),
                       ],
-                      border: Border.all(color: colorScheme.primary.withOpacity(0.15), width: 2),
+                      border: Border.all(color: colorScheme.primary.withValues(alpha: 0.15), width: 2),
                     ),
                     padding: const EdgeInsets.all(32),
                     child: Hero(
@@ -97,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   Text(
                     'Zen Mart Pro',
                     style: TextStyle(
-                      color: colorScheme.onBackground,
+                      color: colorScheme.onSurface,
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
@@ -109,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   Text(
                     'PREMIUM MARKETPLACE',
                     style: TextStyle(
-                      color: colorScheme.primary.withOpacity(0.8),
+                      color: colorScheme.primary.withValues(alpha: 0.8),
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3,
@@ -167,7 +166,7 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
           width: 200,
           height: 4,
           decoration: BoxDecoration(
-            color: isLight ? colorScheme.primary.withOpacity(0.1) : colorScheme.surface,
+            color: isLight ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.surface,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Stack(
@@ -181,7 +180,7 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
                     color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
-                      BoxShadow(color: colorScheme.primary.withOpacity(0.5), blurRadius: 10),
+                      BoxShadow(color: colorScheme.primary.withValues(alpha: 0.5), blurRadius: 10),
                     ],
                   ),
                 ),

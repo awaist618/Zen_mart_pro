@@ -44,13 +44,53 @@ class RiderService {
     });
   }
 
-  /// Update order status
+  /// Update order status and handle post-delivery logic (stock, order counts)
   Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
-    final Map<String, dynamic> data = {'status': status.name};
+    final orderDoc = await _db.collection('orders').doc(orderId).get();
+    if (!orderDoc.exists) return;
+    
+    final order = OrderModel.fromFirestore(orderDoc);
+    final batch = _db.batch();
+
+    // 1. Update Order Status
+    final Map<String, dynamic> statusData = {'status': status.name};
     if (status == OrderStatus.delivered) {
-      data['deliveredAt'] = FieldValue.serverTimestamp();
+      statusData['deliveredAt'] = FieldValue.serverTimestamp();
     }
-    await _db.collection('orders').doc(orderId).update(data);
+    batch.update(_db.collection('orders').doc(orderId), statusData);
+
+    // 2. Handle Logic when order is DELIVERED
+    if (status == OrderStatus.delivered) {
+      // Update Shop stats
+      batch.update(_db.collection('shops').doc(order.shopId), {
+        'activeOrders': FieldValue.increment(-1),
+      });
+
+      // Update Products (Stock Decrease & Order Count Increase)
+      for (var item in order.items) {
+        final productId = item['productId'];
+        final quantity = (item['quantity'] ?? 1) as int;
+        
+        batch.update(_db.collection('products').doc(productId), {
+          'stock': FieldValue.increment(-quantity),
+          'soldQuantity': FieldValue.increment(quantity),
+          'orderCount': FieldValue.increment(1), // Total times this product was ordered
+        });
+      }
+    }
+
+    // 3. Handle Logic when order is CANCELLED/REJECTED (if it was previously active)
+    if (status == OrderStatus.cancelled || status == OrderStatus.rejected) {
+      if (order.status != OrderStatus.delivered && 
+          order.status != OrderStatus.cancelled && 
+          order.status != OrderStatus.rejected) {
+        batch.update(_db.collection('shops').doc(order.shopId), {
+          'activeOrders': FieldValue.increment(-1),
+        });
+      }
+    }
+
+    await batch.commit();
   }
 
   /// Get active tasks for a rider

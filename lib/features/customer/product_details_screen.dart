@@ -22,6 +22,10 @@ class ProductDetailsScreen extends ConsumerWidget {
     final isWishlisted = wishlist.any((p) => p.id == product.id);
     final reviewsAsync = ref.watch(productReviewsProvider(product.id));
 
+    // Watch real-time product data for live updates on ratings and order count
+    final liveProductAsync = ref.watch(productDetailProvider(product.id));
+    final liveProduct = liveProductAsync.asData?.value ?? product;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
@@ -39,26 +43,26 @@ class ProductDetailsScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _Badge(label: product.category, color: colorScheme.primary),
+                          _Badge(label: liveProduct.category, color: colorScheme.primary),
                           _RatingBadge(
-                            rating: product.rating.toStringAsFixed(1), 
-                            count: product.reviewCount.toString(),
-                            onTap: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
+                            rating: liveProduct.rating.toStringAsFixed(1), 
+                            count: liveProduct.reviewCount.toString(),
+                            onTap: () => context.push('/customer/product-reviews/${liveProduct.id}/${liveProduct.name}'),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        product.name,
+                        liveProduct.name,
                         style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${'by'.tr(ref)} ${product.brand}',
+                        '${'by'.tr(ref)} ${liveProduct.brand}',
                         style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 32),
-                      _PriceSection(price: product.price, discount: product.discount),
+                      _PriceSection(price: liveProduct.price, discount: liveProduct.discount),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Divider(color: colorScheme.outline.withValues(alpha: 0.1)),
@@ -68,7 +72,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                         children: [
                           _StatItem(
                             icon: Icons.local_mall_rounded,
-                            label: '${'ordered'.tr(ref)} ${product.orderCount} ${'times'.tr(ref)}',
+                            label: '${'ordered'.tr(ref)} ${liveProduct.orderCount} ${'times'.tr(ref)}',
                             color: colorScheme.primary,
                           ),
                           const SizedBox(width: 24),
@@ -84,14 +88,14 @@ class ProductDetailsScreen extends ConsumerWidget {
                       Text('description'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
                       const SizedBox(height: 12),
                       Text(
-                        product.description,
+                        liveProduct.description,
                         style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), height: 1.7, fontSize: 15, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 40),
-                      _StockCard(stock: product.stock),
+                      _StockCard(stock: liveProduct.stock),
                       const SizedBox(height: 48),
                       
-                      _buildReviewsHeader(context, ref),
+                      _buildReviewsHeader(context, ref, liveProduct),
                       const SizedBox(height: 20),
                       _buildReviewsList(ref, reviewsAsync, textColor: colorScheme.onBackground, secondaryColor: colorScheme.onSurface),
                     ],
@@ -112,14 +116,14 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReviewsHeader(BuildContext context, WidgetRef ref) {
+  Widget _buildReviewsHeader(BuildContext context, WidgetRef ref, ProductModel liveProduct) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text('customer_reviews'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onBackground)),
-        if (product.reviewCount > 0)
+        if (liveProduct.reviewCount > 0)
           TextButton(
-            onPressed: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
+            onPressed: () => context.push('/customer/product-reviews/${liveProduct.id}/${liveProduct.name}'),
             child: Text('view_all'.tr(ref), style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
           ),
       ],

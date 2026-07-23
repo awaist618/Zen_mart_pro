@@ -54,13 +54,16 @@ class OrderService {
         'revenue': FieldValue.increment(order.totalAmount - order.deliveryFee),
       });
 
-      // 4.5 Side Effect: Update Product Order Counts
+      // 4.5 Side Effect: Update Product Stats (Stock, Sold, Order Count)
       for (var item in order.items) {
         final productId = item['productId'];
         if (productId != null) {
           final prodRef = _db.collection('products').doc(productId);
+          final quantity = (item['quantity'] ?? 1) as int;
           batch.update(prodRef, {
-            'orderCount': FieldValue.increment(item['quantity'] ?? 1),
+            'stock': FieldValue.increment(-quantity),
+            'soldQuantity': FieldValue.increment(quantity),
+            'orderCount': FieldValue.increment(1),
           });
         }
       }
@@ -75,6 +78,7 @@ class OrderService {
     try {
       await batch.commit();
     } catch (e) {
+      debugPrint("CRITICAL: Order side-effects failed: $e");
       // Fallback: Try updating only the order status if the batch fails due to permissions on other collections
       await orderRef.update(updateData);
     }

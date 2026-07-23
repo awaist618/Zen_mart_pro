@@ -54,44 +54,58 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
     final ordersAsync = ref.watch(allShopOrdersProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Order Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Order Management', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: false,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
+          preferredSize: const Size.fromHeight(110),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+                    boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
                   ),
                   child: TextField(
                     onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                    decoration: const InputDecoration(
-                      hintText: 'Search Order ID or Name...',
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurface, fontWeight: FontWeight.w600),
+                    decoration: InputDecoration(
+                      hintText: 'Search order ID or name...',
+                      hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 13),
+                      prefixIcon: Icon(Icons.search_rounded, size: 20, color: colorScheme.primary),
                       border: InputBorder.none,
-                      icon: Icon(Icons.search, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
               TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                labelColor: const Color(0xFF8B5CF6),
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: const Color(0xFF8B5CF6),
+                labelColor: colorScheme.primary,
+                unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
+                indicatorColor: colorScheme.primary,
                 indicatorWeight: 3,
+                indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Colors.transparent,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 tabs: _tabLabels.map((label) => Tab(text: label)).toList(),
               ),
             ],
@@ -100,6 +114,7 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const BouncingScrollPhysics(),
         children: List.generate(_tabLabels.length, (index) {
           return ordersAsync.when(
             data: (orders) {
@@ -116,8 +131,9 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
               }
 
               return ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 itemCount: filtered.length,
+                physics: const BouncingScrollPhysics(),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (context, index) => _OrderCard(order: filtered[index]),
               );
@@ -138,39 +154,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.withOpacity(0.5)),
+          Icon(Icons.receipt_long_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.05)),
           const SizedBox(height: 16),
-          Text('No $label orders found', style: const TextStyle(color: Colors.grey)),
+          Text('No $label orders found', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _StatusChip({required this.label, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        selectedColor: const Color(0xFF8B5CF6),
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.black,
-          fontSize: 12,
-        ),
       ),
     );
   }
@@ -182,98 +174,105 @@ class _OrderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '#${order.id.substring(0, 8).toUpperCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-              _buildStatusBadge(order.status),
-            ],
-          ),
-          const Divider(height: 24),
-          Text(
-            order.customerName,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${order.items.length} items • Rs ${order.totalAmount}',
-            style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                DateFormat('MMM dd, h:mm a').format(order.createdAt),
-                style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
-              ),
-              TextButton(
-                onPressed: () => context.push('/vendor/order-details/${order.id}'),
-                child: const Text('View Details'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
-  Widget _buildStatusBadge(OrderStatus status) {
-    Color color;
-    switch (status) {
-      case OrderStatus.pending: color = Colors.orange; break;
-      case OrderStatus.preparing: color = Colors.blue; break;
-      case OrderStatus.confirmed: color = Colors.green; break;
-      case OrderStatus.cancelled:
-      case OrderStatus.rejected: color = Colors.red; break;
-      default: color = Colors.purple;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        status.name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+    return InkWell(
+      onTap: () => context.push('/vendor/order-details/${order.id}'),
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))] : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '#${order.id.substring(0, 8).toUpperCase()}',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: colorScheme.primary, letterSpacing: 0.5),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('MMM dd • h:mm a').format(order.createdAt),
+                      style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                _StatusBadge(status: order.status),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Divider(height: 1, color: colorScheme.outline.withOpacity(0.1)),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 18),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.customerName,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      ),
+                      Text(
+                        '${order.items.length} Items • Rs ${order.totalAmount.round()}',
+                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurface.withOpacity(0.1), size: 14),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _SmallActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SmallActionButton({required this.icon, required this.label, required this.onTap});
+class _StatusBadge extends StatelessWidget {
+  final OrderStatus status;
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.black.withOpacity(0.4)),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.6))),
-        ],
+    Color color;
+    switch (status) {
+      case OrderStatus.pending: color = AppColors.warning; break;
+      case OrderStatus.preparing: color = AppColors.info; break;
+      case OrderStatus.confirmed: color = AppColors.success; break;
+      case OrderStatus.cancelled:
+      case OrderStatus.rejected: color = AppColors.error; break;
+      default: color = Colors.purple;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.name.toUpperCase(),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
     );
   }

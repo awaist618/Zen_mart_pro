@@ -10,16 +10,23 @@ class VendorNotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
     final notificationsAsync = ref.watch(vendorNotificationsProvider);
     final user = ref.watch(userModelProvider).asData?.value;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Vendor Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Vendor Notifications', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: notificationsAsync.when(
         data: (notifications) {
@@ -28,20 +35,29 @@ class VendorNotificationsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: Colors.grey.withOpacity(0.5)),
-                  const SizedBox(height: 16),
-                  const Text('No alerts for your shop yet', style: TextStyle(color: Colors.grey)),
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.05), shape: BoxShape.circle),
+                    child: Icon(Icons.notifications_none_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.1)),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('No alerts yet', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text('We\'ll notify you about orders and stock.', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
                 ],
               ),
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) => _VendorNotificationTile(
+            itemBuilder: (context, index) => _VendorNotificationCard(
               notification: notifications[index],
               vendorId: user?.uid ?? '',
+              colorScheme: colorScheme,
+              isLight: isLight,
             ),
           );
         },
@@ -52,36 +68,32 @@ class VendorNotificationsScreen extends ConsumerWidget {
   }
 }
 
-class _VendorNotificationTile extends ConsumerWidget {
+class _VendorNotificationCard extends ConsumerWidget {
   final VendorNotificationModel notification;
   final String vendorId;
-  const _VendorNotificationTile({required this.notification, required this.vendorId});
+  final ColorScheme colorScheme;
+  final bool isLight;
+  const _VendorNotificationCard({required this.notification, required this.vendorId, required this.colorScheme, required this.isLight});
 
   IconData _getIcon() {
     switch (notification.type) {
       case VendorNotificationType.newOrder: return Icons.shopping_bag_rounded;
       case VendorNotificationType.orderCancelled: return Icons.cancel_schedule_send_rounded;
-      case VendorNotificationType.newReview: return Icons.rate_review_rounded;
+      case VendorNotificationType.newReview: return Icons.forum_rounded;
       case VendorNotificationType.lowStock: return Icons.warning_amber_rounded;
       case VendorNotificationType.shopApproved: return Icons.verified_user_rounded;
-      case VendorNotificationType.bannerUpdated: return Icons.photo_library_rounded;
-      case VendorNotificationType.couponExpired: return Icons.confirmation_number_rounded;
-      case VendorNotificationType.systemAnnouncement: return Icons.campaign_rounded;
       default: return Icons.notifications_rounded;
     }
   }
 
   Color _getColor() {
     switch (notification.type) {
-      case VendorNotificationType.newOrder: return Colors.green;
-      case VendorNotificationType.orderCancelled: return Colors.red;
-      case VendorNotificationType.newReview: return Colors.blue;
-      case VendorNotificationType.lowStock: return Colors.orange;
-      case VendorNotificationType.shopApproved: return Colors.purple;
-      case VendorNotificationType.bannerUpdated: return Colors.teal;
-      case VendorNotificationType.couponExpired: return Colors.brown;
-      case VendorNotificationType.systemAnnouncement: return Colors.indigo;
-      default: return const Color(0xFF8B5CF6); // Vendor Primary
+      case VendorNotificationType.newOrder: return AppColors.success;
+      case VendorNotificationType.orderCancelled: return AppColors.error;
+      case VendorNotificationType.newReview: return Colors.purple;
+      case VendorNotificationType.lowStock: return AppColors.warning;
+      case VendorNotificationType.shopApproved: return Colors.blue;
+      default: return colorScheme.primary;
     }
   }
 
@@ -95,38 +107,33 @@ class _VendorNotificationTile extends ConsumerWidget {
       },
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(24)),
+        child: const Icon(Icons.delete_sweep_rounded, color: AppColors.error),
       ),
       child: InkWell(
         onTap: () {
           if (!notification.isRead) {
             ref.read(vendorServiceProvider).markAsRead(vendorId, notification.id);
           }
-          // TODO: Navigate to Order Details, Inventory, or Reviews based on type
         },
-        child: Container(
-          padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(28),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: notification.isRead ? Colors.white : const Color(0xFF8B5CF6).withOpacity(0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: notification.isRead 
-                ? Border.all(color: Colors.grey.withOpacity(0.1)) 
-                : Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.2)),
-            boxShadow: [
-              if (notification.isRead)
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
+            color: notification.isRead ? colorScheme.surface : colorScheme.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: notification.isRead ? colorScheme.outline.withOpacity(0.1) : colorScheme.primary.withOpacity(0.2)
+            ),
+            boxShadow: isLight && notification.isRead ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _getColor().withOpacity(0.1),
                   shape: BoxShape.circle,
@@ -144,36 +151,27 @@ class _VendorNotificationTile extends ConsumerWidget {
                         Text(
                           notification.title,
                           style: TextStyle(
-                            fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.bold,
+                            fontWeight: FontWeight.w800,
                             fontSize: 15,
-                            color: const Color(0xFF1E293B),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           DateFormat('h:mm a').format(notification.timestamp),
-                          style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       notification.message,
                       style: TextStyle(
-                        color: Colors.black.withOpacity(0.6),
+                        color: colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 13,
-                        height: 1.4,
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    if (!notification.isRead)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
                   ],
                 ),
               ),

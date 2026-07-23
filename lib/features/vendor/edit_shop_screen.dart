@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
 
 class EditShopScreen extends ConsumerStatefulWidget {
@@ -59,13 +60,13 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Shop updated successfully'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Shop updated successfully'), backgroundColor: AppColors.success),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -75,53 +76,64 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
     final shop = ref.watch(currentShopProvider).asData?.value;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Store Profile', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Store Profile', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Banner & Logo Edit
-              _buildImagePickers(shop),
+              _buildImagePickers(shop, colorScheme, isLight),
+              const SizedBox(height: 48),
+              
+              _buildSectionHeader('BASIC INFORMATION', colorScheme),
+              const SizedBox(height: 16),
+              _buildModernField(_nameController, 'Store Name', Icons.storefront_rounded, colorScheme, isLight),
+              const SizedBox(height: 16),
+              _buildModernField(_descController, 'Store Description', Icons.description_rounded, colorScheme, isLight, maxLines: 4),
+              
               const SizedBox(height: 32),
-              
-              const Text('Basic Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              _buildSectionHeader('CONTACT & LOGISTICS', colorScheme),
               const SizedBox(height: 16),
-              _buildTextField(_nameController, 'Store Name', Icons.storefront_rounded),
-              _buildTextField(_descController, 'Store Description', Icons.description_outlined, maxLines: 3),
-              
-              const SizedBox(height: 24),
-              const Text('Contact & Logistics', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              _buildModernField(_phoneController, 'Public Contact Number', Icons.phone_rounded, colorScheme, isLight, keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
-              _buildTextField(_phoneController, 'Public Contact Number', Icons.phone_outlined),
-              _buildTextField(_addressController, 'Store Physical Address', Icons.location_on_outlined),
-              _buildTextField(_hoursController, 'Opening Hours (e.g. 9 AM - 10 PM)', Icons.access_time_rounded),
+              _buildModernField(_addressController, 'Store Physical Address', Icons.location_on_rounded, colorScheme, isLight),
+              const SizedBox(height: 16),
+              _buildModernField(_hoursController, 'Opening Hours (e.g. 9 AM - 10 PM)', Icons.access_time_filled_rounded, colorScheme, isLight),
               
+              const SizedBox(height: 48),
+              _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 64),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 0,
+                    ),
+                    child: const Text('SAVE STORE PROFILE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  ),
               const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.vendor,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: _isLoading 
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Save Store Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -129,7 +141,7 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
     );
   }
 
-  Widget _buildImagePickers(dynamic shop) {
+  Widget _buildImagePickers(dynamic shop, ColorScheme colorScheme, bool isLight) {
     return Column(
       children: [
         Stack(
@@ -138,42 +150,44 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
             GestureDetector(
               onTap: () => _uploadImage(isBanner: true, shopId: shop?.id),
               child: Container(
-                height: 150,
+                height: 160,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(20),
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
                   image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop.bannerImage!), fit: BoxFit.cover) : null,
+                  boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
                 ),
-                child: shop?.bannerImage == null ? const Center(child: Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 40)) : null,
+                child: shop?.bannerImage == null ? Center(child: Icon(Icons.add_photo_alternate_rounded, color: colorScheme.primary.withOpacity(0.3), size: 40)) : null,
               ),
             ),
             Positioned(
-              bottom: -30,
+              bottom: -40,
               left: 20,
               child: GestureDetector(
                 onTap: () => _uploadImage(isBanner: false, shopId: shop?.id),
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: colorScheme.background, shape: BoxShape.circle),
                   child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: shop?.logoUrl != null ? NetworkImage(shop.logoUrl!) : null,
-                    child: shop?.logoUrl == null ? const Icon(Icons.store, color: Colors.grey) : null,
+                    radius: 46,
+                    backgroundColor: colorScheme.primary.withOpacity(0.1),
+                    backgroundImage: (shop?.logoUrl != null && shop!.logoUrl!.isNotEmpty) ? NetworkImage(shop.logoUrl!) : null,
+                    child: (shop?.logoUrl == null || shop!.logoUrl!.isEmpty) ? Icon(Icons.storefront_rounded, color: colorScheme.primary, size: 40) : null,
                   ),
                 ),
               ),
             ),
             Positioned(
-              top: 10,
-              right: 10,
+              top: 12,
+              right: 12,
               child: GestureDetector(
                 onTap: () => _uploadImage(isBanner: true, shopId: shop?.id),
-                child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.5),
-                  radius: 18,
-                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
                 ),
               ),
             ),
@@ -185,42 +199,61 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
 
   Future<void> _uploadImage({required bool isBanner, String? shopId}) async {
     if (shopId == null) return;
-
     final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
       context: context, 
       folder: isBanner ? 'shop_banners' : 'shop_logos',
       source: ImageSource.gallery,
     );
-    
     if (url != null) {
       if (isBanner) {
         await ref.read(vendorServiceProvider).updateShopBanner(shopId, url);
       } else {
         await ref.read(vendorServiceProvider).updateShopLogo(shopId, url);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${isBanner ? 'Banner' : 'Logo'} updated successfully!')),
-        );
-      }
     }
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+  Widget _buildSectionHeader(String title, ColorScheme colorScheme) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: colorScheme.primary.withOpacity(0.7),
+        fontSize: 11,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildModernField(TextEditingController controller, String label, IconData icon, ColorScheme colorScheme, bool isLight, {int maxLines = 1, TextInputType? keyboardType}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+      ),
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.withOpacity(0.3))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.withOpacity(0.3))),
+          labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+          prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
-        validator: (v) => v!.isEmpty ? 'This field is required' : null,
+        validator: (v) => v!.isEmpty ? 'Required field' : null,
       ),
     );
   }

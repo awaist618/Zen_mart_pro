@@ -10,23 +10,35 @@ class VendorSalesAnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text('Sales Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
+          title: const Text('Sales Analytics', style: TextStyle(fontWeight: FontWeight.w900)),
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          foregroundColor: Colors.black,
-          bottom: const TabBar(
-            labelColor: Color(0xFF8B5CF6),
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Color(0xFF8B5CF6),
-            tabs: [
-              Tab(text: 'Daily'),
-              Tab(text: 'Weekly'),
-              Tab(text: 'Monthly'),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+            onPressed: () => Navigator.pop(context),
+          ),
+          bottom: TabBar(
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: colorScheme.onSurface.withOpacity(0.4),
+            indicatorColor: colorScheme.primary,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: Colors.transparent,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            tabs: const [
+              Tab(text: 'DAILY'),
+              Tab(text: 'WEEKLY'),
+              Tab(text: 'MONTHLY'),
             ],
           ),
         ),
@@ -42,19 +54,23 @@ class VendorSalesAnalyticsScreen extends ConsumerWidget {
   }
 }
 
-class _SalesTabContent extends StatelessWidget {
+class _SalesTabContent extends ConsumerWidget {
   final String period;
   const _SalesTabContent({required this.period});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Performance Summary
-          const Text('Performance Summary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          _SectionHeader(title: 'PERFORMANCE SUMMARY', color: colorScheme.primary),
           const SizedBox(height: 16),
           GridView.count(
             crossAxisCount: 2,
@@ -63,31 +79,57 @@ class _SalesTabContent extends StatelessWidget {
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
             childAspectRatio: 1.4,
-            children: const [
-              _AnalyticsStatCard(title: 'Revenue', value: 'Rs 18,420', icon: Icons.payments_outlined, color: Colors.green),
-              _AnalyticsStatCard(title: 'Orders', value: '24', icon: Icons.shopping_bag_outlined, color: Colors.blue),
-              _AnalyticsStatCard(title: 'Products Sold', value: '156', icon: Icons.inventory_2_outlined, color: Colors.orange),
-              _AnalyticsStatCard(title: 'Avg Order', value: 'Rs 768', icon: Icons.analytics_outlined, color: Colors.purple),
+            children: [
+              _AnalyticsStatCard(title: 'Revenue', value: 'Rs 18.4k', icon: Icons.payments_rounded, color: AppColors.success, colorScheme: colorScheme, isLight: isLight),
+              _AnalyticsStatCard(title: 'Orders', value: '24', icon: Icons.shopping_bag_rounded, color: AppColors.info, colorScheme: colorScheme, isLight: isLight),
+              _AnalyticsStatCard(title: 'Items Sold', value: '156', icon: Icons.inventory_2_rounded, color: Colors.orange, colorScheme: colorScheme, isLight: isLight),
+              _AnalyticsStatCard(title: 'Avg Value', value: 'Rs 768', icon: Icons.insights_rounded, color: Colors.purple, colorScheme: colorScheme, isLight: isLight),
             ],
           ),
           
-          const SizedBox(height: 32),
-          const Text('Revenue Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 40),
+          _SectionHeader(title: 'REVENUE TREND', color: colorScheme.primary),
           const SizedBox(height: 16),
           
-          // Chart
           Container(
-            height: 240,
-            padding: const EdgeInsets.all(20),
+            height: 260,
+            padding: const EdgeInsets.fromLTRB(10, 24, 24, 20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)],
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
             ),
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
+                gridData: FlGridData(
+                  show: true, 
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (v) => FlLine(color: colorScheme.outline.withOpacity(0.05), strokeWidth: 1),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (v, meta) => Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text('${v.toInt()}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (v, meta) => Text('${v.toInt()}k', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
@@ -100,21 +142,30 @@ class _SalesTabContent extends StatelessWidget {
                       const FlSpot(10, 6.5),
                     ],
                     isCurved: true,
-                    color: const Color(0xFF8B5CF6),
+                    color: colorScheme.primary,
                     barWidth: 4,
-                    belowBarData: BarAreaData(show: true, color: const Color(0xFF8B5CF6).withOpacity(0.1)),
+                    isStrokeCapRound: true,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true, 
+                      gradient: LinearGradient(
+                        colors: [colorScheme.primary.withOpacity(0.2), colorScheme.primary.withOpacity(0)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 32),
-          const Text('Best Selling Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 40),
+          _SectionHeader(title: 'BEST SELLING PRODUCTS', color: colorScheme.primary),
           const SizedBox(height: 16),
-          _TopProductTile(name: 'Fresh Milk 1L', sales: '45 sales', revenue: 'Rs 9,000'),
-          _TopProductTile(name: 'Bread Wheat Large', sales: '32 sales', revenue: 'Rs 4,800'),
-          _TopProductTile(name: 'Eggs (Dozen)', sales: '28 sales', revenue: 'Rs 8,400'),
+          _TopProductTile(name: 'Fresh Milk 1L', sales: '45 sales', revenue: 'Rs 9,000', colorScheme: colorScheme, isLight: isLight),
+          _TopProductTile(name: 'Bread Wheat Large', sales: '32 sales', revenue: 'Rs 4,800', colorScheme: colorScheme, isLight: isLight),
+          _TopProductTile(name: 'Eggs (Dozen)', sales: '28 sales', revenue: 'Rs 8,400', colorScheme: colorScheme, isLight: isLight),
           
           const SizedBox(height: 40),
         ],
@@ -123,29 +174,45 @@ class _SalesTabContent extends StatelessWidget {
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
+  @override
+  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 4), Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color.withOpacity(0.6), letterSpacing: 2))]);
+}
+
 class _AnalyticsStatCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
   final Color color;
+  final ColorScheme colorScheme;
+  final bool isLight;
 
-  const _AnalyticsStatCard({required this.title, required this.value, required this.icon, required this.color});
+  const _AnalyticsStatCard({required this.title, required this.value, required this.icon, required this.color, required this.colorScheme, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 5))] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: color, size: 18),
+          ),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          Text(title.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: colorScheme.onSurface.withOpacity(0.4), letterSpacing: 0.5)),
         ],
       ),
     );
@@ -156,33 +223,41 @@ class _TopProductTile extends StatelessWidget {
   final String name;
   final String sales;
   final String revenue;
+  final ColorScheme colorScheme;
+  final bool isLight;
 
-  const _TopProductTile({required this.name, required this.sales, required this.revenue});
+  const _TopProductTile({required this.name, required this.sales, required this.revenue, required this.colorScheme, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+      ),
       child: Row(
         children: [
           Container(
             width: 48, height: 48,
-            decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF8B5CF6)),
+            decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+            child: Icon(Icons.inventory_2_rounded, color: colorScheme.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(sales, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12)),
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(sales.toUpperCase(), style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
               ],
             ),
           ),
-          Text(revenue, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+          Text(revenue, style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.success, fontSize: 14)),
         ],
       ),
     );

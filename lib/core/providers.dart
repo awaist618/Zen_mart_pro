@@ -218,6 +218,13 @@ final shopProductsByIdProvider = StreamProvider.family<List<ProductModel>, Strin
   return ref.watch(customerServiceProvider).getShopProducts(shopId);
 });
 
+final productDetailProvider = StreamProvider.family<ProductModel?, String>((ref, productId) {
+  return FirebaseFirestore.instance.collection('products').doc(productId).snapshots().map((doc) {
+    if (doc.exists) return ProductModel.fromFirestore(doc);
+    return null;
+  });
+});
+
 final categoryShopsProvider = StreamProvider.family<List<ShopModel>, String>((ref, category) {
   return ref.watch(customerServiceProvider).getCategoryShops(category);
 });

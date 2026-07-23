@@ -244,7 +244,7 @@ class _AdminTicketCard extends ConsumerWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isResolved ? Colors.grey[600] : Colors.black87,
+                    color: isResolved ? Colors.grey[600] : Colors.black.withOpacity(0.87),
                   ),
                 ),
                 const SizedBox(height: 4),
