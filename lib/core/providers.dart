@@ -198,6 +198,15 @@ final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
   return ref.watch(customerServiceProvider).getNearbyShops();
 });
 
+final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  return FirebaseFirestore.instance
+      .collection('products')
+      .where('isAvailable', isEqualTo: true)
+      .limit(10) // Simplistic "Trending" - just get 10 available products
+      .snapshots()
+      .map((s) => s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+});
+
 final allCategoriesProvider = StreamProvider<List<String>>((ref) {
   return ref.watch(customerServiceProvider).getAllCategories();
 });
@@ -490,3 +499,84 @@ class CartNotifier extends StateNotifier<CartModel> {
 final cartProvider = StateNotifierProvider<CartNotifier, CartModel>((ref) {
   return CartNotifier();
 });
+
+// --- VENDOR ANALYTICS PROVIDERS ---
+final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>, String>((ref, period) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.shopId == null) return Stream.value({});
+  
+  return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!).map((orders) {
+    final now = DateTime.now();
+    DateTime start;
+    if (period == 'Daily') {
+      start = DateTime(now.year, now.month, now.day);
+    } else if (period == 'Weekly') {
+      start = now.subtract(Duration(days: now.weekday - 1));
+      start = DateTime(start.year, start.month, start.day);
+    } else {
+      start = DateTime(now.year, now.month, 1);
+    }
+    
+    final filtered = orders.where((o) => o.createdAt.isAfter(start)).toList();
+    
+    double revenue = 0;
+    int itemsSold = 0;
+    Map<String, Map<String, dynamic>> productStats = {};
+    Map<int, double> chartMap = {};
+    
+    for (var o in filtered) {
+      if (o.status == OrderStatus.delivered) {
+        final amount = o.totalAmount - o.deliveryFee;
+        revenue += amount;
+        
+        // Items & Product Stats
+        for (var item in o.items) {
+          final pid = item['productId'] as String?;
+          if (pid == null) continue;
+          final qty = (item['quantity'] ?? 1) as int;
+          final price = (item['price'] ?? 0.0).toDouble();
+          itemsSold += qty;
+          
+          productStats.putIfAbsent(pid, () => {
+            'name': item['name'] ?? 'Product',
+            'sales': 0,
+            'revenue': 0.0,
+          });
+          productStats[pid]!['sales'] = (productStats[pid]!['sales'] as int) + qty;
+          productStats[pid]!['revenue'] = (productStats[pid]!['revenue'] as double) + (price * qty);
+        }
+
+        // Chart Logic
+        int key;
+        if (period == 'Daily') {
+          key = o.createdAt.hour;
+        } else if (period == 'Weekly') {
+          key = o.createdAt.weekday;
+        } else {
+          key = o.createdAt.day;
+        }
+        chartMap[key] = (chartMap[key] ?? 0) + amount;
+      }
+    }
+    
+    final topProducts = productStats.values.toList();
+    topProducts.sort((a, b) => (b['sales'] as int).compareTo(a['sales'] as int));
+    
+    // Zero-fill the chart map for a continuous line
+    int maxPoints = period == 'Daily' ? 23 : (period == 'Weekly' ? 7 : 31);
+    int minPoint = period == 'Weekly' ? 1 : 0;
+    for (int i = minPoint; i <= maxPoints; i++) {
+      chartMap.putIfAbsent(i, () => 0.0);
+    }
+    
+    return {
+      'revenue': revenue,
+      'orders': filtered.length,
+      'itemsSold': itemsSold,
+      'avgValue': filtered.isEmpty ? 0.0 : revenue / filtered.length,
+      'topProducts': topProducts.take(5).toList(),
+      'chartMap': chartMap,
+    };
+  });
+});
+

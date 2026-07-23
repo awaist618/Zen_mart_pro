@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 
@@ -53,29 +53,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.dialog,
+        backgroundColor: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Reset Password', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text('Reset Password', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Enter your email address to receive a recovery link.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
             ),
             const SizedBox(height: 24),
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
                 hintText: 'Recovery Email',
-                prefixIcon: Icon(Icons.mail_rounded, size: 20),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                prefixIcon: const Icon(Icons.mail_rounded, size: 20, color: AppColors.premiumDarkPrimary),
+                fillColor: const Color(0xFF0B1120).withValues(alpha: 0.5),
+                filled: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL', style: TextStyle(color: AppColors.textHint))),
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('CANCEL', style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))
+          ),
           ElevatedButton(
             onPressed: () async {
               if (emailController.text.isEmpty) return;
@@ -95,7 +103,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.premiumDarkPrimary,
+              minimumSize: const Size(100, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: const Text('SEND'),
           ),
         ],
@@ -105,12 +117,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF0B1120),
       body: Stack(
         children: [
           Positioned(
@@ -122,7 +130,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [colorScheme.primary.withOpacity(isLight ? 0.08 : 0.05), Colors.transparent],
+                  colors: [
+                    AppColors.premiumDarkPrimary.withValues(alpha: 0.1),
+                    Colors.transparent
+                  ],
                 ),
               ),
             ),
@@ -138,10 +149,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
                       style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.1)) : null,
+                        backgroundColor: const Color(0xFF1E293B).withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -153,21 +164,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: colorScheme.surface,
+                              color: const Color(0xFF1E293B).withValues(alpha: 0.4),
                               borderRadius: BorderRadius.circular(40),
-                              boxShadow: isLight ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06), 
-                                  blurRadius: 30, 
-                                  offset: const Offset(0, 15)
-                                )
-                              ] : [
-                                BoxShadow(
-                                  color: colorScheme.primary.withOpacity(0.05),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                              border: Border.all(color: colorScheme.primary.withOpacity(0.1), width: 1.5),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                             ),
                             padding: const EdgeInsets.all(24),
                             child: Hero(
@@ -175,19 +174,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: Image.asset(
                                 'assets/images/image.png',
                                 fit: BoxFit.contain,
-                                errorBuilder: (c, e, s) => Icon(Icons.auto_awesome_mosaic_rounded, color: colorScheme.primary, size: 48),
+                                errorBuilder: (c, e, s) => const Icon(Icons.auto_awesome_mosaic_rounded, color: AppColors.premiumDarkPrimary, size: 48),
                               ),
                             ),
                           ),
                           const SizedBox(height: 32),
                           Text(
                             'Welcome Back',
-                            style: TextStyle(color: colorScheme.onBackground, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -1,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Access your premium marketplace',
-                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 16, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -195,31 +203,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     const SizedBox(height: 60),
 
-                    TextFormField(
+                    _buildTextField(
                       controller: _emailController,
+                      hint: 'Email Address',
+                      icon: Icons.email_rounded,
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) => v!.isEmpty ? 'Email is required' : null,
-                      decoration: const InputDecoration(
-                        hintText: 'Email Address',
-                        prefixIcon: Icon(Icons.email_rounded, size: 20),
-                      ),
                     ),
                     const SizedBox(height: 20),
-                    TextFormField(
+                    _buildTextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      hint: 'Password',
+                      icon: Icons.lock_rounded,
+                      isPassword: true,
                       validator: (v) => v!.isEmpty ? 'Password is required' : null,
-                      decoration: const InputDecoration(
-                        hintText: 'Password',
-                        prefixIcon: Icon(Icons.lock_rounded, size: 20),
-                      ),
                     ),
                     
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: _showForgotPasswordDialog,
-                        child: Text('Forgot Password?', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w700)),
+                        child: Text(
+                          'Forgot Password?',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppColors.premiumDarkPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -227,9 +237,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     ElevatedButton(
                       onPressed: _isLoading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.premiumDarkPrimary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 64),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 0,
+                      ),
                       child: _isLoading
-                          ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: isLight ? Colors.white : AppColors.background, strokeWidth: 3))
-                          : const Text('SIGN IN'),
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                            )
+                          : const Text('SIGN IN', style: TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
                     ),
 
                     const SizedBox(height: 40),
@@ -239,13 +260,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onTap: () => context.push('/signup'),
                         child: RichText(
                           text: TextSpan(
-                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                             children: [
                               const TextSpan(text: "Don't have an account? "),
                               TextSpan(
                                 text: 'Sign Up',
                                 style: TextStyle(
-                                  color: colorScheme.primary,
+                                  color: AppColors.premiumDarkPrimary,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -262,8 +287,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           Text(
                             'POWERED BY',
-                            style: TextStyle(
-                              color: colorScheme.onSurface.withOpacity(0.15),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.15),
                               fontSize: 10,
                               letterSpacing: 2,
                               fontWeight: FontWeight.w900,
@@ -272,8 +297,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 6),
                           Text(
                             'Zenvyro Labs',
-                            style: TextStyle(
-                              color: colorScheme.onSurface.withOpacity(0.4),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.4),
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
                             ),
@@ -288,6 +313,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.premiumDarkPrimary),
+        filled: true,
+        fillColor: const Color(0xFF1E293B).withValues(alpha: 0.4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppColors.premiumDarkPrimary, width: 1.5),
+        ),
       ),
     );
   }

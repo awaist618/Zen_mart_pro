@@ -218,7 +218,7 @@ class _RiderKpiGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.1,
       children: [
         _KpiCard(
           title: 'Active Tasks',
@@ -275,7 +275,7 @@ class _KpiCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white, 
           borderRadius: BorderRadius.circular(24), 
@@ -283,23 +283,34 @@ class _KpiCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              padding: const EdgeInsets.all(8), 
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), 
-              child: Icon(icon, color: color, size: 18)
+              padding: const EdgeInsets.all(6), 
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)), 
+              child: Icon(icon, color: color, size: 16)
             ),
-            const Spacer(),
-            Text(
-              value, 
-              maxLines: 1, 
-              overflow: TextOverflow.ellipsis, 
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))
-            ),
-            const SizedBox(height: 2),
-            Text(
-              title, 
-              style: TextStyle(fontSize: 10, color: Colors.black.withValues(alpha: 0.5), fontWeight: FontWeight.w700)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value, 
+                    maxLines: 1, 
+                    overflow: TextOverflow.ellipsis, 
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title, 
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 9, color: Colors.black.withValues(alpha: 0.5), fontWeight: FontWeight.w700)
+                ),
+              ],
             ),
           ],
         ),

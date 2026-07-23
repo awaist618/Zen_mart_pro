@@ -621,30 +621,24 @@ class _TrendingProducts extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Re-using nearby shop's first store's products as "Trending" for UI purposes
-    final shopsAsync = ref.watch(nearbyShopsProvider);
+    final productsAsync = ref.watch(trendingProductsProvider);
 
-    return shopsAsync.when(
-      data: (shops) {
-        if (shops.isEmpty) return const SizedBox.shrink();
-        final productsAsync = ref.watch(shopProductsByIdProvider(shops.first.id));
+    return productsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
         
-        return productsAsync.when(
-          data: (products) => SizedBox(
-            height: 120,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemBuilder: (context, index) => _SmallProductCard(product: products[index]),
-            ),
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: products.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) => _SmallProductCard(product: products[index]),
           ),
-          loading: () => const SizedBox.shrink(),
-          error: (e, s) => const SizedBox.shrink(),
         );
       },
-      loading: () => const SizedBox.shrink(),
+      loading: () => SizedBox(height: 120, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => Padding(padding: const EdgeInsets.only(right: 16), child: _Skeleton(width: 240, height: 120, radius: 20))))),
       error: (e, s) => const SizedBox.shrink(),
     );
   }

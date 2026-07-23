@@ -16,9 +16,7 @@ class TrendingProductsScreen extends ConsumerStatefulWidget {
 class _TrendingProductsScreenState extends ConsumerState<TrendingProductsScreen> {
   @override
   Widget build(BuildContext context) {
-    // For now, we reuse nearby shops' first store products or similar logic to populate trending
-    // In a real app, this would be a specific query for high-demand products
-    final shopsAsync = ref.watch(nearbyShopsProvider);
+    final productsAsync = ref.watch(trendingProductsProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
@@ -35,53 +33,30 @@ class _TrendingProductsScreenState extends ConsumerState<TrendingProductsScreen>
           onPressed: () => context.pop(),
         ),
       ),
-      body: shopsAsync.when(
-        data: (shops) {
-          if (shops.isEmpty) return _EmptyState(colorScheme: colorScheme);
-          
-          // Combining products from first few shops to simulate "trending"
-          return _TrendingProductsList(shopId: shops.first.id, colorScheme: colorScheme, isLight: isLight);
+      body: productsAsync.when(
+        data: (products) {
+          if (products.isEmpty) return _EmptyState(colorScheme: colorScheme);
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
+              childAspectRatio: 0.72,
+            ),
+            itemCount: products.length,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) => _TrendingProductCard(
+              product: products[index],
+              colorScheme: colorScheme,
+              isLight: isLight,
+            ),
+          );
         },
         loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
         error: (e, s) => Center(child: Text('Error: $e', style: TextStyle(color: colorScheme.error))),
       ),
-    );
-  }
-}
-
-class _TrendingProductsList extends ConsumerWidget {
-  final String shopId;
-  final ColorScheme colorScheme;
-  final bool isLight;
-  const _TrendingProductsList({required this.shopId, required this.colorScheme, required this.isLight});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(shopProductsByIdProvider(shopId));
-
-    return productsAsync.when(
-      data: (products) {
-        if (products.isEmpty) return _EmptyState(colorScheme: colorScheme);
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(20),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 20,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: products.length,
-          physics: const BouncingScrollPhysics(),
-          itemBuilder: (context, index) => _TrendingProductCard(
-            product: products[index],
-            colorScheme: colorScheme,
-            isLight: isLight,
-          ),
-        );
-      },
-      loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
-      error: (e, s) => Center(child: Text('Error loading products')),
     );
   }
 }

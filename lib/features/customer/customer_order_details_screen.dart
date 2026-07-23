@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../models/order_model.dart';
+import '../../models/product_model.dart';
+import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 import '../../services/pdf_service.dart';
 
@@ -318,7 +321,22 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
       return Column(
         children: [
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () async {
+              for (var item in order.items) {
+                // Fetch product details to add correctly
+                final pDoc = await FirebaseFirestore.instance.collection('products').doc(item['productId']).get();
+                if (pDoc.exists) {
+                  ref.read(cartProvider.notifier).addItem(
+                    ProductModel.fromFirestore(pDoc),
+                    shopName: order.shopName,
+                    shopImageUrl: order.shopImageUrl,
+                  );
+                }
+              }
+              if (context.mounted) {
+                context.push('/customer/cart');
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: Colors.white,
@@ -328,13 +346,22 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
             child: const Text('REORDER NOW', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
           ),
           const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: () => _showReviewDialog(context, ref, order, isLight, primary),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 60),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            child: const Text('RATE EXPERIENCE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+          FutureBuilder<ReviewModel?>(
+            future: ref.read(customerServiceProvider).getOrderReview(order.shopId, order.id),
+            builder: (context, revSnap) {
+              final existingReview = revSnap.data;
+              return OutlinedButton(
+                onPressed: () => _showReviewDialog(context, ref, order, isLight, primary, existingReview: existingReview),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 60),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: Text(
+                  existingReview != null ? 'VIEW / EDIT REVIEW' : 'RATE EXPERIENCE', 
+                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)
+                ),
+              );
+            }
           ),
         ],
       );
@@ -342,7 +369,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     
     if (order.status == OrderStatus.pending) {
       return OutlinedButton(
-        onPressed: () {},
+        onPressed: () => _showCancelOrderDialog(context, ref, order),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.error, 
           side: const BorderSide(color: AppColors.error, width: 1.5),
@@ -356,34 +383,70 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     return const SizedBox.shrink();
   }
 
-  void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order, bool isLight, Color primary) {
-    int shopRating = 5;
+  void _showCancelOrderDialog(BuildContext context, WidgetRef ref, OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColors.dialog,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text('Cancel Order?', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Text('Are you sure you want to cancel this order? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('NO, KEEP IT')),
+          TextButton(
+            onPressed: () async {
+              await ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.cancelled);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Order cancelled successfully'), backgroundColor: AppColors.error),
+                );
+              }
+            },
+            child: const Text('YES, CANCEL', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order, bool isLight, Color primary, {ReviewModel? existingReview}) {
+    int shopRating = existingReview?.rating.toInt() ?? 5;
     final Map<String, int> productRatings = {
-      for (var item in order.items) item['productId']: 5
+      for (var item in order.items) item['productId']: existingReview != null ? shopRating : 5
     };
-    final reviewController = TextEditingController();
+    final reviewController = TextEditingController(text: existingReview?.review);
+    bool isDeleting = false;
 
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: isLight ? Colors.white : AppColors.premiumDarkSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
           title: Column(
             children: [
               Container(
                 width: 40, height: 4, 
-                decoration: BoxDecoration(color: (isLight ? Colors.black.withOpacity(0.12) : Colors.white10), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: (isLight ? Colors.black.withValues(alpha: 0.12) : Colors.white10), borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(height: 24),
-              Text('How was your order?', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isLight ? Colors.black : Colors.white)),
+              Text(
+                existingReview != null ? 'Your Review' : 'How was your order?', 
+                textAlign: TextAlign.center, 
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isLight ? Colors.black : Colors.white)
+              ),
               const SizedBox(height: 8),
-              Text('Your feedback helps us improve', style: TextStyle(fontSize: 13, color: isLight ? Colors.black.withOpacity(0.38) : Colors.white38, fontWeight: FontWeight.w500)),
+              Text(
+                existingReview != null ? 'You can edit or remove your feedback' : 'Your feedback helps us improve', 
+                style: TextStyle(fontSize: 13, color: isLight ? Colors.black.withValues(alpha: 0.38) : Colors.white38, fontWeight: FontWeight.w500)
+              ),
             ],
           ),
           content: SizedBox(
-            width: double.maxFinite,
+            width: MediaQuery.of(context).size.width,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
@@ -391,23 +454,46 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  Text('Rate Store: ${order.shopName}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withOpacity(0.87) : Colors.white70)),
-                  const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) => InkWell(
-                      onTap: () => setState(() => shopRating = index + 1),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 36),
-                      ),
-                    )),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text('Store: ${order.shopName}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white70))),
+                      if (existingReview != null)
+                        IconButton(
+                          onPressed: isDeleting ? null : () async {
+                            setState(() => isDeleting = true);
+                            await ref.read(customerServiceProvider).deleteReview(
+                              orderId: order.id,
+                              shopId: order.shopId,
+                              riderId: order.riderId,
+                              productIds: order.items.map((e) => e['productId'] as String).toList(),
+                            );
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                          icon: isDeleting 
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent))
+                            : const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  FittedBox(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) => InkWell(
+                        onTap: () => setState(() => shopRating = index + 1),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 36),
+                        ),
+                      )),
+                    ),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Divider(height: 1),
                   ),
-                  Text('Rate Products:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withOpacity(0.87) : Colors.white70)),
+                  Text('Rate Products:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white70)),
                   const SizedBox(height: 16),
                   ...order.items.map((item) {
                     final pid = item['productId'];
@@ -421,16 +507,18 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['name'], style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isLight ? Colors.black.withOpacity(0.87) : Colors.white)),
+                          Text(item['name'], style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white)),
                           const SizedBox(height: 8),
-                          Row(
-                            children: List.generate(5, (index) => InkWell(
-                              onTap: () => setState(() => productRatings[pid] = index + 1),
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Icon(Icons.star_rounded, color: index < (productRatings[pid] ?? 5) ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 24),
-                              ),
-                            )),
+                          FittedBox(
+                            child: Row(
+                              children: List.generate(5, (index) => InkWell(
+                                onTap: () => setState(() => productRatings[pid] = index + 1),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: Icon(Icons.star_rounded, color: index < (productRatings[pid] ?? 5) ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 24),
+                                ),
+                              )),
+                            ),
                           ),
                         ],
                       ),
@@ -443,7 +531,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                     style: TextStyle(color: isLight ? Colors.black : Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
                     decoration: InputDecoration(
                       hintText: 'Share your thoughts about the service and products...',
-                      hintStyle: TextStyle(color: isLight ? Colors.black.withOpacity(0.26) : Colors.white24, fontSize: 13),
+                      hintStyle: TextStyle(color: isLight ? Colors.black.withValues(alpha: 0.26) : Colors.white24, fontSize: 13),
                       filled: true,
                       fillColor: isLight ? Colors.black.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.03),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
@@ -461,7 +549,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context), 
-                    child: Text('SKIP', style: TextStyle(color: isLight ? Colors.black.withOpacity(0.38) : Colors.white38, fontWeight: FontWeight.w800, letterSpacing: 1))
+                    child: Text(existingReview != null ? 'CANCEL' : 'SKIP', style: TextStyle(color: isLight ? Colors.black.withValues(alpha: 0.38) : Colors.white38, fontWeight: FontWeight.w800, letterSpacing: 1))
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -469,16 +557,12 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () async {
-                      final List<Map<String, dynamic>> productRatingsList = [];
-                      final generalReview = reviewController.text.trim();
-      
-                      productRatings.forEach((key, value) {
-                        productRatingsList.add({
-                          'productId': key,
-                          'rating': value,
-                          'review': generalReview,
-                        });
-                      });
+                      final reviewText = reviewController.text.trim();
+                      final List<Map<String, dynamic>> productRatingsList = productRatings.entries.map((e) => {
+                        'productId': e.key,
+                        'rating': e.value,
+                        'review': reviewText,
+                      }).toList();
       
                       await ref.read(customerServiceProvider).submitReview(
                         orderId: order.id,
@@ -486,8 +570,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                         riderId: order.riderId,
                         customerName: order.customerName,
                         rating: shopRating.toDouble(),
-                        review: generalReview,
+                        review: reviewText,
                         productRatings: productRatingsList,
+                        oldRating: existingReview?.rating,
                       );
                       if (context.mounted) Navigator.pop(context);
                     },
@@ -497,7 +582,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: const Text('SUBMIT REVIEW', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    child: Text(existingReview != null ? 'UPDATE REVIEW' : 'SUBMIT REVIEW', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                   ),
                 ),
               ],

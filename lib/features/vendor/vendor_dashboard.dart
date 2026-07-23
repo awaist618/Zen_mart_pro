@@ -257,7 +257,7 @@ class _VendorKpiGrid extends ConsumerWidget {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.4,
+      childAspectRatio: 1.1,
       children: [
         _KpiCard(
           title: 'Pending',
@@ -316,7 +316,7 @@ class _KpiCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
@@ -325,39 +325,51 @@ class _KpiCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: color, size: 16),
                 ),
                 Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.2), size: 14),
               ],
             ),
-            const Spacer(),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.onSurface,
-                letterSpacing: -1,
-              ),
-            ),
-            Text(
-              title.toUpperCase(),
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                letterSpacing: 1,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

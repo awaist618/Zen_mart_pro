@@ -341,6 +341,9 @@ class _ShopSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
       borderRadius: BorderRadius.circular(22),
@@ -348,33 +351,34 @@ class _ShopSearchCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(22),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : Border.all(color: colorScheme.outline.withOpacity(0.05)),
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: shop.imageUrl.isNotEmpty 
-                ? Image.network(shop.imageUrl, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 70, height: 70, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: Colors.white10)))
-                : Container(width: 70, height: 70, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: Colors.white10)),
+                ? Image.network(shop.imageUrl, width: 70, height: 70, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 70, height: 70, color: colorScheme.surface, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1))))
+                : Container(width: 70, height: 70, color: colorScheme.surface, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1))),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                  Text(shop.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(shop.category, style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(shop.category, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
-                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle)),
+                      Container(width: 3, height: 3, decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.2), shape: BoxShape.circle)),
                       const SizedBox(width: 8),
                       const Icon(Icons.star_rounded, color: AppColors.warning, size: 14),
-                      Text(' ${shop.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white)),
+                      Text(' ${shop.rating}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
                     ],
                   ),
                 ],
@@ -382,8 +386,8 @@ class _ShopSearchCard extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
+              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.primary),
             ),
           ],
         ),
@@ -398,22 +402,27 @@ class _ProductSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: product.imageUrl.isNotEmpty 
-                ? Image.network(product.imageUrl, width: 85, height: 85, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 85, height: 85, color: AppColors.elevatedSurface, child: const Icon(Icons.image, color: Colors.white10)))
-                : Container(width: 85, height: 85, color: AppColors.elevatedSurface, child: const Icon(Icons.image, color: Colors.white10)),
+                ? Image.network(product.imageUrl, width: 85, height: 85, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 85, height: 85, color: colorScheme.surface, child: Icon(Icons.image, color: colorScheme.onSurface.withOpacity(0.1))))
+                : Container(width: 85, height: 85, color: colorScheme.surface, child: Icon(Icons.image, color: colorScheme.onSurface.withOpacity(0.1))),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -422,27 +431,27 @@ class _ProductSearchCard extends StatelessWidget {
                 children: [
                   Text(
                     product.name, 
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white, letterSpacing: -0.2),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface, letterSpacing: -0.2),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${product.brand} • ${product.category}', 
-                    style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)
+                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Text(
                         'Rs ${product.price.toStringAsFixed(0)}', 
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 17)
+                        style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 17)
                       ),
                       if (product.discount > 0) ...[
                         const SizedBox(width: 10),
                         Text(
                           'Rs ${product.price + product.discount}', 
-                          style: const TextStyle(color: AppColors.textDisabled, fontSize: 12, decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600)
+                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.2), fontSize: 12, decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600)
                         ),
                       ],
                     ],
@@ -450,7 +459,7 @@ class _ProductSearchCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textDisabled),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colorScheme.onSurface.withOpacity(0.1)),
           ],
         ),
       ),

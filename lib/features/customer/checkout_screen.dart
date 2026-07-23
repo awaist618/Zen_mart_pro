@@ -332,6 +332,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final shopImageUrl = shopDoc.exists 
           ? (shopData?['logoUrl'] ?? shopData?['imageUrl'] ?? shopData?['bannerImage'] ?? '') 
           : '';
+      final shopPhone = shopData?['phone'] ?? '03001234567';
+      final shopAddress = shopData?['address'] ?? 'Shop Address, Main Market';
 
       final orderData = {
         'customerId': user.uid,
@@ -343,12 +345,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'shopImageUrl': (cart.shopImageUrl != null && cart.shopImageUrl!.isNotEmpty) 
             ? cart.shopImageUrl 
             : shopImageUrl,
-        'vendorPhone': '03001234567',
+        'vendorPhone': shopPhone,
         'status': 'pending',
         'totalAmount': cart.totalAmount + 100,
         'deliveryFee': 100.0,
-        'pickupAddress': 'Shop Address, Main Market',
+        'pickupAddress': shopAddress,
         'deliveryAddress': address.fullAddress,
+        'deliveryLocation': address.location, // Assuming AddressModel has a GeoPoint
         'items': cart.items.values.map((item) => {
           'productId': item.product.id,
           'name': item.product.name,

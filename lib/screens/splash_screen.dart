@@ -32,10 +32,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
+    const navyBg = Color(0xFF0B1120);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, 
+      backgroundColor: navyBg, 
       body: Stack(
         children: [
           // Background Aesthetic Glow
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             top: -150,
             right: -150,
             child: _GlowCircle(
-              color: colorScheme.primary.withValues(alpha: isLight ? 0.08 : 0.05), 
+              color: colorScheme.primary.withValues(alpha: 0.1), 
               size: 500
             ),
           ),
@@ -59,22 +59,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     width: 170,
                     height: 170,
                     decoration: BoxDecoration(
-                      color: isLight ? Colors.white : colorScheme.surface,
+                      color: const Color(0xFF1E293B).withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(54),
                       boxShadow: [
                         BoxShadow(
-                          color: isLight ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.3), 
+                          color: Colors.black.withValues(alpha: 0.3), 
                           blurRadius: 60, 
                           offset: const Offset(0, 30)
                         ),
-                        if (!isLight)
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            blurRadius: 30,
-                            spreadRadius: -10,
-                          ),
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          blurRadius: 30,
+                          spreadRadius: -10,
+                        ),
                       ],
-                      border: Border.all(color: colorScheme.primary.withValues(alpha: 0.15), width: 2),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 2),
                     ),
                     padding: const EdgeInsets.all(32),
                     child: Hero(
@@ -93,10 +92,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   
                   const SizedBox(height: 48),
 
-                  Text(
+                  const Text(
                     'Zen Mart Pro',
                     style: TextStyle(
-                      color: colorScheme.onSurface,
+                      color: Colors.white,
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
@@ -157,7 +156,6 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return AnimatedBuilder(
       animation: _controller,
@@ -166,7 +164,7 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
           width: 200,
           height: 4,
           decoration: BoxDecoration(
-            color: isLight ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.surface,
+            color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Stack(

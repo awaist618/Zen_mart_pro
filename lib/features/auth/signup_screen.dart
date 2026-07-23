@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import '../../core/providers.dart';
@@ -63,11 +64,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ..recipients.add(email)
       ..subject = 'Verify Your Account - Zen Mart Pro'
       ..html = '''
-        <div style="font-family: sans-serif; background-color: #232733; padding: 40px; color: #FFFFFF; text-align: center;">
-          <div style="max-width: 500px; margin: auto; background: #31384B; border-radius: 24px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
-            <h1 style="margin: 0; font-size: 24px; color: #C9A27E;">Zen Mart Pro</h1>
+        <div style="font-family: sans-serif; background-color: #0B1120; padding: 40px; color: #FFFFFF; text-align: center;">
+          <div style="max-width: 500px; margin: auto; background: #1E293B; border-radius: 24px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
+            <h1 style="margin: 0; font-size: 24px; color: #6366F1;">Zen Mart Pro</h1>
             <p style="color: #C5CBD8; font-size: 16px; margin: 20px 0;">Use the code below to verify your account</p>
-            <div style="background: #232733; padding: 20px; border-radius: 12px; display: inline-block;">
+            <div style="background: #0B1120; padding: 20px; border-radius: 12px; display: inline-block;">
               <span style="font-size: 32px; font-weight: 800; letter-spacing: 5px; color: #FFFFFF;">$_generatedOtp</span>
             </div>
             <p style="color: #6B7280; font-size: 12px; margin-top: 30px;">Valid for 10 minutes.</p>
@@ -113,12 +114,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF0B1120),
       body: Stack(
         children: [
           Positioned(
@@ -129,7 +126,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [colorScheme.primary.withValues(alpha: isLight ? 0.08 : 0.05), Colors.transparent]),
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.premiumDarkPrimary.withValues(alpha: 0.1),
+                    Colors.transparent
+                  ],
+                ),
               ),
             ),
           ),
@@ -144,43 +146,52 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
                       style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surface,
-                        side: isLight ? BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
+                        backgroundColor: const Color(0xFF1E293B).withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
                       'Join Zen Mart Pro',
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Start your premium shopping journey today',
-                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 48),
 
-                    _buildField(_nameController, 'Full Name', Icons.person_rounded),
+                    _buildTextField(_nameController, 'Full Name', Icons.person_rounded),
                     const SizedBox(height: 16),
-                    _buildField(_emailController, 'Email Address', Icons.email_rounded, enabled: !_isOtpSent, type: TextInputType.emailAddress),
+                    _buildTextField(_emailController, 'Email Address', Icons.email_rounded, enabled: !_isOtpSent, type: TextInputType.emailAddress),
                     const SizedBox(height: 16),
-                    _buildField(_phoneController, 'Phone Number', Icons.phone_rounded, type: TextInputType.phone),
+                    _buildTextField(_phoneController, 'Phone Number', Icons.phone_rounded, type: TextInputType.phone),
                     const SizedBox(height: 16),
-                    _buildField(_passwordController, 'Password', Icons.lock_rounded, isPassword: true),
+                    _buildTextField(_passwordController, 'Password', Icons.lock_rounded, isPassword: true),
                     const SizedBox(height: 16),
-                    _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_reset_rounded, isPassword: true),
+                    _buildTextField(_confirmPasswordController, 'Confirm Password', Icons.lock_reset_rounded, isPassword: true),
                     
                     if (_isOtpSent) ...[
                       const SizedBox(height: 32),
-                      const Divider(color: AppColors.border),
+                      const Divider(color: Colors.white10),
                       const SizedBox(height: 24),
-                      _buildField(_otpController, 'Enter 6-Digit OTP', Icons.verified_rounded, type: TextInputType.number),
+                      _buildTextField(_otpController, 'Enter 6-Digit OTP', Icons.verified_rounded, type: TextInputType.number),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         "Check your email (and Spam) for the verification code.",
-                        style: TextStyle(color: AppColors.textHint, fontSize: 12, fontStyle: FontStyle.italic),
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontStyle: FontStyle.italic),
                       ),
                     ],
                     
@@ -188,9 +199,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     
                     ElevatedButton(
                       onPressed: _isLoading ? null : (_isOtpSent ? _verifyAndSignup : _sendOtp),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.premiumDarkPrimary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 64),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 0,
+                      ),
                       child: _isLoading
-                          ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: AppColors.background, strokeWidth: 3))
-                          : Text(_isOtpSent ? 'VERIFY & REGISTER' : 'CONTINUE'),
+                          ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                          : Text(_isOtpSent ? 'VERIFY & REGISTER' : 'CONTINUE', style: const TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
                     ),
                     
                     const SizedBox(height: 32),
@@ -199,10 +217,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         onTap: () => context.push('/login'),
                         child: RichText(
                           text: TextSpan(
-                            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                             children: [
                               const TextSpan(text: 'Already have an account? '),
-                              TextSpan(text: 'Login', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
+                              TextSpan(
+                                text: 'Login',
+                                style: TextStyle(
+                                  color: AppColors.premiumDarkPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -219,17 +247,35 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController ctrl, String hint, IconData icon, {bool isPassword = false, TextInputType? type, bool enabled = true}) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildTextField(TextEditingController ctrl, String hint, IconData icon, {bool isPassword = false, TextInputType? type, bool enabled = true}) {
     return TextFormField(
       controller: ctrl,
       obscureText: isPassword,
       keyboardType: type,
       enabled: enabled,
-      style: TextStyle(color: colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.w600),
+      style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, size: 20, color: colorScheme.primary),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.premiumDarkPrimary),
+        filled: true,
+        fillColor: const Color(0xFF1E293B).withValues(alpha: 0.4),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppColors.premiumDarkPrimary, width: 1.5),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.02)),
+        ),
       ),
       validator: (v) => v!.isEmpty ? 'Field required' : null,
     );
