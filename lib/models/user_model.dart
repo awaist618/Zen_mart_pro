@@ -41,6 +41,7 @@ class UserModel {
   final VerificationStatus verificationStatus;
   final Map<String, String>? documents; // docType -> status (uploaded, pending, approved, rejected)
   final Map<String, String>? documentUrls; // docType -> url
+  final String? fcmToken;
 
   UserModel({
     required this.uid,
@@ -67,6 +68,7 @@ class UserModel {
     this.verificationStatus = VerificationStatus.pending,
     this.documents,
     this.documentUrls,
+    this.fcmToken,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -98,6 +100,7 @@ class UserModel {
       verificationStatus: _parseVerificationStatus(data['verificationStatus']),
       documents: data['documents'] != null ? Map<String, String>.from(data['documents']) : null,
       documentUrls: data['documentUrls'] != null ? Map<String, String>.from(data['documentUrls']) : null,
+      fcmToken: data['fcmToken'],
     );
   }
 
@@ -150,6 +153,7 @@ class UserModel {
       'verificationStatus': verificationStatus.name,
       'documents': documents,
       'documentUrls': documentUrls,
+      'fcmToken': fcmToken,
     };
   }
 }

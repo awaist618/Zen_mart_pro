@@ -54,6 +54,7 @@ import '../features/customer/category_shops_screen.dart';
 import '../features/customer/featured_shops_screen.dart';
 import '../features/customer/offer_details_screen.dart';
 import '../features/customer/product_details_screen.dart';
+import '../features/customer/notifications_screen.dart';
 import '../models/offer_model.dart';
 import '../models/product_model.dart';
 import '../features/rider/rider_dashboard.dart';
@@ -186,6 +187,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
       GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
+      GoRoute(path: '/customer/notifications', builder: (context, state) => const CustomerNotificationsScreen()),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
       GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
       GoRoute(path: '/rider/active-tasks', builder: (context, state) => const ActiveTasksScreen()),

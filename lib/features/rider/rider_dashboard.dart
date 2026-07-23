@@ -443,7 +443,39 @@ class _OrderRequestTile extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Row(children: [Expanded(child: OutlinedButton(onPressed: () => ref.read(riderServiceProvider).rejectOrder(order.id, riderId), style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), child: const Text('Decline'))), const SizedBox(width: 12), Expanded(flex: 2, child: ElevatedButton(onPressed: () => ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.accepted, riderId: riderId), style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))))]),
+          Row(children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => ref.read(riderServiceProvider).rejectOrder(order.id, riderId), 
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF64748B), side: const BorderSide(color: Color(0xFFE2E8F0)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48)), 
+                child: const Text('Decline')
+              )
+            ), 
+            const SizedBox(width: 12), 
+            Expanded(
+              flex: 2, 
+              child: ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.accepted, riderId: riderId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Order accepted successfully!'), backgroundColor: Colors.green),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to accept order: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                }, 
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), minimumSize: const Size(0, 48), elevation: 0), 
+                child: const Text('Accept Delivery', style: TextStyle(fontWeight: FontWeight.bold))
+              )
+            )
+          ]),
         ],
       ),
     );

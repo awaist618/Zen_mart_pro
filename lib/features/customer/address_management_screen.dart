@@ -220,7 +220,7 @@ class _AddressTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(28),
         border: address.isDefault 
           ? Border.all(color: AppColors.accent.withOpacity(0.3), width: 1.5) 
@@ -259,7 +259,7 @@ class _AddressTile extends ConsumerWidget {
                   children: [
                     Text(
                       address.label, 
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A), letterSpacing: -0.2)
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.2)
                     ),
                     if (address.isDefault) ...[
                       const SizedBox(width: 8),
@@ -274,14 +274,14 @@ class _AddressTile extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   address.fullAddress, 
-                  style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   address.city, 
-                  style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 12, fontWeight: FontWeight.w700)
+                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3), fontSize: 12, fontWeight: FontWeight.w700)
                 ),
               ],
             ),

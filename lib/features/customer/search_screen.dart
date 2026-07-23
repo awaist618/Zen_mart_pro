@@ -247,7 +247,7 @@ class _ShopSearchCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
           border: Border.all(color: Colors.grey.withOpacity(0.05)),
@@ -256,21 +256,21 @@ class _ShopSearchCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.network(shop.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 64, height: 64, color: Colors.grey[100], child: const Icon(Icons.storefront, color: Colors.grey))),
+              child: Image.network(shop.imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 64, height: 64, color: Theme.of(context).scaffoldBackgroundColor, child: const Icon(Icons.storefront, color: Colors.grey))),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E293B))),
+                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(shop.category, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(shop.category, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
                       const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                      Text(' ${shop.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF334155))),
+                      Text(' ${shop.rating}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                     ],
                   ),
                 ],
@@ -404,7 +404,10 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(36))),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor, 
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(36))
+      ),
       padding: const EdgeInsets.all(28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -412,10 +415,19 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
         children: [
           Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 24),
-          const Text('Search Filters', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+          Text('Search Filters', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.displayLarge?.color)),
           const SizedBox(height: 32),
           const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-          RangeSlider(values: _priceRange, min: 0, max: 5000, divisions: 25, activeColor: AppColors.accent, inactiveColor: const Color(0xFFF1F5F9), labels: RangeLabels('Rs ${_priceRange.start.round()}', 'Rs ${_priceRange.end.round()}'), onChanged: (v) => setState(() => _priceRange = v)),
+          RangeSlider(
+            values: _priceRange, 
+            min: 0, 
+            max: 5000, 
+            divisions: 25, 
+            activeColor: AppColors.accent, 
+            inactiveColor: AppColors.accent.withOpacity(0.1), 
+            labels: RangeLabels('Rs ${_priceRange.start.round()}', 'Rs ${_priceRange.end.round()}'), 
+            onChanged: (v) => setState(() => _priceRange = v)
+          ),
           const SizedBox(height: 24),
           const Text('Quick Filters', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 12),
@@ -440,14 +452,11 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSel ? Colors.orange : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isSel ? Colors.orange : Colors.grey.withOpacity(0.1)),
+                        color: isSel ? Colors.orange : Theme.of(context).cardTheme.color, 
+                        borderRadius: BorderRadius.circular(12), 
+                        border: Border.all(color: isSel ? Colors.orange : Colors.grey.withOpacity(0.1))
                       ),
-                      child: Text(
-                        '$r+ ★',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isSel ? Colors.white : Colors.black87),
-                      ),
+                      child: Text('$r+ ★', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: isSel ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color))
                     ),
                   ),
                 );
@@ -455,7 +464,14 @@ class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
             ),
           ),
           const SizedBox(height: 40),
-          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () { widget.onApply(_selectedCategory, _priceRange, _minRating, _maxDistance, _freeDelivery, _onlyOffers, _onlyOpen); Navigator.pop(context); }, style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 0), child: const Text('Apply Selection', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)))),
+          SizedBox(
+            width: double.infinity, 
+            child: ElevatedButton(
+              onPressed: () { widget.onApply(_selectedCategory, _priceRange, _minRating, _maxDistance, _freeDelivery, _onlyOffers, _onlyOpen); Navigator.pop(context); }, 
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), elevation: 0), 
+              child: const Text('Apply Selection', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
+            )
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -469,5 +485,14 @@ class _QuickChip extends StatelessWidget {
   final Function(bool) onToggle;
   const _QuickChip({required this.label, required this.selected, required this.onToggle});
   @override
-  Widget build(BuildContext context) => FilterChip(label: Text(label), selected: selected, onSelected: onToggle, selectedColor: AppColors.accent.withOpacity(0.1), checkmarkColor: AppColors.accent, labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: selected ? AppColors.accent : Colors.black87), backgroundColor: const Color(0xFFF8FAFC), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: selected ? AppColors.accent : Colors.grey.withOpacity(0.1))));
+  Widget build(BuildContext context) => FilterChip(
+    label: Text(label), 
+    selected: selected, 
+    onSelected: onToggle, 
+    selectedColor: AppColors.accent.withOpacity(0.1), 
+    checkmarkColor: AppColors.accent, 
+    labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: selected ? AppColors.accent : Theme.of(context).textTheme.bodyLarge?.color), 
+    backgroundColor: Theme.of(context).cardTheme.color, 
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: selected ? AppColors.accent : Colors.grey.withOpacity(0.1)))
+  );
 }

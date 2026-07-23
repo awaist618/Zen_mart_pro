@@ -9,6 +9,7 @@ import '../services/admin_service.dart';
 import '../services/customer_service.dart';
 import '../services/order_service.dart';
 import '../services/support_service.dart';
+import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
@@ -35,6 +36,7 @@ final adminServiceProvider = Provider((ref) => AdminService());
 final customerServiceProvider = Provider((ref) => CustomerService());
 final orderServiceProvider = Provider((ref) => OrderService());
 final supportServiceProvider = Provider((ref) => SupportService());
+final notificationServiceProvider = Provider((ref) => NotificationService());
 
 final authStateProvider = StreamProvider((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
@@ -46,6 +48,8 @@ final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   if (user == null) {
     yield null;
   } else {
+    // Save FCM Token when user logs in
+    ref.read(notificationServiceProvider).saveTokenToFirestore(user.uid);
     yield* ref.read(authServiceProvider).getUserStream(user.uid);
   }
 });

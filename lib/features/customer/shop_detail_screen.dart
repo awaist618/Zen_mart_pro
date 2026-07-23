@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product_model.dart';
 import '../../models/shop_model.dart';
@@ -311,11 +312,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           _tabBar,
-          const Divider(height: 1, thickness: 1),
+          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.1)),
         ],
       ),
     );

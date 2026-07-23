@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../models/shop_model.dart';
 import './widgets/customer_bottom_nav.dart';
+import '../../core/localization.dart';
 
 class CustomerHome extends ConsumerWidget {
   const CustomerHome({super.key});
@@ -13,7 +14,7 @@ class CustomerHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -22,12 +23,12 @@ class CustomerHome extends ConsumerWidget {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.accent.withOpacity(0.05), Colors.white],
+                    colors: [AppColors.accent.withOpacity(0.05), Theme.of(context).scaffoldBackgroundColor],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -51,19 +52,19 @@ class CustomerHome extends ConsumerWidget {
                 children: [
                   const _PromoBanner(),
                   const SizedBox(height: 32),
-                  const _SectionHeader(title: 'What would you like to buy?', showSeeAll: false),
+                  _SectionHeader(title: 'what_buy'.tr(ref), showSeeAll: false),
                   const SizedBox(height: 20),
                   const _CategoryGrid(),
                   const SizedBox(height: 40),
-                  const _SectionHeader(
-                    title: 'Featured Stores', 
+                  _SectionHeader(
+                    title: 'featured_stores'.tr(ref), 
                     showSeeAll: true,
                     onSeeAll: '/customer/featured-shops',
                   ),
                   const SizedBox(height: 20),
                   const _FeaturedShops(),
                   const SizedBox(height: 40),
-                  const _SectionHeader(title: 'Popular Near You', showSeeAll: true),
+                  _SectionHeader(title: 'popular_near'.tr(ref), showSeeAll: true),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -112,9 +113,9 @@ class _LocationHeader extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            'Deliver to',
+                            'deliver_to'.tr(ref),
                             style: TextStyle(
-                              color: Colors.black.withOpacity(0.4),
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4),
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.5,
@@ -124,11 +125,10 @@ class _LocationHeader extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        defaultAddress?.fullAddress ?? 'Select current location',
+                        defaultAddress?.fullAddress ?? 'Select location...',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFF1E293B),
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -167,35 +167,35 @@ class _LocationHeader extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerWidget {
   const _SearchBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () => context.push('/customer/search'),
       child: Container(
         height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accent.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 20,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(color: AppColors.accent.withOpacity(0.05)),
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
         ),
         child: Row(
           children: [
             const Icon(Icons.search_rounded, color: AppColors.accent, size: 24),
             const SizedBox(width: 14),
             Text(
-              'Search for food, grocery...',
-              style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 15, fontWeight: FontWeight.w600),
+              'search_hint'.tr(ref),
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3), fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Container(
@@ -342,21 +342,23 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.5),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5),
           ),
         ),
         if (showSeeAll)
-          GestureDetector(
-            onTap: onSeeAll != null ? () => context.push(onSeeAll!) : null,
-            child: Row(
-              children: [
-                Text(
-                  'View All',
-                  style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.accent),
-              ],
+          Consumer(
+            builder: (context, ref, child) => GestureDetector(
+              onTap: onSeeAll != null ? () => context.push(onSeeAll!) : null,
+              child: Row(
+                children: [
+                  Text(
+                    'view_all'.tr(ref),
+                    style: const TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.accent),
+                ],
+              ),
             ),
           ),
       ],
@@ -369,48 +371,53 @@ class _CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      {'name': 'Grocery', 'icon': Icons.local_grocery_store_rounded, 'color': const Color(0xFF6366F1)},
-      {'name': 'Food', 'icon': Icons.restaurant_rounded, 'color': const Color(0xFFF59E0B)},
-      {'name': 'Pharmacy', 'icon': Icons.medical_services_rounded, 'color': const Color(0xFF10B981)},
-      {'name': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
-    ];
+    return Consumer(
+      builder: (context, ref, child) {
+        final categories = [
+          {'name': 'grocery'.tr(ref), 'key': 'Grocery', 'icon': Icons.local_grocery_store_rounded, 'color': const Color(0xFF6366F1)},
+          {'name': 'food'.tr(ref), 'key': 'Food', 'icon': Icons.restaurant_rounded, 'color': const Color(0xFFF59E0B)},
+          {'name': 'pharmacy'.tr(ref), 'key': 'Pharmacy', 'icon': Icons.medical_services_rounded, 'color': const Color(0xFF10B981)},
+          {'name': 'fashion'.tr(ref), 'key': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
+        ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: categories.map((cat) {
-        final name = cat['name'] as String;
-        final color = cat['color'] as Color;
-        return Column(
-          children: [
-            InkWell(
-              onTap: () => context.push('/customer/category/$name'),
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withOpacity(0.12), color.withOpacity(0.04)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: categories.map((cat) {
+            final name = cat['name'] as String;
+            final key = cat['key'] as String;
+            final color = cat['color'] as Color;
+            return Column(
+              children: [
+                InkWell(
+                  onTap: () => context.push('/customer/category/$key'),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color.withOpacity(0.12), color.withOpacity(0.04)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+                    ),
+                    child: Center(
+                      child: Icon(cat['icon'] as IconData, color: color, size: 30),
+                    ),
+                  ),
                 ),
-                child: Center(
-                  child: Icon(cat['icon'] as IconData, color: color, size: 30),
+                const SizedBox(height: 10),
+                Text(
+                  name,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: -0.2),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF334155), letterSpacing: -0.2),
-            ),
-          ],
+              ],
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }

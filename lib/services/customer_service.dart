@@ -4,6 +4,7 @@ import '../models/product_model.dart';
 import '../models/shop_model.dart';
 import '../models/offer_model.dart';
 import '../models/order_model.dart';
+import '../models/notification_model.dart';
 
 class CustomerService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -259,5 +260,17 @@ class CustomerService {
           .toSet()
           .toList();
     });
+  }
+
+  Stream<List<NotificationModel>> getNotifications(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NotificationModel.fromFirestore(doc))
+            .toList());
   }
 }

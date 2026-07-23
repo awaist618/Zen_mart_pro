@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import './widgets/customer_bottom_nav.dart';
@@ -53,12 +54,12 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
     final ordersAsync = ref.watch(customerOrdersProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-        backgroundColor: Colors.white,
+        title: Text('order_history'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: const Color(0xFF0F172A),
+        foregroundColor: Theme.of(context).textTheme.displayLarge?.color,
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
@@ -148,7 +149,7 @@ class _OrderCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
@@ -179,12 +180,12 @@ class _OrderCard extends StatelessWidget {
                     children: [
                       Text(
                         order.shopName, 
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF0F172A), letterSpacing: -0.2)
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.2)
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Order #${order.id.substring(0, 8).toUpperCase()}',
-                        style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -204,12 +205,12 @@ class _OrderCard extends StatelessWidget {
                   children: [
                     Text(
                       '${order.items.length} ${order.items.length == 1 ? 'ITEM' : 'ITEMS'} • Rs ${order.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       DateFormat('MMM dd, yyyy • h:mm a').format(order.createdAt),
-                      style: TextStyle(color: Colors.black.withOpacity(0.2), fontSize: 11, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.2), fontSize: 11, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -218,15 +219,15 @@ class _OrderCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Track', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w900, fontSize: 13)),
-                        SizedBox(width: 6),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF0F172A)),
+                        Text('Track', style: TextStyle(color: Theme.of(context).textTheme.displayLarge?.color, fontWeight: FontWeight.w900, fontSize: 13)),
+                        const SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Theme.of(context).textTheme.displayLarge?.color),
                       ],
                     ),
                   ),

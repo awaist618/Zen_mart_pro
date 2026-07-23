@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../services/pdf_service.dart';
@@ -17,12 +18,12 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Order Tracking', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-        backgroundColor: Colors.white,
+        title: Text('order_summary'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: const Color(0xFF0F172A),
+        foregroundColor: Theme.of(context).textTheme.displayLarge?.color,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),

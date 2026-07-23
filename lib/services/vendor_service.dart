@@ -21,6 +21,14 @@ class VendorService {
     await _db.collection('shops').doc(shopId).update(data);
   }
 
+  Future<void> updateShopLogo(String shopId, String logoUrl) async {
+    await _db.collection('shops').doc(shopId).update({'logoUrl': logoUrl});
+  }
+
+  Future<void> updateShopBanner(String shopId, String bannerUrl) async {
+    await _db.collection('shops').doc(shopId).update({'bannerImage': bannerUrl});
+  }
+
   /// Toggle shop status (online/offline)
   Future<void> updateShopStatus(String shopId, String status) async {
     await _db.collection('shops').doc(shopId).update({'status': status});

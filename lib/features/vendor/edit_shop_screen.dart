@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 
@@ -134,43 +135,75 @@ class _EditShopScreenState extends ConsumerState<EditShopScreen> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
-              height: 150,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(20),
-                image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop.bannerImage!), fit: BoxFit.cover) : null,
+            GestureDetector(
+              onTap: () => _uploadImage(isBanner: true, shopId: shop?.id),
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(20),
+                  image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop.bannerImage!), fit: BoxFit.cover) : null,
+                ),
+                child: shop?.bannerImage == null ? const Center(child: Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 40)) : null,
               ),
-              child: shop?.bannerImage == null ? const Center(child: Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 40)) : null,
             ),
             Positioned(
               bottom: -30,
               left: 20,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: shop?.logoUrl != null ? NetworkImage(shop.logoUrl!) : null,
-                  child: shop?.logoUrl == null ? const Icon(Icons.store, color: Colors.grey) : null,
+              child: GestureDetector(
+                onTap: () => _uploadImage(isBanner: false, shopId: shop?.id),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: shop?.logoUrl != null ? NetworkImage(shop.logoUrl!) : null,
+                    child: shop?.logoUrl == null ? const Icon(Icons.store, color: Colors.grey) : null,
+                  ),
                 ),
               ),
             ),
             Positioned(
               top: 10,
               right: 10,
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.5),
-                radius: 18,
-                child: const Icon(Icons.edit, color: Colors.white, size: 16),
+              child: GestureDetector(
+                onTap: () => _uploadImage(isBanner: true, shopId: shop?.id),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.5),
+                  radius: 18,
+                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                ),
               ),
             ),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _uploadImage({required bool isBanner, String? shopId}) async {
+    if (shopId == null) return;
+
+    final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
+      context: context, 
+      folder: isBanner ? 'shop_banners' : 'shop_logos',
+      source: ImageSource.gallery,
+    );
+    
+    if (url != null) {
+      if (isBanner) {
+        await ref.read(vendorServiceProvider).updateShopBanner(shopId, url);
+      } else {
+        await ref.read(vendorServiceProvider).updateShopLogo(shopId, url);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${isBanner ? 'Banner' : 'Logo'} updated successfully!')),
+        );
+      }
+    }
   }
 
   Widget _buildTextField(TextEditingController controller, String label, IconData icon, {int maxLines = 1}) {

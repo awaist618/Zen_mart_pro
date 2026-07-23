@@ -169,6 +169,12 @@ class AuthService {
     });
   }
 
+  Future<void> updateProfilePicture(String uid, String imageUrl) async {
+    await _db.collection('users').doc(uid).update({
+      'profilePicture': imageUrl,
+    });
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
   }

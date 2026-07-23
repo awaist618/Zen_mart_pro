@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latlong;
+import 'package:http/http.dart' as http;
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
@@ -115,56 +117,136 @@ class OrderDetailsScreen extends ConsumerWidget {
   }
 }
 
-class _OSMMap extends StatelessWidget {
+class _OSMMap extends StatefulWidget {
   final OrderModel order;
   const _OSMMap({required this.order});
 
   @override
-  Widget build(BuildContext context) {
-    // Default to Islamabad coordinates if not provided
-    final pickup = order.pickupLocation != null 
-      ? latlong.LatLng(order.pickupLocation!.latitude, order.pickupLocation!.longitude)
+  State<_OSMMap> createState() => _OSMMapState();
+}
+
+class _OSMMapState extends State<_OSMMap> {
+  List<latlong.LatLng> _routePoints = [];
+  double _distanceKm = 0.0;
+  bool _isLoadingRoute = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRoute();
+  }
+
+  Future<void> _fetchRoute() async {
+    final pickup = widget.order.pickupLocation != null 
+      ? latlong.LatLng(widget.order.pickupLocation!.latitude, widget.order.pickupLocation!.longitude)
       : latlong.LatLng(33.6844, 73.0479);
       
-    final delivery = order.deliveryLocation != null
-      ? latlong.LatLng(order.deliveryLocation!.latitude, order.deliveryLocation!.longitude)
+    final delivery = widget.order.deliveryLocation != null
+      ? latlong.LatLng(widget.order.deliveryLocation!.latitude, widget.order.deliveryLocation!.longitude)
       : latlong.LatLng(33.7000, 73.0600);
 
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: pickup,
-        initialZoom: 13.0,
-      ),
+    try {
+      final url = 'http://router.project-osrm.org/route/v1/driving/${pickup.longitude},${pickup.latitude};${delivery.longitude},${delivery.latitude}?overview=full&geometries=geojson';
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final coordinates = data['routes'][0]['geometry']['coordinates'] as List;
+        final distance = data['routes'][0]['distance'] as num; // in meters
+
+        setState(() {
+          _routePoints = coordinates.map((c) => latlong.LatLng(c[1], c[0])).toList();
+          _distanceKm = distance / 1000.0;
+          _isLoadingRoute = false;
+        });
+      } else {
+        setState(() {
+          _routePoints = [pickup, delivery];
+          _isLoadingRoute = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching route: $e');
+      setState(() {
+        _routePoints = [pickup, delivery];
+        _isLoadingRoute = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pickup = widget.order.pickupLocation != null 
+      ? latlong.LatLng(widget.order.pickupLocation!.latitude, widget.order.pickupLocation!.longitude)
+      : latlong.LatLng(33.6844, 73.0479);
+      
+    final delivery = widget.order.deliveryLocation != null
+      ? latlong.LatLng(widget.order.deliveryLocation!.latitude, widget.order.deliveryLocation!.longitude)
+      : latlong.LatLng(33.7000, 73.0600);
+
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.zen_mart_pro',
-        ),
-        PolylineLayer(
-          polylines: [
-            Polyline(
-              points: [pickup, delivery],
-              color: AppColors.rider,
-              strokeWidth: 4,
+        FlutterMap(
+          options: MapOptions(
+            initialCenter: pickup,
+            initialZoom: 14.0,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.zen_mart_pro',
+            ),
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: _routePoints.isNotEmpty ? _routePoints : [pickup, delivery],
+                  color: AppColors.rider,
+                  strokeWidth: 5,
+                ),
+              ],
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: pickup,
+                  width: 40,
+                  height: 40,
+                  child: const _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
+                ),
+                Marker(
+                  point: delivery,
+                  width: 40,
+                  height: 40,
+                  child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
+                ),
+              ],
             ),
           ],
         ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: pickup,
-              width: 40,
-              height: 40,
-              child: const _MapMarker(icon: Icons.storefront_rounded, color: AppColors.rider),
+        if (!_isLoadingRoute)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.directions_rounded, size: 16, color: AppColors.rider),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_distanceKm.toStringAsFixed(1)} KM',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
             ),
-            Marker(
-              point: delivery,
-              width: 40,
-              height: 40,
-              child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
-            ),
-          ],
-        ),
+          ),
       ],
     );
   }

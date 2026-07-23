@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import './widgets/vendor_bottom_nav.dart';
@@ -45,7 +46,7 @@ class VendorProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 // Enhanced Shop Identity Card
-                _buildShopCard(context, user, shop),
+                _buildShopCard(context, ref, user, shop),
                 const SizedBox(height: 24),
 
                 // Stats Grid
@@ -128,7 +129,7 @@ class VendorProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildShopCard(BuildContext context, UserModel user, ShopModel? shop) {
+  Widget _buildShopCard(BuildContext context, WidgetRef ref, UserModel user, ShopModel? shop) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -138,37 +139,70 @@ class VendorProfileScreen extends ConsumerWidget {
       child: Column(
         children: [
           // Banner Area
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.vendor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop!.bannerImage!), fit: BoxFit.cover) : null,
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  bottom: -40,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppColors.vendor,
-                        backgroundImage: shop?.logoUrl != null ? NetworkImage(shop!.logoUrl!) : null,
-                        child: shop?.logoUrl == null
-                            ? Text(shop?.name.substring(0, 1).toUpperCase() ?? 'V',
-                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white))
-                            : null,
+          GestureDetector(
+            onTap: () => _uploadShopImage(context, ref, shop?.id, true),
+            child: Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.vendor.withOpacity(0.1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                image: shop?.bannerImage != null ? DecorationImage(image: NetworkImage(shop!.bannerImage!), fit: BoxFit.cover) : null,
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  if (shop?.bannerImage == null)
+                    const Center(child: Icon(Icons.add_photo_alternate_outlined, color: Colors.white, size: 32)),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black.withOpacity(0.3),
+                      radius: 14,
+                      child: const Icon(Icons.edit, color: Colors.white, size: 14),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -40,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        child: Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _uploadShopImage(context, ref, shop?.id, false),
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: AppColors.vendor,
+                                backgroundImage: shop?.logoUrl != null ? NetworkImage(shop!.logoUrl!) : null,
+                                child: shop?.logoUrl == null
+                                    ? Text(shop?.name.substring(0, 1).toUpperCase() ?? 'V',
+                                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white))
+                                    : null,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () => _uploadShopImage(context, ref, shop?.id, false),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(color: AppColors.vendor, shape: BoxShape.circle),
+                                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 50),
@@ -264,6 +298,46 @@ class VendorProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _uploadProfilePicture(BuildContext context, WidgetRef ref, String uid) async {
+    final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
+      context: context, 
+      folder: 'vendor_profiles',
+      source: ImageSource.gallery,
+    );
+    
+    if (url != null) {
+      await ref.read(authServiceProvider).updateProfilePicture(uid, url);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully!')),
+        );
+      }
+    }
+  }
+
+  void _uploadShopImage(BuildContext context, WidgetRef ref, String? shopId, bool isBanner) async {
+    if (shopId == null) return;
+
+    final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
+      context: context, 
+      folder: isBanner ? 'shop_banners' : 'shop_logos',
+      source: ImageSource.gallery,
+    );
+    
+    if (url != null) {
+      if (isBanner) {
+        await ref.read(vendorServiceProvider).updateShopBanner(shopId, url);
+      } else {
+        await ref.read(vendorServiceProvider).updateShopLogo(shopId, url);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${isBanner ? 'Banner' : 'Logo'} updated successfully!')),
+        );
+      }
+    }
   }
 }
 
