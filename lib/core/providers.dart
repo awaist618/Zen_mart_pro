@@ -9,6 +9,7 @@ import '../services/admin_service.dart';
 import '../services/customer_service.dart';
 import '../services/order_service.dart';
 import '../services/support_service.dart';
+import '../services/emergency_service.dart';
 import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../models/order_model.dart';
@@ -24,6 +25,9 @@ import '../models/review_model.dart';
 import '../models/coupon_model.dart';
 import '../models/address_model.dart';
 import '../models/category_model.dart';
+import '../models/support_chat_model.dart';
+import '../models/support_ticket_model.dart';
+import '../models/emergency_report_model.dart';
 import '../models/offer_model.dart';
 import '../models/cart_model.dart';
 
@@ -36,6 +40,7 @@ final adminServiceProvider = Provider((ref) => AdminService());
 final customerServiceProvider = Provider((ref) => CustomerService());
 final orderServiceProvider = Provider((ref) => OrderService());
 final supportServiceProvider = Provider((ref) => SupportService());
+final emergencyServiceProvider = Provider((ref) => EmergencyService());
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
 final authStateProvider = StreamProvider((ref) {
@@ -114,6 +119,14 @@ final shopReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopReviews(user.shopId!);
+});
+
+final shopReviewsProviderFromService = StreamProvider.family<List<ReviewModel>, String>((ref, shopId) {
+  return ref.watch(vendorServiceProvider).getShopReviews(shopId);
+});
+
+final productReviewsProvider = StreamProvider.family<List<ReviewModel>, String>((ref, productId) {
+  return ref.watch(customerServiceProvider).getProductReviews(productId);
 });
 
 final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
@@ -341,11 +354,72 @@ final monthlyRevenueProvider = StreamProvider<double>((ref) {
   return ref.watch(adminServiceProvider).getRevenueStream(start: start, end: end);
 });
 
+// --- SUPPORT & EMERGENCY PROVIDERS ---
+final supportChatProvider = StreamProvider.family<SupportChatModel?, String>((ref, chatId) {
+  return ref.watch(supportServiceProvider).getChatStream(chatId);
+});
+
+final customerSupportChatProvider = StreamProvider<String?>((ref) async* {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) {
+    yield null;
+  } else {
+    // This is a bit tricky for a pure StreamProvider if we want it to be auto-creating.
+    // For now, we'll assume the UI calls getOrCreateChat.
+    // We'll just return the chatId if it exists.
+    final db = FirebaseFirestore.instance;
+    final snapshots = db.collection('support_chats')
+        .where('customerId', isEqualTo: user.uid)
+        .limit(1)
+        .snapshots();
+    
+    await for (final snap in snapshots) {
+      if (snap.docs.isNotEmpty) {
+        yield snap.docs.first.id;
+      } else {
+        yield null;
+      }
+    }
+  }
+});
+
+final supportMessagesProvider = StreamProvider.family<List<SupportMessageModel>, String>((ref, chatId) {
+  return ref.watch(supportServiceProvider).getSupportMessages(chatId);
+});
+
+final customerEmergencyReportsProvider = StreamProvider<List<EmergencyReportModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null) return Stream.value([]);
+  return ref.watch(emergencyServiceProvider).getCustomerReports(user.uid);
+});
+
+final emergencyReportStreamProvider = StreamProvider.family<EmergencyReportModel?, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getReportStream(reportId);
+});
+
+final emergencyTimelineProvider = StreamProvider.family<List<EmergencyTimelineEvent>, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getTimeline(reportId);
+});
+
+final emergencyMessagesProvider = StreamProvider.family<List<SupportMessageModel>, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getEmergencyMessages(reportId);
+});
+
 // --- CART ---
 class CartNotifier extends StateNotifier<CartModel> {
   CartNotifier() : super(CartModel());
 
-  void addItem(ProductModel product) {
+  void addItem(ProductModel product, {String? shopName, String? shopImageUrl}) {
+    if (state.items.isEmpty) {
+      state = CartModel(
+        items: {product.id: CartItem(product: product)},
+        shopId: product.shopId,
+        shopName: shopName,
+        shopImageUrl: shopImageUrl,
+      );
+      return;
+    }
+
     if (state.items.containsKey(product.id)) {
       state = CartModel(
         items: {
@@ -354,6 +428,9 @@ class CartNotifier extends StateNotifier<CartModel> {
             quantity: state.items[product.id]!.quantity + 1,
           ),
         },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
       );
     } else {
       state = CartModel(
@@ -361,6 +438,9 @@ class CartNotifier extends StateNotifier<CartModel> {
           ...state.items,
           product.id: CartItem(product: product),
         },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
       );
     }
   }
@@ -375,11 +455,23 @@ class CartNotifier extends StateNotifier<CartModel> {
             quantity: state.items[productId]!.quantity - 1,
           ),
         },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
       );
     } else {
       final newItems = Map<String, CartItem>.from(state.items);
       newItems.remove(productId);
-      state = CartModel(items: newItems);
+      if (newItems.isEmpty) {
+        state = CartModel();
+      } else {
+        state = CartModel(
+          items: newItems,
+          shopId: state.shopId,
+          shopName: state.shopName,
+          shopImageUrl: state.shopImageUrl,
+        );
+      }
     }
   }
 

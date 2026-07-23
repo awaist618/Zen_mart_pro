@@ -5,6 +5,7 @@ import '../models/shop_model.dart';
 import '../models/offer_model.dart';
 import '../models/order_model.dart';
 import '../models/notification_model.dart';
+import '../models/review_model.dart';
 
 class CustomerService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -127,7 +128,7 @@ class CustomerService {
             .toList());
   }
 
-  /// Submit a review for an order
+  /// Submit a review for an order, shop, rider, and specific products
   Future<void> submitReview({
     required String orderId,
     required String shopId,
@@ -135,6 +136,7 @@ class CustomerService {
     required String customerName,
     required double rating,
     required String review,
+    List<Map<String, dynamic>> productRatings = const [],
   }) async {
     final batch = _db.batch();
     
@@ -161,10 +163,55 @@ class CustomerService {
       });
     }
 
-    // 3. Update order record to mark as reviewed
+    // 3. Add individual product reviews
+    for (var prodRate in productRatings) {
+      final productId = prodRate['productId'];
+      final pRating = prodRate['rating'];
+      final pReview = prodRate['review'] ?? '';
+
+      final prodReviewRef = _db.collection('product_reviews').doc();
+      batch.set(prodReviewRef, {
+        'orderId': orderId,
+        'productId': productId,
+        'customerName': customerName,
+        'rating': pRating,
+        'review': pReview,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // 4. Update order record to mark as reviewed
     batch.update(_db.collection('orders').doc(orderId), {'isReviewed': true});
 
     await batch.commit();
+  }
+
+  /// Get reviews for a specific product
+  Stream<List<ReviewModel>> getProductReviews(String productId) {
+    return _db
+        .collection('product_reviews')
+        .where('productId', isEqualTo: productId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ReviewModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Toggle Wishlist item
+  Future<void> toggleWishlist(String userId, ProductModel product) async {
+    final docRef = _db
+        .collection('users')
+        .doc(userId)
+        .collection('wishlist')
+        .doc(product.id);
+    
+    final doc = await docRef.get();
+    if (doc.exists) {
+      await docRef.delete();
+    } else {
+      await docRef.set(product.toMap());
+    }
   }
 
   Stream<List<AddressModel>> getSavedAddresses(String userId) {

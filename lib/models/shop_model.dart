@@ -13,6 +13,7 @@ class ShopModel {
   final String? logoUrl;
   final String? openingHours;
   final double rating;
+  final int reviewCount;
   final String status; // active, disabled
   final int activeOrders;
   final bool hasFreeDelivery;
@@ -37,6 +38,7 @@ class ShopModel {
     this.logoUrl,
     this.openingHours,
     this.rating = 0.0,
+    this.reviewCount = 0,
     required this.status,
     this.activeOrders = 0,
     this.hasFreeDelivery = false,
@@ -64,6 +66,7 @@ class ShopModel {
       logoUrl: data['logoUrl'],
       openingHours: data['openingHours'],
       rating: (data['rating'] ?? 0.0).toDouble(),
+      reviewCount: data['reviewCount'] ?? 0,
       status: data['status'] ?? 'active',
       activeOrders: data['activeOrders'] ?? 0,
       hasFreeDelivery: data['hasFreeDelivery'] ?? false,
@@ -92,6 +95,7 @@ class ShopModel {
       'logoUrl': logoUrl,
       'openingHours': openingHours,
       'rating': rating,
+      'reviewCount': reviewCount,
       'status': status,
       'activeOrders': activeOrders,
       'hasFreeDelivery': hasFreeDelivery,

@@ -44,7 +44,7 @@ class RoleStatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12.5),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12.5),
           ),
         ],
       ),
@@ -89,7 +89,7 @@ class RoleLaunchCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: color),
@@ -105,7 +105,7 @@ class RoleLaunchCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
           ],
         ),
       ),

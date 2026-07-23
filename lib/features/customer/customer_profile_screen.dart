@@ -33,7 +33,7 @@ class CustomerProfileScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () => context.push('/support'),
-            icon: Icon(Icons.help_outline_rounded, color: colorScheme.onBackground),
+            icon: Icon(Icons.help_outline_rounded, color: colorScheme.onSurface),
           ),
         ],
       ),
@@ -56,6 +56,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                         value: (ordersAsync.value?.length ?? 0).toString(),
                         icon: Icons.receipt_long_rounded,
                         color: AppColors.primary,
+                        onTap: () => context.push('/customer/orders'),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -65,6 +66,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                         value: (wishlistAsync.value?.length ?? 0).toString(),
                         icon: Icons.favorite_rounded,
                         color: AppColors.error,
+                        onTap: () => context.push('/customer/wishlist'),
                       ),
                     ),
                   ],
@@ -126,9 +128,9 @@ class CustomerProfileScreen extends ConsumerWidget {
                   icon: const Icon(Icons.logout_rounded, size: 20),
                   label: const Text('SIGN OUT'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error.withOpacity(0.1),
+                    backgroundColor: AppColors.error.withValues(alpha: 0.1),
                     foregroundColor: AppColors.error,
-                    side: BorderSide(color: AppColors.error.withOpacity(0.2)),
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.2)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -339,34 +341,39 @@ class _StatBox extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
-  const _StatBox({required this.label, required this.value, required this.icon, required this.color});
+  const _StatBox({required this.label, required this.value, required this.icon, required this.color, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 16),
-          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600)),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
+          border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.05)) : null,
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 16),
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }

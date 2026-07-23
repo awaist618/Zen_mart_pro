@@ -55,9 +55,11 @@ import '../features/customer/category_shops_screen.dart';
 import '../features/customer/featured_shops_screen.dart';
 import '../features/customer/nearby_shops_screen.dart';
 import '../features/customer/trending_products_screen.dart';
+import '../features/customer/product_reviews_screen.dart';
 import '../features/customer/offer_details_screen.dart';
 import '../features/customer/product_details_screen.dart';
 import '../features/customer/notifications_screen.dart';
+import '../features/customer/wishlist_screen.dart';
 import '../models/offer_model.dart';
 import '../models/product_model.dart';
 import '../features/rider/rider_dashboard.dart';
@@ -78,6 +80,9 @@ import '../features/support/screens/support_hub_screen.dart';
 import '../features/support/screens/create_ticket_screen.dart';
 import '../features/support/screens/ticket_chat_screen.dart';
 import '../features/support/screens/my_tickets_screen.dart';
+import '../features/support/screens/live_chat_screen.dart';
+import '../features/support/screens/emergency_report_screen.dart';
+import '../features/support/screens/emergency_details_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -181,6 +186,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/profile', builder: (context, state) => const CustomerProfileScreen()),
       GoRoute(path: '/customer/addresses', builder: (context, state) => const AddressManagementScreen()),
       GoRoute(path: '/customer/search', builder: (context, state) => const CustomerSearchScreen()),
+      GoRoute(path: '/customer/wishlist', builder: (context, state) => const WishlistScreen()),
       GoRoute(path: '/customer/cart', builder: (context, state) => const CartScreen()),
       GoRoute(path: '/customer/checkout', builder: (context, state) => const CheckoutScreen()),
       GoRoute(path: '/customer/orders', builder: (context, state) => const CustomerOrdersScreen()),
@@ -192,6 +198,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/category/:name', builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!)),
       GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
       GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),
+      GoRoute(
+        path: '/customer/product-reviews/:id/:name', 
+        builder: (context, state) => ProductReviewsScreen(
+          productId: state.pathParameters['id']!,
+          productName: state.pathParameters['name']!,
+        )
+      ),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/customer/notifications', builder: (context, state) => const CustomerNotificationsScreen()),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
@@ -210,6 +223,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/support', builder: (context, state) => const SupportHubScreen()),
       GoRoute(path: '/support/create-ticket', builder: (context, state) => CreateTicketScreen(initialCategory: state.extra as String?)),
       GoRoute(path: '/support/ticket-chat/:id', builder: (context, state) => TicketChatScreen(ticketId: state.pathParameters['id']!)),
+      GoRoute(path: '/support/live-chat/:id', builder: (context, state) => LiveChatScreen(chatId: state.pathParameters['id']!)),
+      GoRoute(path: '/support/emergency', builder: (context, state) => const EmergencyReportScreen()),
+      GoRoute(path: '/support/emergency-details/:id', builder: (context, state) => EmergencyDetailsScreen(reportId: state.pathParameters['id']!)),
       GoRoute(path: '/support/tickets', builder: (context, state) => const MyTicketsScreen()),
       GoRoute(
         path: '/chat/:orderId/:name',

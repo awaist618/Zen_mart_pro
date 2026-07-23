@@ -73,6 +73,22 @@ class AppColors {
   static const Color customer = primary;
   static const Color rider = secondaryAccent;
 
+  static Color forRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+      case 'super_admin':
+        return admin;
+      case 'vendor':
+        return vendor;
+      case 'rider':
+        return rider;
+      case 'customer':
+        return customer;
+      default:
+        return primary;
+    }
+  }
+
   static LinearGradient gradientForRole(String role, {bool isLight = false}) {
     if (!isLight) {
       Color c = primary;

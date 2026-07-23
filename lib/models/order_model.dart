@@ -21,6 +21,7 @@ class OrderModel {
   final String vendorId;
   final String shopId;
   final String shopName;
+  final String shopImageUrl;
   final String vendorPhone;
   final String? riderId;
   final OrderStatus status;
@@ -46,6 +47,7 @@ class OrderModel {
     required this.vendorId,
     required this.shopId,
     required this.shopName,
+    required this.shopImageUrl,
     required this.vendorPhone,
     this.riderId,
     required this.status,
@@ -74,6 +76,7 @@ class OrderModel {
       vendorId: data['vendorId'] ?? '',
       shopId: data['shopId'] ?? '',
       shopName: data['shopName'] ?? '',
+      shopImageUrl: data['shopImageUrl'] ?? '',
       vendorPhone: data['vendorPhone'] ?? '',
       riderId: data['riderId'],
       status: _parseStatus(data['status']),
@@ -108,6 +111,7 @@ class OrderModel {
       'vendorId': vendorId,
       'shopId': shopId,
       'shopName': shopName,
+      'shopImageUrl': shopImageUrl,
       'vendorPhone': vendorPhone,
       'riderId': riderId,
       'status': status.name,

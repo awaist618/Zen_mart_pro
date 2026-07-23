@@ -55,30 +55,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Premium Logo Container
+                  // Premium Logo Container with sophisticated SaaS styling
                   Container(
-                    width: 150,
-                    height: 150,
+                    width: 170,
+                    height: 170,
                     decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(44),
+                      color: isLight ? Colors.white : colorScheme.surface,
+                      borderRadius: BorderRadius.circular(54),
                       boxShadow: [
                         BoxShadow(
-                          color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
-                          blurRadius: 40, 
-                          offset: const Offset(0, 20)
+                          color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.3), 
+                          blurRadius: 60, 
+                          offset: const Offset(0, 30)
                         ),
+                        if (!isLight)
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.1),
+                            blurRadius: 30,
+                            spreadRadius: -10,
+                          ),
                       ],
-                      border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+                      border: Border.all(color: colorScheme.primary.withOpacity(0.15), width: 2),
                     ),
                     padding: const EdgeInsets.all(32),
-                    child: Image.asset(
-                      'assets/images/image.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.shopping_bag_rounded,
-                        size: 64,
-                        color: colorScheme.primary,
+                    child: Hero(
+                      tag: 'app_logo',
+                      child: Image.asset(
+                        'assets/images/image.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.auto_awesome_mosaic_rounded,
+                          size: 72,
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),

@@ -112,7 +112,6 @@ class AdminService {
 
   /// Reset Password logic (Sending password reset email)
   Future<void> sendResetPasswordEmail(String email) async {
-    await FirebaseFirestore.instance.app.options; // Placeholder for logic if needed
     // Typically this would use FirebaseAuth.instance.sendPasswordResetEmail(email: email);
   }
 

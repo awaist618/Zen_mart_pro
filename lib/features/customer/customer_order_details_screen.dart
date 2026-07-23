@@ -85,9 +85,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.08), 
+                            color: primaryColor.withValues(alpha: 0.08), 
                             borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: primaryColor.withOpacity(0.15), width: 1.5),
+                            border: Border.all(color: primaryColor.withValues(alpha: 0.15), width: 1.5),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -111,7 +111,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.2), blurRadius: 15)],
+                                  boxShadow: [BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: 15)],
                                 ),
                                 child: Text(
                                   order.deliveryOtp ?? '----', 
@@ -357,7 +357,10 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
   }
 
   void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order, bool isLight, Color primary) {
-    int rating = 5;
+    int shopRating = 5;
+    final Map<String, int> productRatings = {
+      for (var item in order.items) item['productId']: 5
+    };
     final reviewController = TextEditingController();
 
     showDialog(
@@ -367,42 +370,77 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
           backgroundColor: isLight ? Colors.white : AppColors.dialog,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           title: Text('Rate your experience', style: TextStyle(fontWeight: FontWeight.w900, color: isLight ? Colors.black : Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) => IconButton(
-                  onPressed: () => setState(() => rating = index + 1),
-                  icon: Icon(Icons.star_rounded, color: index < rating ? AppColors.warning : (isLight ? Colors.grey[200] : Colors.white12), size: 40),
-                )),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: reviewController,
-                maxLines: 3,
-                style: TextStyle(color: isLight ? Colors.black : Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Any specific feedback?',
-                  hintStyle: TextStyle(color: isLight ? Colors.grey : Colors.white38),
-                  filled: true,
-                  fillColor: isLight ? Colors.grey[100] : Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Rate Store: ${order.shopName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) => IconButton(
+                    onPressed: () => setState(() => shopRating = index + 1),
+                    icon: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.grey[200] : Colors.white12), size: 32),
+                  )),
                 ),
-              ),
-            ],
+                const Divider(height: 32),
+                Text('Rate Products:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 12),
+                ...order.items.map((item) {
+                  final pid = item['productId'];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item['name'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        Row(
+                          children: List.generate(5, (index) => InkWell(
+                            onTap: () => setState(() => productRatings[pid] = index + 1),
+                            child: Icon(Icons.star_rounded, color: index < productRatings[pid]! ? AppColors.warning : Colors.grey[200], size: 24),
+                          )),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: reviewController,
+                  maxLines: 3,
+                  style: TextStyle(color: isLight ? Colors.black : Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Share more details about your experience...',
+                    hintStyle: TextStyle(color: isLight ? Colors.grey : Colors.white38),
+                    filled: true,
+                    fillColor: isLight ? Colors.grey[100] : Colors.white.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('SKIP', style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w800))),
             ElevatedButton(
               onPressed: () async {
+                final List<Map<String, dynamic>> productRatingsList = [];
+                productRatings.forEach((key, value) {
+                  productRatingsList.add({
+                    'productId': key,
+                    'rating': value,
+                  });
+                });
+
                 await ref.read(customerServiceProvider).submitReview(
                   orderId: order.id,
                   shopId: order.shopId,
                   riderId: order.riderId,
                   customerName: order.customerName,
-                  rating: rating.toDouble(),
+                  rating: shopRating.toDouble(),
                   review: reviewController.text.trim(),
+                  productRatings: productRatingsList,
                 );
                 if (context.mounted) Navigator.pop(context);
               },

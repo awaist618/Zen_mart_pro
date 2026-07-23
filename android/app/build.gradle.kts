@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.zen_mart_pro"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

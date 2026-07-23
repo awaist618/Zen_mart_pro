@@ -67,10 +67,64 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                   _buildActionGrid(context, user.role, isLight, cardColor, primaryColor, textColor, secondaryTextColor, dividerColor),
                   
                   const SizedBox(height: 32),
-                  _LiveChatCard(isLight: isLight, primary: primaryColor, cardColor: cardColor, textColor: textColor, secondaryTextColor: secondaryTextColor, divider: dividerColor),
+                  _LiveChatCard(
+                    user: user,
+                    ref: ref,
+                    isLight: isLight, 
+                    primary: primaryColor, 
+                    cardColor: cardColor, 
+                    textColor: textColor, 
+                    secondaryTextColor: secondaryTextColor, 
+                    divider: dividerColor
+                  ),
                   
                   const SizedBox(height: 32),
-                  _EmergencyCard(isLight: isLight),
+                  _EmergencyCard(
+                    isLight: isLight,
+                    onTap: () => context.push('/support/emergency'),
+                  ),
+
+                  // NEW: Emergency Reports Tracking
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final reportsAsync = ref.watch(customerEmergencyReportsProvider);
+                      return reportsAsync.when(
+                        data: (reports) {
+                          if (reports.isEmpty) return const SizedBox.shrink();
+                          final lastReport = reports.first;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 24),
+                            child: InkWell(
+                              onTap: () => context.push('/support/emergency-details/${lastReport.id}'),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.track_changes_rounded, color: Colors.redAccent, size: 20),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Track Emergency: ${lastReport.category}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.redAccent),
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right_rounded, color: Colors.redAccent, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      );
+                    }
+                  ),
                   
                   const SizedBox(height: 40),
                   Row(
@@ -457,6 +511,8 @@ class _CategoryCard extends StatelessWidget {
 }
 
 class _LiveChatCard extends StatelessWidget {
+  final UserModel user;
+  final WidgetRef ref;
   final bool isLight;
   final Color primary;
   final Color cardColor;
@@ -465,6 +521,8 @@ class _LiveChatCard extends StatelessWidget {
   final Color divider;
 
   const _LiveChatCard({
+    required this.user,
+    required this.ref,
     required this.isLight, 
     required this.primary,
     required this.cardColor,
@@ -476,7 +534,16 @@ class _LiveChatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {}, // Future Live Chat implementation
+      onTap: () async {
+        final chatId = await ref.read(supportServiceProvider).getOrCreateChat(
+          user.uid, 
+          user.name, 
+          user.profilePicture
+        );
+        if (context.mounted) {
+          context.push('/support/live-chat/$chatId');
+        }
+      },
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(24),
@@ -541,54 +608,59 @@ class _LiveChatCard extends StatelessWidget {
 
 class _EmergencyCard extends StatelessWidget {
   final bool isLight;
-  const _EmergencyCard({required this.isLight});
+  final VoidCallback onTap;
+  const _EmergencyCard({required this.isLight, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isLight ? AppColors.lightError.withOpacity(0.05) : AppColors.supportDarkError.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: (isLight ? AppColors.lightError : AppColors.supportDarkError).withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (isLight ? AppColors.lightError : AppColors.supportDarkError).withOpacity(0.1),
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isLight ? AppColors.lightError.withOpacity(0.05) : AppColors.supportDarkError.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: (isLight ? AppColors.lightError : AppColors.supportDarkError).withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (isLight ? AppColors.lightError : AppColors.supportDarkError).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.report_gmailerrorred_rounded, color: isLight ? AppColors.lightError : AppColors.supportDarkError, size: 24),
             ),
-            child: Icon(Icons.report_gmailerrorred_rounded, color: isLight ? AppColors.lightError : AppColors.supportDarkError, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Emergency Assistance',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: isLight ? AppColors.lightError : AppColors.supportDarkError,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Emergency Assistance',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: isLight ? AppColors.lightError : AppColors.supportDarkError,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Safety issues or fraud report.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isLight ? AppColors.lightError.withOpacity(0.7) : AppColors.supportDarkError.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Safety issues or fraud report.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isLight ? AppColors.lightError.withOpacity(0.7) : AppColors.supportDarkError.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isLight ? AppColors.lightError : AppColors.supportDarkError),
-        ],
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: isLight ? AppColors.lightError : AppColors.supportDarkError),
+          ],
+        ),
       ),
     );
   }

@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/product_model.dart';
+import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 
 class ProductDetailsScreen extends ConsumerWidget {
@@ -15,6 +17,9 @@ class ProductDetailsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    final wishlist = ref.watch(customerWishlistProvider).asData?.value ?? [];
+    final isWishlisted = wishlist.any((p) => p.id == product.id);
+    final reviewsAsync = ref.watch(productReviewsProvider(product.id));
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -23,7 +28,7 @@ class ProductDetailsScreen extends ConsumerWidget {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              _buildModernAppBar(context),
+              _buildModernAppBar(context, ref, isWishlisted),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 150),
@@ -34,33 +39,35 @@ class ProductDetailsScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _Badge(label: product.category, color: colorScheme.primary),
-                          _RatingBadge(rating: '4.8', count: '1.2k'),
+                          _RatingBadge(rating: product.rating.toStringAsFixed(1), count: product.reviewCount.toString()),
                         ],
                       ),
                       const SizedBox(height: 24),
                       Text(
                         product.name,
-                        style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: colorScheme.onBackground, letterSpacing: -1),
+                        style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'by ${product.brand}',
-                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 32),
                       _PriceSection(price: product.price, discount: product.discount),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
-                        child: Divider(color: colorScheme.outline.withOpacity(0.1)),
+                        child: Divider(color: colorScheme.outline.withValues(alpha: 0.1)),
                       ),
-                      Text('The Detail', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
+                      Text('Description', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
                       const SizedBox(height: 12),
                       Text(
                         product.description,
-                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7), height: 1.7, fontSize: 15, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), height: 1.7, fontSize: 15, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 40),
                       _StockCard(stock: product.stock),
+                      const SizedBox(height: 40),
+                      _buildReviewsSection(context, reviewsAsync, colorScheme, textColor: colorScheme.onBackground, secondaryColor: colorScheme.onSurface),
                     ],
                   ),
                 ),
@@ -79,7 +86,7 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildModernAppBar(BuildContext context) {
+  Widget _buildModernAppBar(BuildContext context, WidgetRef ref, bool isWishlisted) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
@@ -93,7 +100,7 @@ class ProductDetailsScreen extends ConsumerWidget {
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
         child: CircleAvatar(
-          backgroundColor: isLight ? Colors.white.withOpacity(0.8) : AppColors.surface.withOpacity(0.8),
+          backgroundColor: isLight ? Colors.white.withValues(alpha: 0.8) : AppColors.surface.withValues(alpha: 0.8),
           child: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: colorScheme.onSurface),
             onPressed: () => context.pop(),
@@ -101,7 +108,16 @@ class ProductDetailsScreen extends ConsumerWidget {
         ),
       ),
       actions: [
-        _CircleActionBtn(icon: Icons.favorite_border_rounded, onTap: () {}),
+        _CircleActionBtn(
+          icon: isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded, 
+          color: isWishlisted ? Colors.redAccent : null,
+          onTap: () {
+            final user = ref.read(userModelProvider).asData?.value;
+            if (user != null) {
+              ref.read(customerServiceProvider).toggleWishlist(user.uid, product);
+            }
+          }
+        ),
         const SizedBox(width: 12),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -111,10 +127,40 @@ class ProductDetailsScreen extends ConsumerWidget {
             color: isLight ? AppColors.lightSecondaryBackground : AppColors.secondaryBackground,
             child: product.imageUrl.isNotEmpty 
                 ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                : Center(child: Icon(Icons.image, size: 80, color: colorScheme.onSurface.withOpacity(0.05))),
+                : Center(child: Icon(Icons.image, size: 80, color: colorScheme.onSurface.withValues(alpha: 0.05))),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildReviewsSection(BuildContext context, AsyncValue<List<ReviewModel>> reviewsAsync, ColorScheme colorScheme, {required Color textColor, required Color secondaryColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Customer Reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: textColor)),
+            if (product.reviewCount > 0)
+              TextButton(
+                onPressed: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
+                child: Text('View All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        reviewsAsync.when(
+          data: (reviews) {
+            if (reviews.isEmpty) return Text('No reviews yet.', style: TextStyle(color: secondaryColor.withValues(alpha: 0.5)));
+            return Column(
+              children: reviews.take(3).map((r) => _ReviewTile(review: r, textColor: textColor, secondaryColor: secondaryColor)).toList(),
+            );
+          },
+          loading: () => const LinearProgressIndicator(),
+          error: (e, s) => Text('Error loading reviews: $e'),
+        ),
+      ],
     );
   }
 
@@ -129,15 +175,15 @@ class ProductDetailsScreen extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
           decoration: BoxDecoration(
-            color: isLight ? Colors.white.withOpacity(0.9) : AppColors.bottomNav.withOpacity(0.9),
+            color: isLight ? Colors.white.withValues(alpha: 0.9) : AppColors.bottomNav.withValues(alpha: 0.9),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
             boxShadow: [
               BoxShadow(
-                color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.3), 
+                color: isLight ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.3), 
                 blurRadius: 40
               )
             ],
-            border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
+            border: Border.all(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05)),
           ),
           child: Row(
             children: [
@@ -163,12 +209,54 @@ class ProductDetailsScreen extends ConsumerWidget {
   }
 }
 
+class _ReviewTile extends StatelessWidget {
+  final ReviewModel review;
+  final Color textColor;
+  final Color secondaryColor;
+  const _ReviewTile({required this.review, required this.textColor, required this.secondaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(review.customerName, style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14)),
+              Row(
+                children: List.generate(5, (index) => Icon(
+                  Icons.star_rounded, 
+                  size: 14, 
+                  color: index < review.rating ? Colors.orange : Colors.grey[300]
+                )),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            DateFormat('dd MMM yyyy').format(review.createdAt),
+            style: TextStyle(color: secondaryColor.withValues(alpha: 0.4), fontSize: 11),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            review.review,
+            style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Badge extends StatelessWidget {
   final String label;
   final Color color;
   const _Badge({required this.label, required this.color});
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Text(label.toUpperCase(), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)));
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(label.toUpperCase(), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)));
 }
 
 class _RatingBadge extends StatelessWidget {
@@ -244,8 +332,9 @@ class _StockCard extends StatelessWidget {
 
 class _CircleActionBtn extends StatelessWidget {
   final IconData icon;
+  final Color? color;
   final VoidCallback onTap;
-  const _CircleActionBtn({required this.icon, required this.onTap});
+  const _CircleActionBtn({required this.icon, this.color, required this.onTap});
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
@@ -254,8 +343,8 @@ class _CircleActionBtn extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 10), 
       child: CircleAvatar(
-        backgroundColor: isLight ? Colors.white.withOpacity(0.8) : AppColors.surface.withOpacity(0.8), 
-        child: IconButton(icon: Icon(icon, size: 20, color: colorScheme.onSurface), onPressed: onTap)
+        backgroundColor: isLight ? Colors.white.withValues(alpha: 0.8) : AppColors.surface.withValues(alpha: 0.8), 
+        child: IconButton(icon: Icon(icon, size: 20, color: color ?? colorScheme.onSurface), onPressed: onTap)
       )
     );
   }

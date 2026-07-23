@@ -37,7 +37,7 @@ class CustomerHome extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [primaryColor.withOpacity(isLight ? 0.12 : 0.08), Colors.transparent],
+                  colors: [primaryColor.withValues(alpha: isLight ? 0.12 : 0.08), Colors.transparent],
                 ),
               ),
             ),
@@ -143,7 +143,7 @@ class _LocationHeader extends StatelessWidget {
     
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final cardColor = isLight ? Colors.white : const Color(0xFF1E293B);
 
     return Row(
       children: [
@@ -200,6 +200,14 @@ class _LocationHeader extends StatelessWidget {
         _HeaderActionBtn(
           icon: Icons.notifications_none_rounded, 
           onTap: () => context.push('/customer/notifications'),
+          cardColor: cardColor,
+          textColor: textColor,
+          isLight: isLight,
+        ),
+        const SizedBox(width: 12),
+        _HeaderActionBtn(
+          icon: Icons.favorite_border_rounded, 
+          onTap: () => context.push('/customer/wishlist'),
           cardColor: cardColor,
           textColor: textColor,
           isLight: isLight,
@@ -428,12 +436,21 @@ class _SectionHeader extends StatelessWidget {
         ),
         if (showSeeAll)
           TextButton(
-            onPressed: onSeeAll != null ? () => context.push(onSeeAll!) : null,
+            onPressed: () {
+              if (onSeeAll != null) {
+                context.push(onSeeAll!);
+              }
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text('View All', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 13)),
-                const SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
+                Text('View All', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+                const SizedBox(width: 6),
+                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
               ],
             ),
           ),

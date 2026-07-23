@@ -18,8 +18,16 @@ class CartItem {
 
 class CartModel {
   final Map<String, CartItem> items;
+  final String? shopId;
+  final String? shopName;
+  final String? shopImageUrl;
 
-  CartModel({this.items = const {}});
+  CartModel({
+    this.items = const {},
+    this.shopId,
+    this.shopName,
+    this.shopImageUrl,
+  });
 
   double get totalAmount {
     double total = 0.0;

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,7 +129,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [colorScheme.primary.withOpacity(isLight ? 0.08 : 0.05), Colors.transparent]),
+                gradient: RadialGradient(colors: [colorScheme.primary.withValues(alpha: isLight ? 0.08 : 0.05), Colors.transparent]),
               ),
             ),
           ),
@@ -145,21 +144,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
                       style: IconButton.styleFrom(
                         backgroundColor: colorScheme.surface,
-                        side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.1)) : null,
+                        side: isLight ? BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
                       'Join Zen Mart Pro',
-                      style: TextStyle(color: colorScheme.onBackground, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Start your premium shopping journey today',
-                      style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 48),
 
@@ -200,7 +199,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         onTap: () => context.push('/login'),
                         child: RichText(
                           text: TextSpan(
-                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
+                            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14, fontWeight: FontWeight.w500),
                             children: [
                               const TextSpan(text: 'Already have an account? '),
                               TextSpan(text: 'Login', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),

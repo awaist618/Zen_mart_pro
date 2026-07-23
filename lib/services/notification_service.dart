@@ -28,7 +28,7 @@ class NotificationService {
     await _localNotifications.initialize(initSettings);
 
     // 3. Create Android Notification Channel
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'zen_mart_high_importance_channel',
         'High Importance Notifications',
@@ -37,9 +37,13 @@ class NotificationService {
       );
 
       final dynamic plugin = _localNotifications;
-      final dynamic androidPlugin = plugin.resolvePlatformSpecificPlugin<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) {
-        await androidPlugin.createNotificationChannel(channel);
+      try {
+        final androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          await androidPlugin.createNotificationChannel(channel);
+        }
+      } catch (e) {
+        debugPrint('Error creating notification channel: $e');
       }
 
       // 4. Listen for Messages

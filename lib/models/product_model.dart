@@ -15,6 +15,8 @@ class ProductModel {
   final String category;
   final String brand;
   final bool isAvailable;
+  final double rating;
+  final int reviewCount;
   final DateTime createdAt;
 
   ProductModel({
@@ -32,6 +34,8 @@ class ProductModel {
     required this.category,
     this.brand = 'Generic',
     this.isAvailable = true,
+    this.rating = 0.0,
+    this.reviewCount = 0,
     required this.createdAt,
   });
 
@@ -52,6 +56,8 @@ class ProductModel {
       category: data['category'] ?? 'General',
       brand: data['brand'] ?? 'Generic',
       isAvailable: data['isAvailable'] ?? true,
+      rating: (data['rating'] ?? 0.0).toDouble(),
+      reviewCount: data['reviewCount'] ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -71,6 +77,8 @@ class ProductModel {
       'category': category,
       'brand': brand,
       'isAvailable': isAvailable,
+      'rating': rating,
+      'reviewCount': reviewCount,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

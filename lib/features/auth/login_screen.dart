@@ -150,19 +150,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         children: [
                           Container(
-                            width: 100,
-                            height: 100,
+                            width: 120,
+                            height: 120,
                             decoration: BoxDecoration(
                               color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(32),
-                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)] : null,
-                              border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+                              borderRadius: BorderRadius.circular(40),
+                              boxShadow: isLight ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06), 
+                                  blurRadius: 30, 
+                                  offset: const Offset(0, 15)
+                                )
+                              ] : [
+                                BoxShadow(
+                                  color: colorScheme.primary.withOpacity(0.05),
+                                  blurRadius: 20,
+                                ),
+                              ],
+                              border: Border.all(color: colorScheme.primary.withOpacity(0.1), width: 1.5),
                             ),
                             padding: const EdgeInsets.all(24),
-                            child: Image.asset(
-                              'assets/images/image.png',
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => Icon(Icons.lock_person_rounded, color: colorScheme.primary, size: 36),
+                            child: Hero(
+                              tag: 'app_logo',
+                              child: Image.asset(
+                                'assets/images/image.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) => Icon(Icons.auto_awesome_mosaic_rounded, color: colorScheme.primary, size: 48),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -238,6 +252,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+
+                    // Designer Footer
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'POWERED BY',
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withOpacity(0.15),
+                              fontSize: 10,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Zenvyro Labs',
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withOpacity(0.4),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 40),

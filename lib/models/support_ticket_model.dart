@@ -114,7 +114,9 @@ class SupportMessageModel {
   final String senderName;
   final String senderRole;
   final String message;
-  final String? imageUrl;
+  final String type; // text, image, voice, pdf, order
+  final String? attachmentUrl;
+  final String? linkedId; // e.g. Order ID
   final DateTime timestamp;
 
   SupportMessageModel({
@@ -123,7 +125,9 @@ class SupportMessageModel {
     required this.senderName,
     required this.senderRole,
     required this.message,
-    this.imageUrl,
+    this.type = 'text',
+    this.attachmentUrl,
+    this.linkedId,
     required this.timestamp,
   });
 
@@ -135,7 +139,9 @@ class SupportMessageModel {
       senderName: data['senderName'] ?? '',
       senderRole: data['senderRole'] ?? 'customer',
       message: data['message'] ?? '',
-      imageUrl: data['imageUrl'],
+      type: data['type'] ?? 'text',
+      attachmentUrl: data['attachmentUrl'] ?? data['imageUrl'], // backward compatibility
+      linkedId: data['linkedId'],
       timestamp: data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
     );
   }
@@ -146,7 +152,9 @@ class SupportMessageModel {
       'senderName': senderName,
       'senderRole': senderRole,
       'message': message,
-      'imageUrl': imageUrl,
+      'type': type,
+      'attachmentUrl': attachmentUrl,
+      'linkedId': linkedId,
       'timestamp': FieldValue.serverTimestamp(),
     };
   }

@@ -7,6 +7,8 @@ import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product_model.dart';
 import '../../models/shop_model.dart';
+import '../../models/review_model.dart';
+import 'package:intl/intl.dart';
 
 class ShopDetailScreen extends ConsumerStatefulWidget {
   final String shopId;
@@ -80,7 +82,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                       const SizedBox(height: 24),
                       Text(
                         shop.description, 
-                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), height: 1.6, fontSize: 14, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.6, fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 24),
                       _ContactBar(phone: shop.phone, address: shop.address),
@@ -113,8 +115,8 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
             body: TabBarView(
               controller: _tabController,
               children: [
-                _buildProductsTab(productsAsync),
-                _buildReviewsTab(),
+                _buildProductsTab(productsAsync, shop),
+                _buildReviewsTab(shop.id),
               ],
             ),
           ),
@@ -148,7 +150,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
     );
   }
 
-  Widget _buildProductsTab(AsyncValue<List<ProductModel>> productsAsync) {
+  Widget _buildProductsTab(AsyncValue<List<ProductModel>> productsAsync, ShopModel shop) {
     final colorScheme = Theme.of(context).colorScheme;
     return productsAsync.when(
       data: (products) {
@@ -172,8 +174,8 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
                 : ListView.separated(
                     padding: const EdgeInsets.all(20),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) => _ProductTile(product: filtered[index]),
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) => _ProductTile(product: filtered[index], shop: shop),
                   ),
             ),
           ],
@@ -184,17 +186,33 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> with Single
     );
   }
 
-  Widget _buildReviewsTab() {
+  Widget _buildReviewsTab(String shopId) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.rate_review_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.05)),
-          const SizedBox(height: 16),
-          Text('No ratings yet.', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
-        ],
-      ),
+    final reviewsAsync = ref.watch(shopReviewsProviderFromService(shopId));
+
+    return reviewsAsync.when(
+      data: (reviews) {
+        if (reviews.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.rate_review_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.05)),
+                const SizedBox(height: 16),
+                Text('No ratings yet.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
+              ],
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(24),
+          itemCount: reviews.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 20),
+          itemBuilder: (context, index) => _ShopReviewTile(review: reviews[index]),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text('Error loading reviews')),
     );
   }
 
@@ -388,9 +406,78 @@ class _ContactBar extends StatelessWidget {
   }
 }
 
+class _ShopReviewTile extends StatelessWidget {
+  final ReviewModel review;
+  const _ShopReviewTile({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor = colorScheme.onSurface.withValues(alpha: 0.6);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(review.customerName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+            Row(
+              children: List.generate(5, (index) => Icon(
+                Icons.star_rounded, 
+                size: 16, 
+                color: index < review.rating ? Colors.orange : colorScheme.onSurface.withValues(alpha: 0.1)
+              )),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          DateFormat('MMM dd, yyyy').format(review.createdAt),
+          style: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          review.review,
+          style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.8), fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
+        ),
+        if (review.reply != null && review.reply!.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.reply_rounded, color: colorScheme.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Text('RESPONSE FROM VENDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.primary, letterSpacing: 1)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  review.reply!,
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13, height: 1.4, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _ProductTile extends ConsumerWidget {
   final ProductModel product;
-  const _ProductTile({required this.product});
+  final ShopModel shop;
+  const _ProductTile({required this.product, required this.shop});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -447,7 +534,11 @@ class _ProductTile extends ConsumerWidget {
                       ),
                       InkWell(
                         onTap: () {
-                          ref.read(cartProvider.notifier).addItem(product);
+                          ref.read(cartProvider.notifier).addItem(
+                            product, 
+                            shopName: shop.name, 
+                            shopImageUrl: shop.imageUrl
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('${product.name} added to cart'),

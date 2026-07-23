@@ -328,6 +328,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // Fix shopName missing error by fetching shop data
       final shopDoc = await FirebaseFirestore.instance.collection('shops').doc(firstItem.product.shopId).get();
       final shopName = shopDoc.exists ? (shopDoc.data()?['name'] ?? 'Premium Shop') : 'Premium Shop';
+      final shopImageUrl = shopDoc.exists ? (shopDoc.data()?['imageUrl'] ?? '') : '';
 
       final orderData = {
         'customerId': user.uid,
@@ -335,7 +336,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'customerPhone': user.phone,
         'vendorId': firstItem.product.vendorId,
         'shopId': firstItem.product.shopId,
-        'shopName': shopName,
+        'shopName': cart.shopName ?? shopName,
+        'shopImageUrl': cart.shopImageUrl ?? shopImageUrl,
         'vendorPhone': '03001234567',
         'status': 'pending',
         'totalAmount': cart.totalAmount + 100,

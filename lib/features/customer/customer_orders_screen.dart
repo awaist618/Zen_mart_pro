@@ -221,12 +221,23 @@ class _OrderCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: primaryColor.withOpacity(0.1)),
                   ),
-                  child: Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: order.shopImageUrl.isNotEmpty
+                        ? Image.network(
+                            order.shopImageUrl, 
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
+                          )
+                        : Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

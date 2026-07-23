@@ -1,6 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -9,24 +9,25 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF0B1120), // Deep Navy from image
       body: Stack(
         children: [
-          // Background Glows
+          // Background subtle glows to match the futuristic feel
           Positioned(
-            top: -100,
-            left: -100,
+            top: 100,
+            right: -100,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [colorScheme.primary.withOpacity(isLight ? 0.1 : 0.05), Colors.transparent],
+                  colors: [
+                    AppColors.premiumDarkPrimary.withValues(alpha: 0.1),
+                    Colors.transparent
+                  ],
                 ),
               ),
             ),
@@ -34,178 +35,169 @@ class WelcomeScreen extends StatelessWidget {
 
           SafeArea(
             child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height - 
-                             MediaQuery.of(context).padding.top - 
-                             MediaQuery.of(context).padding.bottom,
-                ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    children: [
-                      const Spacer(flex: 2),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  
+                  // Top Illustration (The 3D image provided)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Image.asset(
+                      'assets/images/welcome.jpeg',
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
 
-                      // Logo Container
-                      Center(
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(40),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
-                                blurRadius: isLight ? 40 : 30, 
-                                offset: const Offset(0, 10)
-                              ),
-                            ],
-                            border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+                  const SizedBox(height: 40),
+
+                  // Brand Title
+                  RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -1,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Zen Mart '),
+                        TextSpan(
+                          text: 'Pro',
+                          style: TextStyle(color: AppColors.premiumDarkPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Subtitle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      'The next generation of multi-vendor shopping & management experience.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        height: 1.6,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Feature Chips
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: const [
+                        Expanded(
+                          child: _FeatureChip(
+                            icon: Icons.storefront_rounded,
+                            label: 'PREMIUM VENDORS',
                           ),
-                          padding: const EdgeInsets.all(32),
-                          child: Image.asset(
-                            'assets/images/image.png',
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.shopping_bag_rounded,
-                              size: 64,
-                              color: colorScheme.primary,
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: _FeatureChip(
+                            icon: Icons.bolt_rounded,
+                            label: 'EXPRESS DELIVERY',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Action Area
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                      ),
+                      child: Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => context.push('/signup'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.premiumDarkPrimary,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 64),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              elevation: 0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Text('GET STARTED', style: TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
+                                SizedBox(width: 12),
+                                Icon(Icons.arrow_forward_rounded, size: 22),
+                              ],
                             ),
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      Text(
-                        'Zen Mart Pro',
-                        style: TextStyle(
-                          color: colorScheme.onBackground,
-                          fontSize: 38,
-                          letterSpacing: -1.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 48),
-                        child: Text(
-                          'The next generation of multi-vendor shopping & management experience.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                            height: 1.6,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 48),
-
-                      // Feature Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Row(
-                          children: const [
-                            _FeatureChip(icon: Icons.storefront_rounded, label: 'PREMIUM VENDORS'),
-                            _FeatureChip(icon: Icons.bolt_rounded, label: 'EXPRESS DELIVERY'),
-                            _FeatureChip(icon: Icons.shield_moon_rounded, label: 'SECURE PAY'),
-                          ],
-                        ),
-                      ),
-
-                      const Spacer(flex: 3),
-
-                      // Action Area
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(32),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: isLight ? colorScheme.surface.withOpacity(0.8) : colorScheme.surface.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(32),
-                                border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
-                                boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40)] : null,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                          const SizedBox(height: 24),
+                          GestureDetector(
+                            onTap: () => context.push('/login'),
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: () => context.push('/signup'),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Text('GET STARTED'),
-                                        SizedBox(width: 12),
-                                        Icon(Icons.arrow_forward_rounded, size: 20),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  GestureDetector(
-                                    onTap: () => context.push('/login'),
-                                    child: RichText(
-                                      text: TextSpan(
-                                        style: TextStyle(
-                                          color: colorScheme.onSurface.withOpacity(0.7), 
-                                          fontSize: 14, 
-                                          fontWeight: FontWeight.w500
-                                        ),
-                                        children: [
-                                          const TextSpan(text: 'Already a member? '),
-                                          TextSpan(
-                                            text: 'Login',
-                                            style: TextStyle(
-                                              color: colorScheme.primary,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  const TextSpan(text: 'Already a member? '),
+                                  TextSpan(
+                                    text: 'Login',
+                                    style: TextStyle(
+                                      color: AppColors.premiumDarkPrimary,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-
-                      // Powered By
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Column(
-                          children: [
-                            Text(
-                              'DESIGNED BY',
-                              style: TextStyle(
-                                color: colorScheme.onSurface.withOpacity(0.3),
-                                fontSize: 9,
-                                letterSpacing: 2,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Zenvyro Labs',
-                              style: TextStyle(
-                                color: colorScheme.onBackground,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  // Designer Footer
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(
+                      children: [
+                        Text(
+                          'DESIGNED BY',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            fontSize: 10,
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Zenvyro Labs X Awais',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -222,30 +214,27 @@ class _FeatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
     return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: const Color(0xFF1E293B).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: colorScheme.primary, size: 18),
+          Icon(icon, color: AppColors.premiumDarkPrimary, size: 20),
           const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(
-              color: colorScheme.onSurface, 
-              fontWeight: FontWeight.w800, 
-              fontSize: 11, 
-              letterSpacing: 0.5
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 10,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ],
