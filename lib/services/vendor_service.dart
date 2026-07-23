@@ -145,6 +145,14 @@ class VendorService {
     return null;
   }
 
+  /// Get stream of a single order
+  Stream<OrderModel?> getShopOrderStream(String orderId) {
+    return _db.collection('orders').doc(orderId).snapshots().map((doc) {
+      if (doc.exists) return OrderModel.fromFirestore(doc);
+      return null;
+    });
+  }
+
   /// Get stream of reviews for a specific shop
   Stream<List<ReviewModel>> getShopReviews(String shopId) {
     return _db

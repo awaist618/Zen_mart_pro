@@ -158,7 +158,7 @@ class _VendorHero extends ConsumerWidget {
               ),
               const SizedBox(height: 36),
               InkWell(
-                onTap: () => context.push('/vendor/analytics'),
+                onTap: () => context.push('/vendor/earnings'),
                 borderRadius: BorderRadius.circular(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,6 +443,7 @@ class _ShopStatusCard extends ConsumerWidget {
               Switch.adaptive(
                 value: isOnline,
                 activeColor: AppColors.success,
+                activeTrackColor: AppColors.success.withValues(alpha: 0.3),
                 onChanged: (v) {
                   ref.read(vendorServiceProvider).updateShopStatus(
                     shop.id, 

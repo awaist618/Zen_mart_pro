@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/providers.dart';
+import '../../core/settings_provider.dart';
 import '../../theme/app_colors.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _rememberMe = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadRememberedUser();
+  }
+
+  void _loadRememberedUser() {
+    final prefs = ref.read(sharedPrefsProvider);
+    final savedEmail = prefs.getString('remember_email');
+    final savedPassword = prefs.getString('remember_password');
+    if (savedEmail != null && savedPassword != null) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      setState(() => _rememberMe = true);
+    }
+  }
+
+  void _saveRememberedUser() {
+    final prefs = ref.read(sharedPrefsProvider);
+    if (_rememberMe) {
+      prefs.setString('remember_email', _emailController.text.trim());
+      prefs.setString('remember_password', _passwordController.text.trim());
+    } else {
+      prefs.remove('remember_email');
+      prefs.remove('remember_password');
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -36,6 +65,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _emailController.text.trim(),
             _passwordController.text.trim(),
           );
+      
+      _saveRememberedUser();
       
       // On successful login, trigger a 3-second splash transition
       ref.read(forcedSplashProvider.notifier).state = true;

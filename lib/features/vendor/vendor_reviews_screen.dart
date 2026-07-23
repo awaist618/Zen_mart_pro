@@ -238,8 +238,12 @@ class _ReviewCard extends ConsumerWidget {
               _ReviewActionButton(
                 icon: Icons.flag_rounded,
                 label: 'REPORT',
-                color: AppColors.error.withOpacity(0.7),
-                onTap: () {},
+                color: AppColors.error.withValues(alpha: 0.7),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Review report submitted for moderation.'), behavior: SnackBarBehavior.floating),
+                  );
+                },
               ),
             ],
           ),

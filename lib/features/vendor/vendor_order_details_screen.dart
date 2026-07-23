@@ -46,8 +46,8 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: FutureBuilder<OrderModel?>(
-        future: ref.read(vendorServiceProvider).getOrder(orderId),
+      body: StreamBuilder<OrderModel?>(
+        stream: ref.read(vendorServiceProvider).getShopOrderStream(orderId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator(color: colorScheme.primary));
@@ -237,7 +237,26 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
 
   void _updateStatus(BuildContext context, WidgetRef ref, String id, OrderStatus status) async {
     await ref.read(orderServiceProvider).updateStatus(id, status);
-    if (context.mounted) Navigator.pop(context);
+    
+    // Automatically determine which tab to go back to
+    int targetTab = 0;
+    if (status == OrderStatus.preparing) targetTab = 2;
+    if (status == OrderStatus.confirmed) targetTab = 3;
+    if (status == OrderStatus.cancelled) targetTab = 5;
+
+    if (context.mounted) {
+      ref.read(vendorActiveOrderTabProvider.notifier).state = targetTab;
+      Navigator.pop(context);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order moved to ${status.name.toUpperCase()}'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
   }
 }
 

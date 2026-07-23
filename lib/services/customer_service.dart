@@ -95,12 +95,20 @@ class CustomerService {
     return _db
         .collection('orders')
         .where('customerId', isEqualTo: userId)
+        .where('isDeletedByCustomer', isNotEqualTo: true)
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
-      // Sort in memory to avoid index requirement for now
+      // Sort in memory to avoid complex index requirement for combined query
       orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return orders;
+    });
+  }
+
+  /// Hide an order from customer history (Soft delete)
+  Future<void> deleteOrderForCustomer(String orderId) async {
+    await _db.collection('orders').doc(orderId).update({
+      'isDeletedByCustomer': true,
     });
   }
 

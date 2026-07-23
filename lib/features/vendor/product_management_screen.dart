@@ -295,7 +295,7 @@ class _ProductManagementTile extends ConsumerWidget {
               _ActionButton(
                 icon: Icons.edit_rounded,
                 label: 'Edit',
-                onTap: () {},
+                onTap: () => _showEditProductDialog(context, ref, colorScheme),
                 color: colorScheme.onSurface,
               ),
               _ActionButton(
@@ -317,6 +317,57 @@ class _ProductManagementTile extends ConsumerWidget {
                 onTap: () => _showDeleteDialog(context, ref, colorScheme),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProductDialog(BuildContext context, WidgetRef ref, ColorScheme colorScheme) {
+    final nameController = TextEditingController(text: product.name);
+    final descController = TextEditingController(text: product.description);
+    final categoryController = TextEditingController(text: product.category);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text('Edit Product Info', style: TextStyle(fontWeight: FontWeight.w900)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Product Name', prefixIcon: Icon(Icons.shopping_bag_rounded)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description_rounded)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(labelText: 'Category', prefixIcon: Icon(Icons.category_rounded)),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(vendorServiceProvider).updateProduct(product.id, {
+                'name': nameController.text.trim(),
+                'description': descController.text.trim(),
+                'category': categoryController.text.trim(),
+              });
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48)),
+            child: const Text('SAVE'),
           ),
         ],
       ),

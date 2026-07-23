@@ -417,6 +417,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     };
     final reviewController = TextEditingController(text: existingReview?.review);
     bool isDeleting = false;
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
@@ -460,15 +461,24 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       Expanded(child: Text('Store: ${order.shopName}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white70))),
                       if (existingReview != null)
                         IconButton(
-                          onPressed: isDeleting ? null : () async {
+                          onPressed: (isDeleting || isSubmitting) ? null : () async {
                             setState(() => isDeleting = true);
-                            await ref.read(customerServiceProvider).deleteReview(
-                              orderId: order.id,
-                              shopId: order.shopId,
-                              riderId: order.riderId,
-                              productIds: order.items.map((e) => e['productId'] as String).toList(),
-                            );
-                            if (context.mounted) Navigator.pop(context);
+                            try {
+                              await ref.read(customerServiceProvider).deleteReview(
+                                orderId: order.id,
+                                shopId: order.shopId,
+                                riderId: order.riderId,
+                                productIds: order.items.map((e) => e['productId'] as String).toList(),
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (context.mounted) {
+                                setState(() => isDeleting = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed to delete review: ${e.toString()}'), backgroundColor: AppColors.error),
+                                );
+                              }
+                            }
                           },
                           icon: isDeleting 
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent))
@@ -481,7 +491,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) => InkWell(
-                        onTap: () => setState(() => shopRating = index + 1),
+                        onTap: (isDeleting || isSubmitting) ? null : () => setState(() => shopRating = index + 1),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 36),
@@ -512,7 +522,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                           FittedBox(
                             child: Row(
                               children: List.generate(5, (index) => InkWell(
-                                onTap: () => setState(() => productRatings[pid] = index + 1),
+                                onTap: (isDeleting || isSubmitting) ? null : () => setState(() => productRatings[pid] = index + 1),
                                 child: Padding(
                                   padding: const EdgeInsets.only(right: 6),
                                   child: Icon(Icons.star_rounded, color: index < (productRatings[pid] ?? 5) ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 24),
@@ -528,6 +538,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                   TextField(
                     controller: reviewController,
                     maxLines: 4,
+                    enabled: !isDeleting && !isSubmitting,
                     style: TextStyle(color: isLight ? Colors.black : Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
                     decoration: InputDecoration(
                       hintText: 'Share your thoughts about the service and products...',
@@ -548,7 +559,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () => Navigator.pop(context), 
+                    onPressed: (isDeleting || isSubmitting) ? null : () => Navigator.pop(context), 
                     child: Text(existingReview != null ? 'CANCEL' : 'SKIP', style: TextStyle(color: isLight ? Colors.black.withValues(alpha: 0.38) : Colors.white38, fontWeight: FontWeight.w800, letterSpacing: 1))
                   ),
                 ),
@@ -556,25 +567,39 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final reviewText = reviewController.text.trim();
-                      final List<Map<String, dynamic>> productRatingsList = productRatings.entries.map((e) => {
-                        'productId': e.key,
-                        'rating': e.value,
-                        'review': reviewText,
-                      }).toList();
-      
-                      await ref.read(customerServiceProvider).submitReview(
-                        orderId: order.id,
-                        shopId: order.shopId,
-                        riderId: order.riderId,
-                        customerName: order.customerName,
-                        rating: shopRating.toDouble(),
-                        review: reviewText,
-                        productRatings: productRatingsList,
-                        oldRating: existingReview?.rating,
-                      );
-                      if (context.mounted) Navigator.pop(context);
+                    onPressed: (isDeleting || isSubmitting) ? null : () async {
+                      setState(() => isSubmitting = true);
+                      try {
+                        final reviewText = reviewController.text.trim();
+                        final List<Map<String, dynamic>> productRatingsList = productRatings.entries.map((e) => {
+                          'productId': e.key,
+                          'rating': e.value,
+                          'review': reviewText,
+                        }).toList();
+        
+                        await ref.read(customerServiceProvider).submitReview(
+                          orderId: order.id,
+                          shopId: order.shopId,
+                          riderId: order.riderId,
+                          customerName: order.customerName,
+                          rating: shopRating.toDouble(),
+                          review: reviewText,
+                          productRatings: productRatingsList,
+                          oldRating: existingReview?.rating,
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        if (context.mounted) {
+                          setState(() => isSubmitting = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Submission failed. Please check your permissions or try again.'),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 56), 
@@ -582,7 +607,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: Text(existingReview != null ? 'UPDATE REVIEW' : 'SUBMIT REVIEW', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    child: isSubmitting 
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(existingReview != null ? 'UPDATE REVIEW' : 'SUBMIT REVIEW', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                   ),
                 ),
               ],

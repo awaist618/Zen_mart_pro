@@ -159,6 +159,8 @@ final vendorNotificationsProvider = StreamProvider<List<VendorNotificationModel>
   return ref.watch(vendorServiceProvider).getNotifications(user.uid);
 });
 
+final vendorActiveOrderTabProvider = StateProvider<int>((ref) => 0);
+
 // --- CUSTOMER PROVIDERS ---
 final customerAddressesProvider = StreamProvider<List<AddressModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
@@ -197,7 +199,17 @@ final activeOffersProvider = StreamProvider<List<OfferModel>>((ref) {
 });
 
 final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
-  return ref.watch(customerServiceProvider).getFeaturedShops();
+  return ref.watch(customerServiceProvider).getNearbyShops().map((shops) {
+    // 1. First, try to get shops explicitly marked as featured
+    final featured = shops.where((s) => s.isFeatured).toList();
+    if (featured.isNotEmpty) return featured;
+    
+    // 2. Fallback: Show top-rated shops if no featured shops are set
+    // This ensures the "Featured" section is never empty in a live app
+    final sorted = List<ShopModel>.from(shops);
+    sorted.sort((a, b) => b.rating.compareTo(a.rating));
+    return sorted.take(5).toList();
+  });
 });
 
 final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
@@ -208,9 +220,13 @@ final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
   return FirebaseFirestore.instance
       .collection('products')
       .where('isAvailable', isEqualTo: true)
-      .limit(10) // Simplistic "Trending" - just get 10 available products
       .snapshots()
-      .map((s) => s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+      .map((s) {
+        final products = s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList();
+        // Professional Trending: Sort by orderCount or rating in memory to avoid index errors for now
+        products.sort((a, b) => b.orderCount.compareTo(a.orderCount));
+        return products.take(10).toList();
+      });
 });
 
 final allCategoriesProvider = StreamProvider<List<String>>((ref) {

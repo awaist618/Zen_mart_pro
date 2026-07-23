@@ -109,15 +109,56 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
                 itemCount: filtered.length,
                 physics: const BouncingScrollPhysics(),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) => _OrderCard(
-                  order: filtered[index],
-                  isLight: isLight,
-                  cardColor: cardColor,
-                  primaryColor: primaryColor,
-                  textColor: textColor,
-                  secondaryTextColor: secondaryTextColor,
-                  dividerColor: dividerColor,
-                ),
+                itemBuilder: (context, itemIndex) {
+                  final order = filtered[itemIndex];
+                  final bool canDelete = index > 0; // index is the Tab index (1: HISTORY, 2: CANCELLED)
+
+                  if (canDelete) {
+                    return Dismissible(
+                      key: Key(order.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (direction) {
+                        ref.read(customerServiceProvider).deleteOrderForCustomer(order.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Order removed from history'),
+                            backgroundColor: cardColor,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                      },
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Icon(Icons.delete_sweep_rounded, color: AppColors.error, size: 28),
+                      ),
+                      child: _OrderCard(
+                        order: order,
+                        isLight: isLight,
+                        cardColor: cardColor,
+                        primaryColor: primaryColor,
+                        textColor: textColor,
+                        secondaryTextColor: secondaryTextColor,
+                        dividerColor: dividerColor,
+                      ),
+                    );
+                  }
+
+                  return _OrderCard(
+                    order: order,
+                    isLight: isLight,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                    textColor: textColor,
+                    secondaryTextColor: secondaryTextColor,
+                    dividerColor: dividerColor,
+                  );
+                },
               );
             },
             loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),

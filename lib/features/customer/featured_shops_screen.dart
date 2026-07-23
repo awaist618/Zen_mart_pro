@@ -93,12 +93,12 @@ class _FeaturedShopBigCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              color: isLight ? Colors.black.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.2), 
               blurRadius: 30, 
               offset: const Offset(0, 10)
             ),
           ],
-          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : Border.all(color: colorScheme.outline.withOpacity(0.3)),
+          border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.1)) : Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +106,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
             Stack(
               children: [
                 Hero(
-                  tag: 'shop_banner_${shop.id}',
+                  tag: 'shop_banner_featured_${shop.id}',
                   child: Container(
                     height: 200,
                     decoration: BoxDecoration(
@@ -117,7 +117,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
                     ),
                     child: shop.imageUrl.isEmpty 
-                        ? Center(child: Icon(Icons.storefront, size: 64, color: colorScheme.onSurface.withOpacity(0.1)))
+                        ? Center(child: Icon(Icons.storefront, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)))
                         : null,
                   ),
                 ),
@@ -131,7 +131,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.white12),
                         ),
@@ -147,6 +147,19 @@ class _FeaturedShopBigCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (shop.hasFreeDelivery)
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text('FREE DELIVERY', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    ),
+                  ),
               ],
             ),
             Padding(
@@ -166,7 +179,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.1),
+                          color: colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -179,7 +192,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${shop.category} • ${shop.address}', 
-                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

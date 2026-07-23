@@ -41,6 +41,7 @@ import '../features/vendor/low_stock_screen.dart';
 import '../features/vendor/vendor_reviews_screen.dart';
 import '../features/vendor/edit_shop_screen.dart';
 import '../features/vendor/coupon_management_screen.dart';
+import '../features/vendor/vendor_earnings_screen.dart';
 import '../features/customer/customer_home.dart';
 import '../features/customer/shop_detail_screen.dart';
 import '../features/customer/customer_profile_screen.dart';
@@ -187,6 +188,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/vendor/low-stock', builder: (context, state) => const LowStockScreen()),
       GoRoute(path: '/vendor/reviews', builder: (context, state) => const VendorReviewsScreen()),
       GoRoute(path: '/vendor/coupons', builder: (context, state) => const CouponManagementScreen()),
+      GoRoute(path: '/vendor/earnings', builder: (context, state) => const VendorEarningsScreen()),
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/customer/profile', builder: (context, state) => const CustomerProfileScreen()),
       GoRoute(path: '/customer/addresses', builder: (context, state) => const AddressManagementScreen()),

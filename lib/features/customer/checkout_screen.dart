@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../models/order_model.dart';
+import '../../models/coupon_model.dart';
 import '../../theme/app_colors.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,15 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMethod = 'Cash on Delivery';
   bool _isPlacingOrder = false;
+  CouponModel? _appliedCoupon;
+
+  double _calculateDiscount(double subtotal) {
+    if (_appliedCoupon == null) return 0.0;
+    if (_appliedCoupon!.discountPercentage > 0) {
+      return (subtotal * _appliedCoupon!.discountPercentage) / 100;
+    }
+    return _appliedCoupon!.fixedDiscount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +38,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    final shopAsync = ref.watch(shopDetailProvider(cart.shopId ?? ''));
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -41,28 +52,46 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
-            const SizedBox(height: 16),
-            _buildAddressCard(context, address, colorScheme, isLight),
-            const SizedBox(height: 32),
-            _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
-            const SizedBox(height: 16),
-            _buildPaymentOptions(colorScheme, isLight),
-            const SizedBox(height: 32),
-            _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
-            const SizedBox(height: 16),
-            _buildOrderSummary(cart, colorScheme, isLight),
-            const SizedBox(height: 40),
-          ],
-        ),
+      body: shopAsync.when(
+        data: (shop) {
+          final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
+                const SizedBox(height: 16),
+                _buildAddressCard(context, address, colorScheme, isLight),
+                const SizedBox(height: 32),
+                _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
+                const SizedBox(height: 16),
+                _buildPaymentOptions(colorScheme, isLight),
+                const SizedBox(height: 32),
+                _buildSectionHeader('Available Coupons', Icons.confirmation_number_rounded, colorScheme),
+                const SizedBox(height: 16),
+                _buildCouponSelector(cart, colorScheme, isLight),
+                const SizedBox(height: 32),
+                _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
+                const SizedBox(height: 16),
+                _buildOrderSummary(cart, colorScheme, isLight, deliveryFee),
+                const SizedBox(height: 40),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => Center(child: Text('Error: $e')),
       ),
-      bottomNavigationBar: _buildBottomAction(context, cart, address, user, colorScheme, isLight),
+      bottomNavigationBar: shopAsync.when(
+        data: (shop) {
+           final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
+           return _buildBottomAction(context, cart, address, user, colorScheme, isLight, deliveryFee);
+        },
+        loading: () => const SizedBox.shrink(),
+        error: (e, s) => const SizedBox.shrink(),
+      ),
     );
   }
 
@@ -163,7 +192,114 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildOrderSummary(dynamic cart, ColorScheme colorScheme, bool isLight) {
+  Widget _buildCouponSelector(dynamic cart, ColorScheme colorScheme, bool isLight) {
+    if (cart.items.isEmpty) return const SizedBox.shrink();
+    final shopId = cart.shopId;
+    final couponsAsync = ref.watch(shopCouponsProvider);
+
+    return couponsAsync.when(
+      data: (coupons) {
+        final activeCoupons = coupons.where((c) => 
+          c.isActive && 
+          c.expiryDate.isAfter(DateTime.now()) &&
+          cart.totalAmount >= c.minOrderAmount
+        ).toList();
+
+        if (activeCoupons.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.05)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withOpacity(0.3), size: 20),
+                const SizedBox(width: 12),
+                Text('No applicable coupons for this store', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 90,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: activeCoupons.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final coupon = activeCoupons[index];
+              final isSelected = _appliedCoupon?.id == coupon.id;
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _appliedCoupon = null;
+                    } else {
+                      _appliedCoupon = coupon;
+                    }
+                  });
+                },
+                borderRadius: BorderRadius.circular(22),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 200,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colorScheme.primary.withOpacity(0.1) : colorScheme.surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.1),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? colorScheme.primary : colorScheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.confirmation_number_rounded, color: isSelected ? Colors.white : colorScheme.primary, size: 16),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(coupon.code, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 14, letterSpacing: 0.5)),
+                            Text(
+                              coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : 'Rs ${coupon.fixedDiscount.round()} OFF',
+                              style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildOrderSummary(dynamic cart, ColorScheme colorScheme, bool isLight, double deliveryFee) {
+    final discount = _calculateDiscount(cart.totalAmount);
+    final totalToPay = cart.totalAmount + deliveryFee - discount;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -202,14 +338,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
           _SummaryLine(label: 'item_subtotal'.tr(ref), value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
           const SizedBox(height: 12),
-          _SummaryLine(label: 'delivery_fee'.tr(ref), value: 'Rs 100', color: AppColors.success, colorScheme: colorScheme),
+          _SummaryLine(label: 'delivery_fee'.tr(ref), value: 'Rs ${deliveryFee.toStringAsFixed(0)}', color: AppColors.success, colorScheme: colorScheme),
+          
+          if (discount > 0) ...[
+            const SizedBox(height: 12),
+            _SummaryLine(
+              label: 'Coupon Discount (${_appliedCoupon?.code})', 
+              value: '- Rs ${discount.toStringAsFixed(0)}', 
+              color: AppColors.success, 
+              colorScheme: colorScheme
+            ),
+          ],
+
           Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('total_to_pay'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-              Text('Rs ${(cart.totalAmount + 100).toStringAsFixed(0)}', 
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.primary)),
+              Text('Rs ${totalToPay.toStringAsFixed(0)}', 
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
             ],
           ),
         ],
@@ -217,7 +364,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildBottomAction(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight) {
+  Widget _buildBottomAction(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
@@ -234,7 +381,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: ElevatedButton(
         onPressed: (_isPlacingOrder || address == null) ? null : () {
           if (_paymentMethod == 'Online Transfer') {
-            _showQRScannerDialog(context, cart, address, user, colorScheme, isLight);
+            _showQRScannerDialog(context, cart, address, user, colorScheme, isLight, deliveryFee);
           } else {
             _placeOrder(context, cart, address, user);
           }
@@ -253,8 +400,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  void _showQRScannerDialog(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight) {
-    final total = cart.totalAmount + 100;
+  void _showQRScannerDialog(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee) {
+    final discount = _calculateDiscount(cart.totalAmount);
+    final total = cart.totalAmount + deliveryFee - discount;
     
     showModalBottomSheet(
       context: context,
@@ -305,7 +453,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             _VerificationStatus(
               colorScheme: colorScheme,
               onComplete: () {
-                Navigator.pop(context);
                 _placeOrder(context, cart, address, user, isPrepaid: true);
               }
             ),
@@ -334,6 +481,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           : '';
       final shopPhone = shopData?['phone'] ?? '03001234567';
       final shopAddress = shopData?['address'] ?? 'Shop Address, Main Market';
+      final double shopDeliveryFee = (shopData?['deliveryFee'] ?? 100.0).toDouble();
+      final bool hasFreeDelivery = shopData?['hasFreeDelivery'] ?? false;
+      final actualDeliveryFee = hasFreeDelivery ? 0.0 : shopDeliveryFee;
+
+      final discount = _calculateDiscount(cart.totalAmount);
+      final finalAmount = cart.totalAmount + actualDeliveryFee - discount;
 
       final orderData = {
         'customerId': user.uid,
@@ -347,11 +500,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             : shopImageUrl,
         'vendorPhone': shopPhone,
         'status': 'pending',
-        'totalAmount': cart.totalAmount + 100,
-        'deliveryFee': 100.0,
+        'totalAmount': finalAmount,
+        'discountAmount': discount,
+        'couponCode': _appliedCoupon?.code,
+        'deliveryFee': actualDeliveryFee,
         'pickupAddress': shopAddress,
         'deliveryAddress': address.fullAddress,
-        'deliveryLocation': address.location, // Assuming AddressModel has a GeoPoint
+        'deliveryLocation': address.location,
         'items': cart.items.values.map((item) => {
           'productId': item.product.id,
           'name': item.product.name,
@@ -369,6 +524,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ref.read(cartProvider.notifier).clearCart();
       
       if (context.mounted) {
+        // If bottom sheet is open (QR Pay), close it first
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
         context.go('/customer/order-success/$orderId');
       }
     } catch (e) {
@@ -409,8 +568,8 @@ class _VerificationStatusState extends State<_VerificationStatus> {
     setState(() { _status = 'Confirming with gateway...'; _progress = 0.8; });
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    setState(() { _isSuccess = true; _status = 'Success! Finalizing...'; _progress = 1.0; });
-    await Future.delayed(const Duration(seconds: 2));
+    setState(() { _isSuccess = true; _status = 'Payment successful!'; _progress = 1.0; });
+    await Future.delayed(const Duration(seconds: 1));
     widget.onComplete();
   }
 

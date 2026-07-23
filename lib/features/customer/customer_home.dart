@@ -542,7 +542,8 @@ class _FeaturedShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
@@ -557,12 +558,12 @@ class _FeaturedShopCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              color: isLight ? Colors.black.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.2), 
               blurRadius: 30, 
               offset: const Offset(0, 10)
             )
           ],
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withValues(alpha: 0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,15 +572,24 @@ class _FeaturedShopCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                  child: shop.imageUrl.isNotEmpty 
-                      ? Image.network(shop.imageUrl, height: 155, width: double.infinity, fit: BoxFit.cover)
-                      : Container(height: 155, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1), size: 50))),
+                  child: Hero(
+                    tag: 'shop_home_${shop.id}',
+                    child: shop.imageUrl.isNotEmpty 
+                        ? Image.network(shop.imageUrl, height: 155, width: double.infinity, fit: BoxFit.cover)
+                        : Container(height: 155, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withValues(alpha: 0.1), size: 50))),
+                  ),
                 ),
                 Positioned(
                   top: 16,
                   left: 16,
                   child: _GlassBadge(label: '${shop.rating}', icon: Icons.star_rounded, color: AppColors.warning),
                 ),
+                if (shop.hasFreeDelivery)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: _GlassBadge(label: 'FREE', icon: Icons.bolt_rounded, color: AppColors.success),
+                  ),
               ],
             ),
             Padding(
@@ -587,24 +597,39 @@ class _FeaturedShopCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    shop.name, 
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 17, 
-                      color: textColor, 
-                      letterSpacing: -0.2
-                    ), 
-                    maxLines: 1
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          shop.name, 
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900, 
+                            fontSize: 17, 
+                            color: textColor, 
+                            letterSpacing: -0.2
+                          ), 
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        shop.deliveryTime,
+                        style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${shop.category} • ${shop.deliveryTime}', 
+                    '${shop.category} • ${shop.address}', 
                     style: TextStyle(
-                      color: secondaryTextColor, 
+                      color: secondaryTextColor.withValues(alpha: 0.7), 
                       fontSize: 12, 
                       fontWeight: FontWeight.w600
-                    )
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

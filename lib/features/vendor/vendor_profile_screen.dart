@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/providers.dart';
+import '../../core/settings_provider.dart';
 import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
 import './widgets/vendor_bottom_nav.dart';
@@ -86,9 +87,9 @@ class VendorProfileScreen extends ConsumerWidget {
                     ),
                     _SettingsTile(
                       icon: Icons.account_balance_rounded,
-                      title: 'Bank Information',
-                      subtitle: 'Manage your payouts',
-                      onTap: () => _showBankInfoDialog(context, ref, user),
+                      title: 'Earnings & Payouts',
+                      subtitle: 'Withdrawals and sales history',
+                      onTap: () => context.push('/vendor/earnings'),
                     ),
                     _SettingsTile(
                       icon: Icons.insights_rounded,
@@ -133,8 +134,8 @@ class VendorProfileScreen extends ConsumerWidget {
                     _SettingsTile(
                       icon: Icons.language_rounded,
                       title: 'App Language',
-                      subtitle: 'Select your preferred language',
-                      onTap: () {}, // Language logic
+                      subtitle: ref.watch(settingsProvider).locale.languageCode == 'en' ? 'English' : 'Urdu',
+                      onTap: () => _showLanguageDialog(context, ref),
                     ),
                   ],
                 ),
@@ -266,6 +267,32 @@ class VendorProfileScreen extends ConsumerWidget {
 
   Widget _buildStatsGrid(AsyncValue<List<ProductModel>> products, AsyncValue<List<OrderModel>> orders, UserModel user) {
     return const SizedBox.shrink(); // Integrated into main build above
+  }
+
+  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.dialog,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Select Language', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              trailing: ref.watch(settingsProvider).locale.languageCode == 'en' ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('en'); Navigator.pop(context); },
+            ),
+            ListTile(
+              title: const Text('Urdu (اردو)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              trailing: ref.watch(settingsProvider).locale.languageCode == 'ur' ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('ur'); Navigator.pop(context); },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showBankInfoDialog(BuildContext context, WidgetRef ref, UserModel user) {

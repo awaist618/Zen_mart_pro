@@ -32,6 +32,11 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabLabels.length, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        ref.read(vendorActiveOrderTabProvider.notifier).state = _tabController.index;
+      }
+    });
   }
 
   @override
@@ -58,6 +63,13 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
     final ordersAsync = ref.watch(allShopOrdersProvider);
+    
+    // Auto-sync tab controller with provider
+    ref.listen(vendorActiveOrderTabProvider, (prev, next) {
+      if (next != _tabController.index) {
+        _tabController.animateTo(next);
+      }
+    });
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -135,7 +147,9 @@ class _VendorOrdersScreenState extends ConsumerState<VendorOrdersScreen> with Si
                 itemCount: filtered.length,
                 physics: const BouncingScrollPhysics(),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) => _OrderCard(order: filtered[index]),
+                itemBuilder: (context, itemIndex) => _OrderCard(
+                  order: filtered[itemIndex],
+                ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -178,73 +192,116 @@ class _OrderCard extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
 
-    return InkWell(
-      onTap: () => context.push('/vendor/order-details/${order.id}'),
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/vendor/order-details/${order.id}'),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))] : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '#${order.id.substring(0, 8).toUpperCase()}',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: colorScheme.primary, letterSpacing: 0.5),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '#${order.id.substring(0, 8).toUpperCase()}',
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: colorScheme.primary, letterSpacing: 0.5),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          DateFormat('MMM dd • h:mm a').format(order.createdAt),
+                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      DateFormat('MMM dd • h:mm a').format(order.createdAt),
-                      style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700),
-                    ),
+                    _StatusBadge(status: order.status),
                   ],
                 ),
-                _StatusBadge(status: order.status),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1, color: colorScheme.outline.withOpacity(0.1)),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                      child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 18),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.customerName,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                          Text(
+                            '${order.items.length} Items • Rs ${order.totalAmount.round()}',
+                            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (order.status == OrderStatus.pending || order.status == OrderStatus.preparing)
+                      _buildQuickAction(context, ref, colorScheme)
+                    else
+                      Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurface.withOpacity(0.1), size: 14),
+                  ],
+                ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Divider(height: 1, color: colorScheme.outline.withOpacity(0.1)),
-            ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
-                  child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 18),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order.customerName,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                      Text(
-                        '${order.items.length} Items • Rs ${order.totalAmount.round()}',
-                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurface.withOpacity(0.1), size: 14),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickAction(BuildContext context, WidgetRef ref, ColorScheme colorScheme) {
+    String label = '';
+    OrderStatus nextStatus = OrderStatus.pending;
+    Color btnColor = colorScheme.primary;
+    int nextTabIndex = 0;
+
+    if (order.status == OrderStatus.pending) {
+      label = 'ACCEPT';
+      nextStatus = OrderStatus.preparing;
+      btnColor = AppColors.success;
+      nextTabIndex = 2; // Moving to Preparing tab
+    } else if (order.status == OrderStatus.preparing) {
+      label = 'PACK';
+      nextStatus = OrderStatus.confirmed;
+      btnColor = colorScheme.primary;
+      nextTabIndex = 3; // Moving to Ready tab
+    }
+
+    return ElevatedButton(
+      onPressed: () async {
+        await ref.read(orderServiceProvider).updateStatus(order.id, nextStatus);
+        ref.read(vendorActiveOrderTabProvider.notifier).state = nextTabIndex;
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: btnColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        minimumSize: Size.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
     );
   }
 }
