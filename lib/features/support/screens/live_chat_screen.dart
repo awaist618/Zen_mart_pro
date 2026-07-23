@@ -8,9 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import 'package:record/record.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/providers.dart';
 import '../../../models/user_model.dart';
@@ -30,18 +27,13 @@ class LiveChatScreen extends ConsumerStatefulWidget {
 class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  final _audioRecorder = AudioRecorder();
-  final _audioPlayer = AudioPlayer();
   bool _showEmojiPicker = false;
-  bool _isRecording = false;
-  String? _recordingPath;
+  bool _isSending = false;
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _audioRecorder.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -52,11 +44,13 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     final user = ref.read(userModelProvider).asData?.value;
     if (user == null) return;
 
+    setState(() => _isSending = true);
+
     final msg = SupportMessageModel(
       id: '',
       senderId: user.uid,
       senderName: user.name,
-      senderRole: user.role.name,
+      senderRole: user.role.name.replaceAll(RegExp(r'(?<!^)(?=[A-Z])'), '_').toLowerCase(),
       message: text,
       type: type,
       attachmentUrl: attachmentUrl,
@@ -65,7 +59,10 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     );
 
     _messageController.clear();
-    setState(() => _showEmojiPicker = false);
+    setState(() {
+      _showEmojiPicker = false;
+      _isSending = false;
+    });
     
     await ref.read(supportServiceProvider).sendSupportMessage(widget.chatId, msg);
     _scrollToBottom();
@@ -94,26 +91,8 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
     if (result != null) {
       final file = File(result.files.single.path!);
-      final url = await ref.read(uploadServiceProvider).uploadImage(file, folder: 'support_docs'); // Reuse image upload for now
+      final url = await ref.read(uploadServiceProvider).uploadImage(file, folder: 'support_docs'); 
       if (url != null) _sendMessage(type: 'pdf', attachmentUrl: url, message: result.files.single.name);
-    }
-  }
-
-  Future<void> _startRecording() async {
-    if (await _audioRecorder.hasPermission()) {
-      final directory = await getApplicationDocumentsDirectory();
-      _recordingPath = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      await _audioRecorder.start(const RecordConfig(), path: _recordingPath!);
-      setState(() => _isRecording = true);
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    final path = await _audioRecorder.stop();
-    setState(() => _isRecording = false);
-    if (path != null) {
-      final url = await ref.read(uploadServiceProvider).uploadImage(File(path), folder: 'support_voice');
-      if (url != null) _sendMessage(type: 'voice', attachmentUrl: url);
     }
   }
 
@@ -127,6 +106,29 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
           _sendMessage(type: 'order', linkedId: order.id, message: 'Attached Order #${order.id.substring(0, 8).toUpperCase()}');
           ref.read(supportServiceProvider).linkOrderToChat(widget.chatId, order.id);
         },
+      ),
+    );
+  }
+
+  void _handleEndChat() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.dialog,
+        title: const Text('End Conversation?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will mark the conversation as resolved.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(supportServiceProvider).endChat(widget.chatId);
+              Navigator.pop(context);
+              context.pop();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('END CHAT'),
+          ),
+        ],
       ),
     );
   }
@@ -146,17 +148,34 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: _buildHeader(primaryColor, textColor, secondaryTextColor, cardColor),
+      appBar: _buildHeader(primaryColor, textColor, secondaryTextColor, cardColor, user),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<List<SupportMessageModel>>(
               stream: ref.watch(supportServiceProvider).getSupportMessages(widget.chatId),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error loading messages: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final messages = snapshot.data ?? [];
+                
+                if (messages.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.forum_rounded, size: 64, color: secondaryTextColor.withOpacity(0.2)),
+                        const SizedBox(height: 16),
+                        Text('No messages yet', style: TextStyle(color: secondaryTextColor.withOpacity(0.4))),
+                      ],
+                    ),
+                  );
+                }
+
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
@@ -171,7 +190,6 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               },
             ),
           ),
-          if (_isRecording) _buildRecordingIndicator(primaryColor, textColor),
           _buildQuickReplies(primaryColor, cardColor),
           _buildInputArea(isLight, cardColor, textColor, secondaryTextColor, primaryColor),
           if (_showEmojiPicker) 
@@ -196,7 +214,9 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildHeader(Color primary, Color textColor, Color secondaryTextColor, Color cardColor) {
+  PreferredSizeWidget _buildHeader(Color primary, Color textColor, Color secondaryTextColor, Color cardColor, UserModel user) {
+    final isAdmin = user.role == UserRole.superAdmin;
+
     return AppBar(
       backgroundColor: cardColor,
       elevation: 0.5,
@@ -204,37 +224,55 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
         icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: textColor),
         onPressed: () => context.pop(),
       ),
-      title: StreamBuilder<SupportChatModel?>(
-        stream: ref.watch(supportServiceProvider).getChatStream(widget.chatId),
-        builder: (context, snapshot) {
-          final chat = snapshot.data;
-          return Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: primary.withOpacity(0.1),
-                child: Icon(Icons.support_agent_rounded, color: primary, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Zen MArt Support', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
-                    Row(
+      title: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: primary.withOpacity(0.1),
+            child: Icon(Icons.support_agent_rounded, color: primary, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Zen MArt Support', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
+                StreamBuilder<bool>(
+                  stream: ref.watch(supportServiceProvider).isAdminOnline(),
+                  builder: (context, snapshot) {
+                    final isOnline = snapshot.data ?? false;
+                    return Row(
                       children: [
-                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
-                        const SizedBox(width: 4),
-                        Text('Online • Replies in 2m', style: TextStyle(fontSize: 10, color: secondaryTextColor, fontWeight: FontWeight.bold)),
+                        Container(
+                          width: 8, 
+                          height: 8, 
+                          decoration: BoxDecoration(
+                            color: isOnline ? AppColors.success : AppColors.textDisabled, 
+                            shape: BoxShape.circle
+                          )
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isOnline ? 'Online' : 'Offline', 
+                          style: TextStyle(fontSize: 11, color: secondaryTextColor, fontWeight: FontWeight.bold)
+                        ),
                       ],
-                    ),
-                  ],
+                    );
+                  }
                 ),
-              ),
-            ],
-          );
-        }
+              ],
+            ),
+          ),
+        ],
       ),
+      actions: [
+        if (isAdmin)
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline_rounded, color: AppColors.success),
+            tooltip: 'End Chat',
+            onPressed: _handleEndChat,
+          ),
+      ],
     );
   }
 
@@ -258,22 +296,6 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             _sendMessage();
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildRecordingIndicator(Color primary, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: primary.withOpacity(0.1),
-      child: Row(
-        children: [
-          const Icon(Icons.mic, color: Colors.red),
-          const SizedBox(width: 12),
-          Text('Recording...', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-          const Spacer(),
-          TextButton(onPressed: () => setState(() => _isRecording = false), child: const Text('Cancel', style: TextStyle(color: Colors.red))),
-        ],
       ),
     );
   }
@@ -305,7 +327,10 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               child: TextField(
                 controller: _messageController,
                 style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w500),
-                onChanged: (v) => ref.read(supportServiceProvider).setTypingStatus(widget.chatId, true, v.isNotEmpty),
+                onChanged: (v) {
+                   ref.read(supportServiceProvider).setTypingStatus(widget.chatId, true, v.isNotEmpty);
+                   setState(() {}); // Redraw to update send button
+                },
                 decoration: InputDecoration(
                   hintText: 'Type your message...',
                   hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.4), fontSize: 14),
@@ -316,15 +341,11 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
-            onLongPress: _startRecording,
-            onLongPressUp: _stopRecording,
-            child: CircleAvatar(
-              backgroundColor: primary,
-              child: IconButton(
-                icon: Icon(_messageController.text.isEmpty ? Icons.mic_rounded : Icons.send_rounded, color: Colors.white, size: 18),
-                onPressed: _messageController.text.isEmpty ? null : () => _sendMessage(),
-              ),
+          CircleAvatar(
+            backgroundColor: primary,
+            child: IconButton(
+              icon: Icon(_messageController.text.trim().isEmpty ? Icons.send_rounded : Icons.send_rounded, color: Colors.white, size: 18),
+              onPressed: _isSending ? null : () => _sendMessage(),
             ),
           ),
         ],
@@ -339,7 +360,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.dialog,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
@@ -374,7 +395,7 @@ class _AttachmentBtn extends StatelessWidget {
       children: [
         CircleAvatar(radius: 28, backgroundColor: color.withOpacity(0.1), child: Icon(icon, color: color)),
         const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
       ],
     ),
   );
@@ -444,7 +465,7 @@ class _ChatBubble extends StatelessWidget {
           ],
         );
       default:
-        return Text(message.message, style: TextStyle(color: isMe ? Colors.white : textColor, fontSize: 14));
+        return Text(message.message, style: TextStyle(color: isMe ? Colors.white : (isLight ? textColor : Colors.white), fontSize: 14));
     }
   }
 }
@@ -458,29 +479,29 @@ class _OrderPickerSheet extends ConsumerWidget {
     final ordersAsync = ref.watch(customerOrdersProvider);
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      decoration: const BoxDecoration(color: AppColors.dialog, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select Order to Attach', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('Select Order to Attach', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 20),
           Expanded(
             child: ordersAsync.when(
               data: (orders) => ListView.separated(
                 itemCount: orders.length,
-                separatorBuilder: (_, __) => const Divider(),
+                separatorBuilder: (_, __) => const Divider(color: AppColors.border),
                 itemBuilder: (context, index) {
                   final order = orders[index];
                   return ListTile(
-                    title: Text(order.shopName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Order #${order.id.substring(0, 8).toUpperCase()} • Rs ${order.totalAmount.round()}'),
+                    title: Text(order.shopName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    subtitle: Text('Order #${order.id.substring(0, 8).toUpperCase()} • Rs ${order.totalAmount.round()}', style: const TextStyle(color: AppColors.textSecondary)),
                     onTap: () { Navigator.pop(context); onOrderSelected(order); },
                   );
                 },
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, s) => Text('Error: $e'),
+              error: (e, s) => Text('Error: $e', style: const TextStyle(color: Colors.white)),
             ),
           ),
         ],

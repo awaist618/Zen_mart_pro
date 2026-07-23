@@ -27,7 +27,7 @@ class CustomerProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Account Profile', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: Text('my_profile'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w800)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         actions: [
@@ -52,7 +52,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _StatBox(
-                        label: 'Total Orders',
+                        label: 'total_orders'.tr(ref),
                         value: (ordersAsync.value?.length ?? 0).toString(),
                         icon: Icons.receipt_long_rounded,
                         color: AppColors.primary,
@@ -62,7 +62,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _StatBox(
-                        label: 'In Wishlist',
+                        label: 'wishlist'.tr(ref),
                         value: (wishlistAsync.value?.length ?? 0).toString(),
                         icon: Icons.favorite_rounded,
                         color: AppColors.error,
@@ -73,19 +73,19 @@ class CustomerProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 32),
 
-                _SectionHeader(title: 'Account Settings'),
+                _SectionHeader(title: 'account_settings'.tr(ref)),
                 const SizedBox(height: 12),
                 _SettingsGroup(
                   children: [
                     _SettingsTile(
                       icon: Icons.person_rounded,
-                      title: 'Edit Profile',
+                      title: 'edit_profile'.tr(ref),
                       subtitle: 'Name, email, and phone',
                       onTap: () => _showEditProfileDialog(context, ref, user),
                     ),
                     _SettingsTile(
                       icon: Icons.location_on_rounded,
-                      title: 'Saved Addresses',
+                      title: 'saved_addresses'.tr(ref),
                       subtitle: 'Delivery locations',
                       onTap: () => context.push('/customer/addresses'),
                     ),
@@ -99,7 +99,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 32),
 
-                _SectionHeader(title: 'Preferences'),
+                _SectionHeader(title: 'preferences'.tr(ref)),
                 const SizedBox(height: 12),
                 _SettingsGroup(
                   children: [
@@ -115,7 +115,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                     ),
                     _SettingsTile(
                       icon: Icons.translate_rounded,
-                      title: 'Language',
+                      title: 'language'.tr(ref),
                       subtitle: settings.locale.languageCode == 'en' ? 'English' : 'Urdu',
                       onTap: () => _showLanguageDialog(context, ref),
                     ),
@@ -126,7 +126,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                 ElevatedButton.icon(
                   onPressed: () => _showLogoutDialog(context, ref),
                   icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: const Text('SIGN OUT'),
+                  label: Text('sign_out'.tr(ref).toUpperCase()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error.withValues(alpha: 0.1),
                     foregroundColor: AppColors.error,
@@ -146,7 +146,7 @@ class CustomerProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
       ),
-      bottomNavigationBar: const CustomerBottomNav(currentIndex: 4),
+      bottomNavigationBar: const CustomerBottomNav(currentIndex: 3),
     );
   }
 
@@ -218,7 +218,7 @@ class CustomerProfileScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              'Joined ${DateFormat('MMMM yyyy').format(user.createdAt)}',
+              'Member since ${DateFormat('MMMM yyyy').format(user.createdAt)}',
               style: TextStyle(color: colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
             ),
           ),
@@ -250,12 +250,20 @@ class CustomerProfileScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Select Language', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text('select_language'.tr(ref), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _LanguageTile(label: 'English', isSelected: true, onTap: () { ref.read(settingsProvider.notifier).setLocale('en'); Navigator.pop(context); }),
-            _LanguageTile(label: 'Urdu', isSelected: false, onTap: () { ref.read(settingsProvider.notifier).setLocale('ur'); Navigator.pop(context); }),
+            _LanguageTile(
+              label: 'english'.tr(ref), 
+              isSelected: ref.watch(settingsProvider).locale.languageCode == 'en', 
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('en'); Navigator.pop(context); }
+            ),
+            _LanguageTile(
+              label: 'urdu'.tr(ref), 
+              isSelected: ref.watch(settingsProvider).locale.languageCode == 'ur', 
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('ur'); Navigator.pop(context); }
+            ),
           ],
         ),
       ),
@@ -271,17 +279,17 @@ class CustomerProfileScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Edit Details', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text('edit_profile_title'.tr(ref), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full Name')),
+            TextField(controller: nameController, decoration: InputDecoration(labelText: 'full_name'.tr(ref))),
             const SizedBox(height: 16),
-            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone Number')),
+            TextField(controller: phoneController, decoration: InputDecoration(labelText: 'phone_number'.tr(ref))),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL', style: TextStyle(color: AppColors.textHint))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('cancel'.tr(ref), style: const TextStyle(color: AppColors.textHint))),
           ElevatedButton(
             onPressed: () async {
               await ref.read(authServiceProvider).updateUserProfile(
@@ -292,7 +300,7 @@ class CustomerProfileScreen extends ConsumerWidget {
               if (context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48)),
-            child: const Text('SAVE'),
+            child: Text('save_changes'.tr(ref).toUpperCase()),
           ),
         ],
       ),
@@ -305,16 +313,16 @@ class CustomerProfileScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Sign Out?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text('sign_out'.tr(ref), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: const Text('Are you sure you want to end your session?', style: TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('KEEP SHOPPING', style: TextStyle(color: AppColors.textHint))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('cancel'.tr(ref), style: const TextStyle(color: AppColors.textHint))),
           TextButton(
             onPressed: () {
               ref.read(authServiceProvider).signOut();
               context.go('/welcome');
             },
-            child: const Text('SIGN OUT', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
+            child: Text('sign_out'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -441,7 +449,6 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return ListTile(
       onTap: onTap,
@@ -449,7 +456,7 @@ class _SettingsTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isLight ? colorScheme.primary.withOpacity(0.08) : AppColors.background,
+          color: Theme.of(context).brightness == Brightness.light ? colorScheme.primary.withOpacity(0.08) : AppColors.background,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: colorScheme.primary, size: 20),

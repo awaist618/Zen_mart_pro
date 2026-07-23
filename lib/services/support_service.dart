@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/support_ticket_model.dart';
 import '../models/support_chat_model.dart';
@@ -68,9 +69,12 @@ class SupportService {
         .where('chatId', isEqualTo: chatId)
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
+        .map((snapshot) {
+          debugPrint('Fetched ${snapshot.docs.length} messages for chat $chatId');
+          return snapshot.docs
             .map((doc) => SupportMessageModel.fromFirestore(doc))
-            .toList());
+            .toList();
+        });
   }
 
   /// Send message in support chat
@@ -135,6 +139,35 @@ class SupportService {
     });
   }
 
+  /// Check if any admin is online
+  Stream<bool> isAdminOnline() {
+    return _db
+        .collection('users')
+        .where('role', whereIn: ['admin', 'super_admin'])
+        .where('isOnline', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.isNotEmpty);
+  }
+
+  /// End a support chat (Resolve it)
+  Future<void> endChat(String chatId) async {
+    await _db.collection('support_chats').doc(chatId).update({
+      'status': SupportChatStatus.resolved.name,
+      'lastMessage': '🏁 Conversation ended by support.',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+    
+    // Also send an automated message
+    await sendSupportMessage(chatId, SupportMessageModel(
+      id: '',
+      senderId: 'system',
+      senderName: 'System',
+      senderRole: 'system',
+      message: '🏁 This conversation has been marked as resolved.',
+      timestamp: DateTime.now(),
+    ));
+  }
+
   // --- EXISTING TICKET STUFF (Kept for compatibility) ---
 
   Future<String> createTicket(SupportTicketModel ticket) async {
@@ -167,6 +200,32 @@ class SupportService {
       'status': status.name,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    if (status == TicketStatus.resolved) {
+      final now = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+      final professionalMessage = '''Hello,
+
+We're happy to let you know that your support ticket has been marked as Resolved.
+
+We believe your issue has been addressed. If everything is working as expected, no further action is required.
+
+If you're still experiencing the issue or have additional questions, you can reopen this ticket or create a new support request within the next 7 days.
+
+Thank you for contacting our support team. We appreciate your patience and are always here to help.
+
+Status: Resolved
+Resolved On: $now
+Ticket ID: #${ticketId.substring(0, 8).toUpperCase()}''';
+
+      await sendMessage(ticketId, SupportMessageModel(
+        id: '',
+        senderId: 'system',
+        senderName: 'Zen Mart Support',
+        senderRole: 'system',
+        message: professionalMessage,
+        timestamp: DateTime.now(),
+      ));
+    }
   }
 
   Future<void> sendMessage(String ticketId, SupportMessageModel message) async {

@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../core/providers.dart';
+import '../../models/support_chat_model.dart';
+import '../../models/support_ticket_model.dart';
+import '../../services/support_service.dart';
 
 class SupportChatDetailScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -17,13 +21,21 @@ class SupportChatDetailScreen extends ConsumerStatefulWidget {
 
 class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScreen> {
   final _messageController = TextEditingController();
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final ScrollController _scrollController = ScrollController();
+  String? _chatId;
 
   @override
   void initState() {
     super.initState();
-    _markAsRead();
+    _initializeChat();
+  }
+
+  void _initializeChat() async {
+    final chatId = await ref.read(supportServiceProvider).getOrCreateChat(widget.userId, widget.userName, null);
+    if (mounted) {
+      setState(() => _chatId = chatId);
+      ref.read(supportServiceProvider).markChatAsRead(chatId);
+    }
   }
 
   @override
@@ -33,13 +45,8 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
     super.dispose();
   }
 
-  void _markAsRead() async {
-    final chatId = 'support_${widget.userId}';
-    await _db.collection('support_chats').doc(chatId).update({'unreadCount': 0});
-  }
-
   void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+    if (_messageController.text.trim().isEmpty || _chatId == null) return;
 
     final user = ref.read(userModelProvider).asData?.value;
     if (user == null) return;
@@ -47,21 +54,16 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
     final text = _messageController.text.trim();
     _messageController.clear();
 
-    final chatId = 'support_${widget.userId}';
+    final msg = SupportMessageModel(
+      id: '',
+      senderId: user.uid,
+      senderName: user.name,
+      senderRole: 'super_admin',
+      message: text,
+      timestamp: DateTime.now(),
+    );
 
-    await _db.collection('support_chats').doc(chatId).set({
-      'lastMessage': text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await _db.collection('support_chats').doc(chatId).collection('messages').add({
-      'text': text,
-      'senderId': user.uid,
-      'senderName': user.name,
-      'timestamp': FieldValue.serverTimestamp(),
-      'isFromAdmin': true,
-    });
-
+    await ref.read(supportServiceProvider).sendSupportMessage(_chatId!, msg);
     _scrollToBottom();
   }
 
@@ -75,87 +77,80 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
     }
   }
 
+  void _handleEndChat() {
+    if (_chatId == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.dialog,
+        title: const Text('Resolve Chat?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text('This will mark the conversation as completed.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(supportServiceProvider).endChat(_chatId!);
+              Navigator.pop(context);
+              context.pop();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+            child: const Text('MARK RESOLVED'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final chatId = 'support_${widget.userId}';
+    if (_chatId == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => context.pop(),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const Text('User Support Request', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(widget.userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+            const Text('LIVE CHAT SUPPORT', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1)),
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        foregroundColor: Colors.black,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline_rounded, color: AppColors.success),
+            tooltip: 'Resolve Chat',
+            onPressed: _handleEndChat,
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _db.collection('support_chats').doc(chatId).collection('messages')
-                  .orderBy('timestamp', descending: true).snapshots(),
+            child: StreamBuilder<List<SupportMessageModel>>(
+              stream: ref.watch(supportServiceProvider).getSupportMessages(_chatId!),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
                 
-                final docs = snapshot.data?.docs ?? [];
+                final messages = snapshot.data ?? [];
 
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.all(20),
-                  itemCount: docs.length,
+                  itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final data = docs[index].data() as Map<String, dynamic>;
-                    final isMe = data['isFromAdmin'] ?? false;
-                    final timestamp = data['timestamp'] as Timestamp?;
-                    final timeStr = timestamp != null ? DateFormat('hh:mm a').format(timestamp.toDate()) : '';
+                    final message = messages[index];
+                    final isMe = message.senderRole == 'super_admin' || message.senderRole == 'admin';
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-                            children: [
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isMe ? AppColors.primary : Colors.white,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(20),
-                                      topRight: const Radius.circular(20),
-                                      bottomLeft: Radius.circular(isMe ? 20 : 0),
-                                      bottomRight: Radius.circular(isMe ? 0 : 20),
-                                    ),
-                                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
-                                  ),
-                                  child: Text(
-                                    data['text'] ?? '',
-                                    style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
-                            child: Text(
-                              timeStr,
-                              style: TextStyle(color: Colors.grey, fontSize: 10),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                    return _ChatBubble(message: message, isMe: isMe);
                   },
                 );
               },
@@ -164,21 +159,28 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
           
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-            color: Colors.white,
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(top: BorderSide(color: Colors.white10)),
+            ),
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Type your reply...',
-                      filled: true,
-                      fillColor: const Color(0xFFF1F5F9),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(28),
-                        borderSide: BorderSide.none,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      onChanged: (v) => ref.read(supportServiceProvider).setTypingStatus(_chatId!, false, v.isNotEmpty),
+                      decoration: const InputDecoration(
+                        hintText: 'Type your reply...',
+                        hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                   ),
                 ),
@@ -191,12 +193,56 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    child: const Icon(Icons.send_rounded, color: AppColors.background, size: 20),
                   ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatBubble extends StatelessWidget {
+  final SupportMessageModel message;
+  final bool isMe;
+
+  const _ChatBubble({required this.message, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            decoration: BoxDecoration(
+              color: isMe ? AppColors.primary : AppColors.elevatedSurface,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft: Radius.circular(isMe ? 20 : 0),
+                bottomRight: Radius.circular(isMe ? 0 : 20),
+              ),
+            ),
+            child: Text(
+              message.message,
+              style: TextStyle(color: isMe ? AppColors.background : Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+            child: Text(
+              DateFormat('hh:mm a').format(message.timestamp),
+              style: const TextStyle(color: AppColors.textHint, fontSize: 10),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../models/product_model.dart';
 import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
@@ -39,7 +40,11 @@ class ProductDetailsScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _Badge(label: product.category, color: colorScheme.primary),
-                          _RatingBadge(rating: product.rating.toStringAsFixed(1), count: product.reviewCount.toString()),
+                          _RatingBadge(
+                            rating: product.rating.toStringAsFixed(1), 
+                            count: product.reviewCount.toString(),
+                            onTap: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -49,7 +54,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'by ${product.brand}',
+                        '${'by'.tr(ref)} ${product.brand}',
                         style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 32),
@@ -58,7 +63,25 @@ class ProductDetailsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Divider(color: colorScheme.outline.withValues(alpha: 0.1)),
                       ),
-                      Text('Description', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
+                      
+                      Row(
+                        children: [
+                          _StatItem(
+                            icon: Icons.local_mall_rounded,
+                            label: '${'ordered'.tr(ref)} ${product.orderCount} ${'times'.tr(ref)}',
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 24),
+                          _StatItem(
+                            icon: Icons.verified_rounded,
+                            label: 'Premium Quality',
+                            color: AppColors.success,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
+                      Text('description'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
                       const SizedBox(height: 12),
                       Text(
                         product.description,
@@ -66,8 +89,11 @@ class ProductDetailsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 40),
                       _StockCard(stock: product.stock),
-                      const SizedBox(height: 40),
-                      _buildReviewsSection(context, reviewsAsync, colorScheme, textColor: colorScheme.onBackground, secondaryColor: colorScheme.onSurface),
+                      const SizedBox(height: 48),
+                      
+                      _buildReviewsHeader(context, ref),
+                      const SizedBox(height: 20),
+                      _buildReviewsList(ref, reviewsAsync, textColor: colorScheme.onBackground, secondaryColor: colorScheme.onSurface),
                     ],
                   ),
                 ),
@@ -83,6 +109,33 @@ class ProductDetailsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsHeader(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('customer_reviews'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onBackground)),
+        if (product.reviewCount > 0)
+          TextButton(
+            onPressed: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
+            child: Text('view_all'.tr(ref), style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildReviewsList(WidgetRef ref, AsyncValue<List<ReviewModel>> reviewsAsync, {required Color textColor, required Color secondaryColor}) {
+    return reviewsAsync.when(
+      data: (reviews) {
+        if (reviews.isEmpty) return Text('no_reviews'.tr(ref), style: TextStyle(color: secondaryColor.withValues(alpha: 0.5)));
+        return Column(
+          children: reviews.take(3).map((r) => _ReviewTile(review: r, textColor: textColor, secondaryColor: secondaryColor)).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Text('Error loading reviews: $e'),
     );
   }
 
@@ -134,36 +187,6 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReviewsSection(BuildContext context, AsyncValue<List<ReviewModel>> reviewsAsync, ColorScheme colorScheme, {required Color textColor, required Color secondaryColor}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Customer Reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: textColor)),
-            if (product.reviewCount > 0)
-              TextButton(
-                onPressed: () => context.push('/customer/product-reviews/${product.id}/${product.name}'),
-                child: Text('View All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold)),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        reviewsAsync.when(
-          data: (reviews) {
-            if (reviews.isEmpty) return Text('No reviews yet.', style: TextStyle(color: secondaryColor.withValues(alpha: 0.5)));
-            return Column(
-              children: reviews.take(3).map((r) => _ReviewTile(review: r, textColor: textColor, secondaryColor: secondaryColor)).toList(),
-            );
-          },
-          loading: () => const LinearProgressIndicator(),
-          error: (e, s) => Text('Error loading reviews: $e'),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFloatingAction(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
@@ -196,9 +219,16 @@ class ProductDetailsScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     ref.read(cartProvider.notifier).addItem(product);
-                    context.push('/customer/cart');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${product.name} added to bag'),
+                        backgroundColor: colorScheme.primary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
                   },
-                  child: const Text('ADD TO BAG'),
+                  child: Text('add_to_bag'.tr(ref)),
                 ),
               ),
             ],
@@ -217,8 +247,13 @@ class _ReviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -240,7 +275,7 @@ class _ReviewTile extends StatelessWidget {
             DateFormat('dd MMM yyyy').format(review.createdAt),
             style: TextStyle(color: secondaryColor.withValues(alpha: 0.4), fontSize: 11),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             review.review,
             style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13, height: 1.4),
@@ -262,9 +297,34 @@ class _Badge extends StatelessWidget {
 class _RatingBadge extends StatelessWidget {
   final String rating;
   final String count;
-  const _RatingBadge({required this.rating, required this.count});
+  final VoidCallback onTap;
+  const _RatingBadge({required this.rating, required this.count, required this.onTap});
   @override
-  Widget build(BuildContext context) => Row(children: [const Icon(Icons.star_rounded, color: AppColors.warning, size: 20), const SizedBox(width: 6), Text(rating, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)), const SizedBox(width: 4), Text('($count)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 13, fontWeight: FontWeight.w600))]);
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Row(children: [const Icon(Icons.star_rounded, color: AppColors.warning, size: 20), const SizedBox(width: 6), Text(rating, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)), const SizedBox(width: 4), Text('($count)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 13, fontWeight: FontWeight.w600))]),
+  );
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _StatItem({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color.withOpacity(0.8)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
 }
 
 class _PriceSection extends StatelessWidget {
@@ -296,36 +356,38 @@ class _StockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final ref = Consumer(builder: (context, ref, _) => const SizedBox()); // Dummy to get access to localization context if needed
     bool isLow = stock < 10;
-    return Container(
-      padding: const EdgeInsets.all(24), 
-      decoration: BoxDecoration(
-        color: colorScheme.surface, 
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
-      ), 
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12), 
-            decoration: BoxDecoration(color: (isLow ? AppColors.warning : AppColors.info).withOpacity(0.1), shape: BoxShape.circle), 
-            child: Icon(isLow ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded, color: isLow ? AppColors.warning : AppColors.info, size: 24)
+    return Consumer(
+      builder: (context, ref, _) {
+        return Container(
+          padding: const EdgeInsets.all(24), 
+          decoration: BoxDecoration(
+            color: colorScheme.surface, 
+            borderRadius: BorderRadius.circular(28),
           ), 
-          const SizedBox(width: 16), 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, 
-              children: [
-                Text(isLow ? 'LIMITED AVAILABILITY' : 'FULLY STOCKED', style: TextStyle(color: isLow ? AppColors.warning : AppColors.info, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)), 
-                const SizedBox(height: 4), 
-                Text(isLow ? 'Only $stock items left in stock.' : 'Ready for immediate premium delivery.', style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600))
-              ]
-            )
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12), 
+                decoration: BoxDecoration(color: (isLow ? AppColors.warning : AppColors.info).withOpacity(0.1), shape: BoxShape.circle), 
+                child: Icon(isLow ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded, color: isLow ? AppColors.warning : AppColors.info, size: 24)
+              ), 
+              const SizedBox(width: 16), 
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  children: [
+                    Text(isLow ? 'low_stock'.tr(ref).toUpperCase() : 'in_stock'.tr(ref).toUpperCase(), style: TextStyle(color: isLow ? AppColors.warning : AppColors.info, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)), 
+                    const SizedBox(height: 4), 
+                    Text(isLow ? '${'only'.tr(ref)} $stock ${'items_left'.tr(ref)}' : 'ready_ship'.tr(ref), style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600))
+                  ]
+                )
+              )
+            ]
           )
-        ]
-      )
+        );
+      }
     );
   }
 }

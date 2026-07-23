@@ -116,41 +116,61 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          _buildStatusBanner(widget.ticketId, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
-          Expanded(
-            child: StreamBuilder<List<SupportMessageModel>>(
-              stream: ref.watch(supportServiceProvider).getTicketMessages(widget.ticketId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final messages = snapshot.data ?? [];
-                return ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isMe = message.senderId == user.uid;
-                    return _ChatBubble(
-                      message: message, 
-                      isMe: isMe,
-                      primary: primaryColor,
-                      cardColor: cardColor,
-                      textColor: textColor,
-                      secondaryTextColor: secondaryTextColor,
-                      isLight: isLight,
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('support_tickets').doc(widget.ticketId).snapshots(),
+        builder: (context, ticketSnapshot) {
+          final ticketData = ticketSnapshot.data?.data() as Map<String, dynamic>?;
+          final isResolved = (ticketData?['status'] == 'resolved' || ticketData?['status'] == 'closed');
+
+          return Column(
+            children: [
+              _buildStatusBanner(widget.ticketId, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
+              Expanded(
+                child: StreamBuilder<List<SupportMessageModel>>(
+                  stream: ref.watch(supportServiceProvider).getTicketMessages(widget.ticketId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final messages = snapshot.data ?? [];
+                    return ListView.builder(
+                      controller: _scrollController,
+                      reverse: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final isMe = message.senderId == user.uid;
+                        return _ChatBubble(
+                          message: message, 
+                          isMe: isMe,
+                          primary: primaryColor,
+                          cardColor: cardColor,
+                          textColor: textColor,
+                          secondaryTextColor: secondaryTextColor,
+                          isLight: isLight,
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ),
-          _buildInputArea(isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor),
-        ],
+                ),
+              ),
+              if (!isResolved || user.role == UserRole.superAdmin)
+                _buildInputArea(isLight, cardColor, textColor, secondaryTextColor, dividerColor, primaryColor)
+              else
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+                  width: double.infinity,
+                  color: cardColor,
+                  child: Text(
+                    'This ticket has been resolved. You cannot send more messages.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

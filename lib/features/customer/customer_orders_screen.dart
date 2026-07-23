@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -54,7 +55,6 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
     final ordersAsync = ref.watch(customerOrdersProvider);
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
-    final colorScheme = theme.colorScheme;
     
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
@@ -66,7 +66,7 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('My Orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: textColor)),
+        title: Text('order_history'.tr(ref), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: textColor)),
         backgroundColor: bgColor,
         elevation: 0,
         centerTitle: false,
@@ -121,33 +121,7 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
               );
             },
             loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
-            error: (e, s) {
-              final isPermissionError = e.toString().contains('PERMISSION_DENIED');
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.lock_person_rounded, size: 64, color: AppColors.error.withOpacity(0.2)),
-                      const SizedBox(height: 24),
-                      Text(
-                        isPermissionError ? 'Access Restricted' : 'Error Loading Orders',
-                        style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        isPermissionError 
-                            ? 'Your account doesn\'t have permission to view these orders. Please contact support if this is a mistake.' 
-                            : 'Something went wrong while fetching your orders. Please try again later.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: secondaryTextColor, fontSize: 13, height: 1.5),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+            error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
           );
         }),
       ),
@@ -213,7 +187,6 @@ class _OrderCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
           border: isLight ? Border.all(color: dividerColor) : Border.all(color: dividerColor.withOpacity(0.3)),
         ),
         child: Column(
@@ -231,11 +204,7 @@ class _OrderCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: order.shopImageUrl.isNotEmpty
-                        ? Image.network(
-                            order.shopImageUrl, 
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
-                          )
+                        ? Image.network(order.shopImageUrl, fit: BoxFit.cover)
                         : Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
                   ),
                 ),

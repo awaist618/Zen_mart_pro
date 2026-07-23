@@ -184,6 +184,64 @@ class CustomerService {
     batch.update(_db.collection('orders').doc(orderId), {'isReviewed': true});
 
     await batch.commit();
+
+    // 5. Update Aggregate Ratings (Calculated after commit to simplify batch)
+    _updateShopRating(shopId, rating);
+    if (riderId != null) _updateRiderRating(riderId, rating);
+    for (var prodRate in productRatings) {
+      _updateProductRating(prodRate['productId'], prodRate['rating']);
+    }
+  }
+
+  Future<void> _updateShopRating(String shopId, double newRating) async {
+    final docRef = _db.collection('shops').doc(shopId);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+      
+      double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
+      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      transaction.update(docRef, {
+        'rating': double.parse(avg.toStringAsFixed(1)),
+        'reviewCount': currentCount + 1,
+      });
+    });
+  }
+
+  Future<void> _updateProductRating(String productId, double newRating) async {
+    final docRef = _db.collection('products').doc(productId);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+      
+      double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
+      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      transaction.update(docRef, {
+        'rating': double.parse(avg.toStringAsFixed(1)),
+        'reviewCount': currentCount + 1,
+      });
+    });
+  }
+
+  Future<void> _updateRiderRating(String riderId, double newRating) async {
+    final docRef = _db.collection('users').doc(riderId);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+      
+      double currentRating = (snapshot.data()?['rating'] ?? 0.0).toDouble();
+      int currentCount = snapshot.data()?['reviewCount'] ?? 0;
+      
+      double avg = ((currentRating * currentCount) + newRating) / (currentCount + 1);
+      transaction.update(docRef, {
+        'rating': double.parse(avg.toStringAsFixed(1)),
+        'reviewCount': currentCount + 1,
+      });
+    });
   }
 
   /// Get reviews for a specific product

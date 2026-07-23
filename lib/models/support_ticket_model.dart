@@ -138,9 +138,9 @@ class SupportMessageModel {
       senderId: data['senderId'] ?? '',
       senderName: data['senderName'] ?? '',
       senderRole: data['senderRole'] ?? 'customer',
-      message: data['message'] ?? '',
+      message: data['message'] ?? data['text'] ?? '',
       type: data['type'] ?? 'text',
-      attachmentUrl: data['attachmentUrl'] ?? data['imageUrl'], // backward compatibility
+      attachmentUrl: data['attachmentUrl'] ?? data['imageUrl'],
       linkedId: data['linkedId'],
       timestamp: data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
     );

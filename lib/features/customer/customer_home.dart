@@ -21,7 +21,6 @@ class CustomerHome extends ConsumerWidget {
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -81,7 +80,7 @@ class CustomerHome extends ConsumerWidget {
                       const _CategoryGrid(),
                       const SizedBox(height: 40),
                       _SectionHeader(
-                        title: 'Premium Stores', 
+                        title: 'featured_stores'.tr(ref), 
                         showSeeAll: true,
                         onSeeAll: '/customer/featured-shops',
                         textColor: textColor,
@@ -101,7 +100,7 @@ class CustomerHome extends ConsumerWidget {
                       const _TrendingProducts(),
                       const SizedBox(height: 40),
                       _SectionHeader(
-                        title: 'Stores Near You', 
+                        title: 'popular_near'.tr(ref), 
                         showSeeAll: true, 
                         onSeeAll: '/customer/nearby-shops',
                         textColor: textColor, 
@@ -139,7 +138,6 @@ class _LocationHeader extends StatelessWidget {
     final defaultAddress = ref.watch(defaultAddressProvider);
     final user = ref.watch(userModelProvider).asData?.value;
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final colorScheme = Theme.of(context).colorScheme;
     
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
@@ -168,7 +166,7 @@ class _LocationHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'DELIVERING TO',
+                        'deliver_to'.tr(ref).toUpperCase(),
                         style: TextStyle(
                           color: primaryColor.withOpacity(0.8),
                           fontSize: 9,
@@ -279,7 +277,6 @@ class _SearchBar extends ConsumerWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return GestureDetector(
@@ -435,23 +432,25 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         if (showSeeAll)
-          TextButton(
-            onPressed: () {
-              if (onSeeAll != null) {
-                context.push(onSeeAll!);
-              }
-            },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('View All', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
-                const SizedBox(width: 6),
-                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
-              ],
+          Consumer(
+            builder: (context, ref, child) => TextButton(
+              onPressed: () {
+                if (onSeeAll != null) {
+                  context.push(onSeeAll!);
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('view_all'.tr(ref), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+                  const SizedBox(width: 6),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
+                ],
+              ),
             ),
           ),
       ],
@@ -471,10 +470,10 @@ class _CategoryGrid extends StatelessWidget {
     return Consumer(
       builder: (context, ref, child) {
         final categories = [
-          {'name': 'Grocery', 'key': 'Grocery', 'icon': Icons.local_grocery_store_rounded, 'color': const Color(0xFF6366F1)},
-          {'name': 'Food', 'key': 'Food', 'icon': Icons.restaurant_rounded, 'color': const Color(0xFFF59E0B)},
-          {'name': 'Pharmacy', 'key': 'Pharmacy', 'icon': Icons.medical_services_rounded, 'color': const Color(0xFF10B981)},
-          {'name': 'Fashion', 'key': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
+          {'name': 'grocery'.tr(ref), 'key': 'Grocery', 'icon': Icons.local_grocery_store_rounded, 'color': const Color(0xFF6366F1)},
+          {'name': 'food'.tr(ref), 'key': 'Food', 'icon': Icons.restaurant_rounded, 'color': const Color(0xFFF59E0B)},
+          {'name': 'pharmacy'.tr(ref), 'key': 'Pharmacy', 'icon': Icons.medical_services_rounded, 'color': const Color(0xFF10B981)},
+          {'name': 'fashion'.tr(ref), 'key': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
         ];
 
         return Row(

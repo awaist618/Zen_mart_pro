@@ -17,6 +17,7 @@ class ProductModel {
   final bool isAvailable;
   final double rating;
   final int reviewCount;
+  final int orderCount;
   final DateTime createdAt;
 
   ProductModel({
@@ -36,6 +37,7 @@ class ProductModel {
     this.isAvailable = true,
     this.rating = 0.0,
     this.reviewCount = 0,
+    this.orderCount = 0,
     required this.createdAt,
   });
 
@@ -58,6 +60,7 @@ class ProductModel {
       isAvailable: data['isAvailable'] ?? true,
       rating: (data['rating'] ?? 0.0).toDouble(),
       reviewCount: data['reviewCount'] ?? 0,
+      orderCount: data['orderCount'] ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -79,6 +82,7 @@ class ProductModel {
       'isAvailable': isAvailable,
       'rating': rating,
       'reviewCount': reviewCount,
+      'orderCount': orderCount,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

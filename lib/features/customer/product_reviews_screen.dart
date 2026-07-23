@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 
@@ -26,7 +27,7 @@ class ProductReviewsScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Customer Reviews', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)),
+            Text('customer_reviews'.tr(ref), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)),
             Text(productName, style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.5), fontWeight: FontWeight.bold)),
           ],
         ),
@@ -46,7 +47,7 @@ class ProductReviewsScreen extends ConsumerWidget {
                 children: [
                   Icon(Icons.rate_review_rounded, size: 64, color: textColor.withValues(alpha: 0.1)),
                   const SizedBox(height: 16),
-                  Text('No reviews yet.', style: TextStyle(color: textColor.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
+                  Text('no_reviews'.tr(ref), style: TextStyle(color: textColor.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
                 ],
               ),
             );
@@ -59,7 +60,7 @@ class ProductReviewsScreen extends ConsumerWidget {
           );
         },
         loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
-        error: (e, s) => Center(child: Text('Error loading reviews')),
+        error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
       ),
     );
   }

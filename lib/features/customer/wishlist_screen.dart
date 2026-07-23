@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/localization.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product_model.dart';
@@ -20,7 +21,7 @@ class WishlistScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('My Wishlist', style: TextStyle(fontWeight: FontWeight.w900, color: textColor)),
+        title: Text('my_wishlist'.tr(ref), style: TextStyle(fontWeight: FontWeight.w900, color: textColor)),
         backgroundColor: bgColor,
         elevation: 0,
         centerTitle: true,
@@ -45,9 +46,9 @@ class WishlistScreen extends ConsumerWidget {
                     child: Icon(Icons.favorite_border_rounded, size: 64, color: primaryColor.withOpacity(0.2)),
                   ),
                   const SizedBox(height: 24),
-                  Text('Your wishlist is empty', style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18)),
+                  Text('empty_wishlist'.tr(ref), style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18)),
                   const SizedBox(height: 8),
-                  Text('Explore products and save your favorites!', style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 14)),
+                  Text('wishlist_hint'.tr(ref), style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 14)),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: () => context.go('/customer'),
@@ -56,7 +57,7 @@ class WishlistScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Text('EXPLORE NOW', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text('explore_now'.tr(ref).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ],
               ),

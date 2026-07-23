@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 
@@ -31,7 +32,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Confirm Order', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: colorScheme.onBackground)),
+        title: Text('confirm_order'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
@@ -46,15 +47,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('Delivery Location', Icons.location_on_rounded, colorScheme),
+            _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
             const SizedBox(height: 16),
             _buildAddressCard(context, address, colorScheme, isLight),
             const SizedBox(height: 32),
-            _buildSectionHeader('Payment Method', Icons.payments_rounded, colorScheme),
+            _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
             const SizedBox(height: 16),
             _buildPaymentOptions(colorScheme, isLight),
             const SizedBox(height: 32),
-            _buildSectionHeader('Order Summary', Icons.shopping_bag_rounded, colorScheme),
+            _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
             const SizedBox(height: 16),
             _buildOrderSummary(cart, colorScheme, isLight),
             const SizedBox(height: 40),
@@ -100,12 +101,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  address?.label ?? 'Delivery Address', 
+                  address?.label ?? 'select_address'.tr(ref), 
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  address?.fullAddress ?? 'Please add a delivery address to continue', 
+                  address?.fullAddress ?? 'add_address_hint'.tr(ref), 
                   style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -139,7 +140,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Column(
         children: [
           _PaymentTile(
-            title: 'Cash on Delivery',
+            title: 'cash_on_delivery'.tr(ref),
             subtitle: 'Pay at your doorstep',
             icon: Icons.payments_rounded,
             isSelected: _paymentMethod == 'Cash on Delivery',
@@ -149,7 +150,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, indent: 64, endIndent: 16),
           _PaymentTile(
-            title: 'Online Transfer',
+            title: 'online_transfer'.tr(ref),
             subtitle: 'Instant secure payment',
             icon: Icons.qr_code_scanner_rounded,
             isSelected: _paymentMethod == 'Online Transfer',
@@ -199,14 +200,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           )),
           Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
-          _SummaryLine(label: 'Subtotal', value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
+          _SummaryLine(label: 'item_subtotal'.tr(ref), value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
           const SizedBox(height: 12),
-          _SummaryLine(label: 'Delivery Charge', value: 'Rs 100', color: AppColors.success, colorScheme: colorScheme),
+          _SummaryLine(label: 'delivery_fee'.tr(ref), value: 'Rs 100', color: AppColors.success, colorScheme: colorScheme),
           Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total to Pay', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+              Text('total_to_pay'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
               Text('Rs ${(cart.totalAmount + 100).toStringAsFixed(0)}', 
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.primary)),
             ],
@@ -243,7 +244,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_paymentMethod == 'Online Transfer' ? 'PAY & CONFIRM' : 'PLACE ORDER'),
+                Text(_paymentMethod == 'Online Transfer' ? 'pay_confirm'.tr(ref).toUpperCase() : 'confirm_order'.tr(ref).toUpperCase()),
                 const SizedBox(width: 12),
                 const Icon(Icons.verified_rounded, size: 20),
               ],
@@ -325,10 +326,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final firstItem = cart.items.values.first;
       final deliveryOtp = (Random().nextInt(9000) + 1000).toString();
 
-      // Fix shopName missing error by fetching shop data
       final shopDoc = await FirebaseFirestore.instance.collection('shops').doc(firstItem.product.shopId).get();
-      final shopName = shopDoc.exists ? (shopDoc.data()?['name'] ?? 'Premium Shop') : 'Premium Shop';
-      final shopImageUrl = shopDoc.exists ? (shopDoc.data()?['imageUrl'] ?? '') : '';
+      final shopData = shopDoc.data();
+      final shopName = shopDoc.exists ? (shopData?['name'] ?? 'Premium Shop') : 'Premium Shop';
+      final shopImageUrl = shopDoc.exists 
+          ? (shopData?['logoUrl'] ?? shopData?['imageUrl'] ?? shopData?['bannerImage'] ?? '') 
+          : '';
 
       final orderData = {
         'customerId': user.uid,
@@ -337,7 +340,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'vendorId': firstItem.product.vendorId,
         'shopId': firstItem.product.shopId,
         'shopName': cart.shopName ?? shopName,
-        'shopImageUrl': cart.shopImageUrl ?? shopImageUrl,
+        'shopImageUrl': (cart.shopImageUrl != null && cart.shopImageUrl!.isNotEmpty) 
+            ? cart.shopImageUrl 
+            : shopImageUrl,
         'vendorPhone': '03001234567',
         'status': 'pending',
         'totalAmount': cart.totalAmount + 100,

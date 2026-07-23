@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/providers.dart';
+import '../../../core/localization.dart';
 import '../../../models/user_model.dart';
 import '../../../models/support_ticket_model.dart';
 import '../../../services/support_service.dart';
@@ -18,7 +19,6 @@ class SupportHubScreen extends ConsumerStatefulWidget {
 
 class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void dispose() {
@@ -34,7 +34,6 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     
-    // Help Center Specific Palette
     final bgColor = isLight ? AppColors.lightBackground : AppColors.supportDarkBackground;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.supportDarkSurface;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.supportDarkPrimary;
@@ -47,7 +46,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildSliverAppBar(context, user, isLight, primaryColor, textColor, secondaryTextColor, bgColor),
+          _buildSliverAppBar(context, user, isLight, primaryColor, textColor, secondaryTextColor, bgColor, ref),
           
           SliverToBoxAdapter(
             child: Padding(
@@ -56,15 +55,14 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  _buildSearchBar(isLight, cardColor, secondaryTextColor, dividerColor),
+                  _buildSearchBar(isLight, cardColor, secondaryTextColor, dividerColor, ref),
                   const SizedBox(height: 32),
                   _SectionHeader(
-                    title: 'Quick Help', 
-                    isLight: isLight, 
+                    title: 'quick_help'.tr(ref), 
                     textColor: textColor,
                   ),
                   const SizedBox(height: 16),
-                  _buildActionGrid(context, user.role, isLight, cardColor, primaryColor, textColor, secondaryTextColor, dividerColor),
+                  _buildActionGrid(context, user.role, isLight, cardColor, primaryColor, textColor, secondaryTextColor, dividerColor, ref),
                   
                   const SizedBox(height: 32),
                   _LiveChatCard(
@@ -82,63 +80,21 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                   _EmergencyCard(
                     isLight: isLight,
                     onTap: () => context.push('/support/emergency'),
+                    ref: ref,
                   ),
 
-                  // NEW: Emergency Reports Tracking
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final reportsAsync = ref.watch(customerEmergencyReportsProvider);
-                      return reportsAsync.when(
-                        data: (reports) {
-                          if (reports.isEmpty) return const SizedBox.shrink();
-                          final lastReport = reports.first;
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 24),
-                            child: InkWell(
-                              onTap: () => context.push('/support/emergency-details/${lastReport.id}'),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.track_changes_rounded, color: Colors.redAccent, size: 20),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'Track Emergency: ${lastReport.category}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.redAccent),
-                                      ),
-                                    ),
-                                    const Icon(Icons.chevron_right_rounded, color: Colors.redAccent, size: 18),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      );
-                    }
-                  ),
-                  
                   const SizedBox(height: 40),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _SectionHeader(
-                        title: 'My Tickets', 
-                        isLight: isLight, 
+                        title: 'my_tickets'.tr(ref), 
                         textColor: textColor,
                       ),
                       TextButton(
                         onPressed: () => context.push('/support/tickets'),
                         child: Text(
-                          'View All', 
+                          'view_all'.tr(ref), 
                           style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 13)
                         ),
                       ),
@@ -148,8 +104,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                   
                   const SizedBox(height: 40),
                   _SectionHeader(
-                    title: 'Common Questions', 
-                    isLight: isLight, 
+                    title: 'common_questions'.tr(ref), 
                     textColor: textColor,
                   ),
                   const SizedBox(height: 16),
@@ -162,16 +117,16 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showNewTicketSheet(context, user.role),
+        onPressed: () => context.push('/support/create-ticket'),
         backgroundColor: primaryColor,
         elevation: 10,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('NEW TICKET', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
+        label: Text('new_ticket'.tr(ref), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
       ),
     );
   }
 
-  Widget _buildSliverAppBar(BuildContext context, UserModel user, bool isLight, Color primary, Color textColor, Color secondaryTextColor, Color bgColor) {
+  Widget _buildSliverAppBar(BuildContext context, UserModel user, bool isLight, Color primary, Color textColor, Color secondaryTextColor, Color bgColor, WidgetRef ref) {
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
@@ -184,7 +139,6 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [
-            // Decorative Glow
             Positioned(
               top: -50,
               right: -50,
@@ -221,8 +175,8 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'LIVE SUPPORT ONLINE',
-                              style: TextStyle(
+                              'live_online'.tr(ref),
+                              style: const TextStyle(
                                 color: AppColors.success,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
@@ -233,7 +187,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Hi, ${user.name.split(' ').first} 👋',
+                          '${'Hi'.tr(ref)}, ${user.name.split(' ').first} 👋',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
@@ -243,7 +197,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'How can we help you today?',
+                          'how_help'.tr(ref),
                           style: TextStyle(
                             fontSize: 15,
                             color: secondaryTextColor,
@@ -271,7 +225,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
     );
   }
 
-  Widget _buildSearchBar(bool isLight, Color cardColor, Color secondaryTextColor, Color divider) {
+  Widget _buildSearchBar(bool isLight, Color cardColor, Color secondaryTextColor, Color divider, WidgetRef ref) {
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -281,13 +235,11 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
       ),
       child: TextField(
-        onChanged: (v) => setState(() => _searchQuery = v),
         style: TextStyle(color: isLight ? Colors.black : Colors.white, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
-          hintText: 'Search FAQs, tickets or articles...',
+          hintText: 'search_support_hint'.tr(ref),
           hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 14),
           prefixIcon: Icon(Icons.search_rounded, color: secondaryTextColor.withOpacity(0.7)),
-          suffixIcon: Icon(Icons.tune_rounded, color: secondaryTextColor.withOpacity(0.7)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -295,7 +247,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
     );
   }
 
-  Widget _buildActionGrid(BuildContext context, UserRole role, bool isLight, Color cardColor, Color primary, Color textColor, Color secondaryTextColor, Color divider) {
+  Widget _buildActionGrid(BuildContext context, UserRole role, bool isLight, Color cardColor, Color primary, Color textColor, Color secondaryTextColor, Color divider, WidgetRef ref) {
     final categories = _getCategoriesForRole(role);
     return GridView.builder(
       shrinkWrap: true,
@@ -310,7 +262,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
       itemBuilder: (context, index) {
         final category = categories[index];
         return _CategoryCard(
-          category: category,
+          category: _getLocalizedCategory(category, ref),
           icon: _getIconForCategory(category),
           isLight: isLight,
           cardColor: cardColor,
@@ -347,7 +299,7 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
                 Icon(Icons.confirmation_number_outlined, size: 48, color: secondaryTextColor.withOpacity(0.2)),
                 const SizedBox(height: 16),
                 Text(
-                  'No active tickets found.', 
+                  'no_tickets'.tr(ref), 
                   textAlign: TextAlign.center, 
                   style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.w600)
                 ),
@@ -395,10 +347,6 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
     );
   }
 
-  void _showNewTicketSheet(BuildContext context, UserRole role) {
-    context.push('/support/create-ticket');
-  }
-
   List<String> _getCategoriesForRole(UserRole role) {
     switch (role) {
       case UserRole.customer:
@@ -410,6 +358,16 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
       default:
         return ['General Support', 'Technical Issue', 'Other'];
     }
+  }
+
+  String _getLocalizedCategory(String cat, WidgetRef ref) {
+    if (cat.contains('Order')) return 'order_issue'.tr(ref);
+    if (cat.contains('Payment')) return 'payment_issue'.tr(ref);
+    if (cat.contains('Refund')) return 'refund_issue'.tr(ref);
+    if (cat.contains('Delivery')) return 'delivery_issue'.tr(ref);
+    if (cat.contains('Quality')) return 'quality_issue'.tr(ref);
+    if (cat.contains('Technical')) return 'technical_issue'.tr(ref);
+    return 'other_issue'.tr(ref);
   }
 
   IconData _getIconForCategory(String category) {
@@ -426,9 +384,8 @@ class _SupportHubScreenState extends ConsumerState<SupportHubScreen> {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final bool isLight;
   final Color textColor;
-  const _SectionHeader({required this.title, required this.isLight, required this.textColor});
+  const _SectionHeader({required this.title, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -498,7 +455,7 @@ class _CategoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Get help with your ${category.toLowerCase()}',
+              'Zen Mart Pro Support',
               style: TextStyle(fontSize: 11, color: secondaryTextColor, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -568,10 +525,9 @@ class _LiveChatCard extends StatelessWidget {
                   child: Container(
                     width: 12,
                     height: 12,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.success,
                       shape: BoxShape.circle,
-                      border: Border.all(color: cardColor, width: 2),
                     ),
                   ),
                 ),
@@ -583,12 +539,12 @@ class _LiveChatCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Live Chat Support',
+                    'live_chat'.tr(ref),
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: textColor),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Chat with our support experts now.',
+                    'chat_now'.tr(ref),
                     style: TextStyle(fontSize: 13, color: secondaryTextColor, fontWeight: FontWeight.w500),
                   ),
                 ],
@@ -597,7 +553,7 @@ class _LiveChatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(10)),
-              child: const Text('START', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              child: Text('start'.tr(ref), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
             ),
           ],
         ),
@@ -609,7 +565,8 @@ class _LiveChatCard extends StatelessWidget {
 class _EmergencyCard extends StatelessWidget {
   final bool isLight;
   final VoidCallback onTap;
-  const _EmergencyCard({required this.isLight, required this.onTap});
+  final WidgetRef ref;
+  const _EmergencyCard({required this.isLight, required this.onTap, required this.ref});
 
   @override
   Widget build(BuildContext context) {
@@ -639,7 +596,7 @@ class _EmergencyCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Emergency Assistance',
+                    'emergency_help'.tr(ref),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
@@ -648,7 +605,7 @@ class _EmergencyCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Safety issues or fraud report.',
+                    'safety_fraud'.tr(ref),
                     style: TextStyle(
                       fontSize: 13,
                       color: isLight ? AppColors.lightError.withOpacity(0.7) : AppColors.supportDarkError.withOpacity(0.7),
@@ -687,80 +644,85 @@ class _TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.push('/support/ticket-chat/${ticket.id}'),
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: cardColor,
+    return Consumer(
+      builder: (context, ref, _) {
+        return InkWell(
+          onTap: () => context.push('/support/ticket-chat/${ticket.id}'),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: divider),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)] : null,
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: divider),
+              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)] : null,
+            ),
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'TICKET #${ticket.id.substring(0, 8).toUpperCase()}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: primary,
-                        letterSpacing: 1,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TICKET #${ticket.id.substring(0, 8).toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: primary,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          ticket.title,
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textColor),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      ticket.title,
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textColor),
-                    ),
+                    _StatusChip(status: ticket.status, ref: ref),
                   ],
                 ),
-                _StatusChip(status: ticket.status),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                _TicketMeta(
-                  icon: Icons.category_outlined,
-                  label: ticket.category,
-                  secondaryTextColor: secondaryTextColor,
-                ),
-                const SizedBox(width: 16),
-                _TicketMeta(
-                  icon: Icons.access_time_rounded,
-                  label: DateFormat('MMM d').format(ticket.createdAt),
-                  secondaryTextColor: secondaryTextColor,
-                ),
-                const Spacer(),
-                if (ticket.unreadCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(8)),
-                    child: Text(
-                      '${ticket.unreadCount} NEW',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    _TicketMeta(
+                      icon: Icons.category_outlined,
+                      label: ticket.category,
+                      secondaryTextColor: secondaryTextColor,
                     ),
-                  ),
+                    const SizedBox(width: 16),
+                    _TicketMeta(
+                      icon: Icons.access_time_rounded,
+                      label: DateFormat('MMM d').format(ticket.createdAt),
+                      secondaryTextColor: secondaryTextColor,
+                    ),
+                    const Spacer(),
+                    if (ticket.unreadCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(8)),
+                        child: const Text(
+                          'NEW',
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 }
 
 class _StatusChip extends StatelessWidget {
   final TicketStatus status;
-  const _StatusChip({required this.status});
+  final WidgetRef ref;
+  const _StatusChip({required this.status, required this.ref});
 
   @override
   Widget build(BuildContext context) {

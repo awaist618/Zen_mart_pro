@@ -1,14 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_colors.dart';
+import '../../../core/localization.dart';
 
-class CustomerBottomNav extends StatelessWidget {
+class CustomerBottomNav extends ConsumerWidget {
   final int currentIndex;
   const CustomerBottomNav({super.key, required this.currentIndex});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     
@@ -40,7 +42,7 @@ class CustomerBottomNav extends StatelessWidget {
             children: [
               _CustomerNavItem(
                 icon: Icons.grid_view_rounded, 
-                label: 'Home', 
+                label: 'home'.tr(ref), 
                 isActive: currentIndex == 0,
                 onTap: () => context.go('/customer'),
                 activeColor: activeColor,
@@ -48,7 +50,7 @@ class CustomerBottomNav extends StatelessWidget {
               ),
               _CustomerNavItem(
                 icon: Icons.search_rounded, 
-                label: 'Search', 
+                label: 'search'.tr(ref), 
                 isActive: currentIndex == 1,
                 onTap: () => context.go('/customer/search'),
                 activeColor: activeColor,
@@ -56,7 +58,7 @@ class CustomerBottomNav extends StatelessWidget {
               ),
               _CustomerNavItem(
                 icon: Icons.shopping_bag_rounded, 
-                label: 'Cart', 
+                label: 'cart'.tr(ref), 
                 isActive: currentIndex == 2,
                 onTap: () => context.go('/customer/cart'),
                 activeColor: activeColor,
@@ -64,7 +66,7 @@ class CustomerBottomNav extends StatelessWidget {
               ),
               _CustomerNavItem(
                 icon: Icons.receipt_long_rounded, 
-                label: 'Orders', 
+                label: 'orders'.tr(ref), 
                 isActive: currentIndex == 3,
                 onTap: () => context.go('/customer/orders'),
                 activeColor: activeColor,
@@ -72,7 +74,7 @@ class CustomerBottomNav extends StatelessWidget {
               ),
               _CustomerNavItem(
                 icon: Icons.person_rounded, 
-                label: 'Account', 
+                label: 'account'.tr(ref),
                 isActive: currentIndex == 4,
                 onTap: () => context.go('/customer/profile'),
                 activeColor: activeColor,

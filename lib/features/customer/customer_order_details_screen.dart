@@ -379,9 +379,12 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) => IconButton(
-                    onPressed: () => setState(() => shopRating = index + 1),
-                    icon: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.grey[200] : Colors.white12), size: 32),
+                  children: List.generate(5, (index) => InkWell(
+                    onTap: () => setState(() => shopRating = index + 1),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.grey[200] : Colors.white12), size: 28),
+                    ),
                   )),
                 ),
                 const Divider(height: 32),

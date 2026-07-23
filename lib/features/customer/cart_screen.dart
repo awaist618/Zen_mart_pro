@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
+import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
 import './widgets/customer_bottom_nav.dart';
 
@@ -14,7 +15,6 @@ class CartScreen extends ConsumerWidget {
     final cart = ref.watch(cartProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -28,7 +28,7 @@ class CartScreen extends ConsumerWidget {
                 backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.8),
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                title: Text('My Shopping Bag', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: colorScheme.onBackground)),
+                title: Text('my_cart'.tr(ref), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: colorScheme.onBackground)),
                 flexibleSpace: FlexibleSpaceBar(
                   background: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -43,7 +43,7 @@ class CartScreen extends ConsumerWidget {
                   if (cart.itemCount > 0)
                     TextButton(
                       onPressed: () => _showClearCartDialog(context, ref),
-                      child: const Text('CLEAR', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
+                      child: Text('clear'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
                     ),
                   const SizedBox(width: 10),
                 ],
@@ -96,13 +96,13 @@ class CartScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: isLight ? Colors.white : AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text('Clear everything?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
+        title: Text('clear'.tr(ref) + '?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
         content: Text('This will remove all premium items from your bag.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('NOT NOW', style: TextStyle(color: AppColors.textHint))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('cancel'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.textHint))),
           TextButton(
             onPressed: () { ref.read(cartProvider.notifier).clearCart(); Navigator.pop(context); },
-            child: const Text('CLEAR ALL', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
+            child: Text('clear'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -127,14 +127,14 @@ class CartScreen extends ConsumerWidget {
             child: Icon(Icons.shopping_bag_outlined, size: 70, color: colorScheme.primary.withOpacity(0.3)),
           ),
           const SizedBox(height: 32),
-          Text('Bag is Empty', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
+          Text('empty_cart'.tr(ref), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
           const SizedBox(height: 12),
           Text('Discover premium products and add them here.', textAlign: TextAlign.center, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 14)),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () => context.go('/customer'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(180, 56)),
-            child: const Text('EXPLORE NOW'),
+            child: Text('start_shopping'.tr(ref).toUpperCase()),
           ),
         ],
       ),
@@ -170,7 +170,7 @@ class CartScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('GRAND TOTAL', style: TextStyle(color: colorScheme.primary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                    Text('grand_total'.tr(ref).toUpperCase(), style: TextStyle(color: colorScheme.primary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                     const SizedBox(height: 4),
                     Text('Rs ${total.toStringAsFixed(0)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
                   ],
@@ -180,10 +180,10 @@ class CartScreen extends ConsumerWidget {
                 onPressed: () => context.push('/customer/checkout'),
                 style: ElevatedButton.styleFrom(minimumSize: const Size(160, 60)),
                 child: Row(
-                  children: const [
-                    Text('CHECKOUT'),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, size: 18),
+                  children: [
+                    Text('checkout'.tr(ref).toUpperCase()),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, size: 18),
                   ],
                 ),
               ),

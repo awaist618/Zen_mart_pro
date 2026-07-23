@@ -53,6 +53,17 @@ class OrderService {
         'totalSales': FieldValue.increment(1),
         'revenue': FieldValue.increment(order.totalAmount - order.deliveryFee),
       });
+
+      // 4.5 Side Effect: Update Product Order Counts
+      for (var item in order.items) {
+        final productId = item['productId'];
+        if (productId != null) {
+          final prodRef = _db.collection('products').doc(productId);
+          batch.update(prodRef, {
+            'orderCount': FieldValue.increment(item['quantity'] ?? 1),
+          });
+        }
+      }
     }
 
     // 5. Create Notifications based on Phase
