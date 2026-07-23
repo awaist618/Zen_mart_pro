@@ -132,69 +132,75 @@ class _TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.push('/support/ticket-chat/${ticket.id}'),
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: cardColor,
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: divider),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: () => context.push('/support/ticket-chat/${ticket.id}'),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: divider),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)] : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'TICKET #${ticket.id.substring(0, 8).toUpperCase()}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: primary,
-                    letterSpacing: 1,
-                  ),
-                ),
-                _StatusChip(status: ticket.status),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              ticket.title,
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: textColor),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              ticket.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: secondaryTextColor, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 20),
-            Container(height: 1, color: divider),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _MetaItem(icon: Icons.category_outlined, label: ticket.category, color: secondaryTextColor),
-                const SizedBox(width: 16),
-                _MetaItem(icon: Icons.calendar_today_rounded, label: DateFormat('MMM dd').format(ticket.createdAt), color: secondaryTextColor),
-                const Spacer(),
-                if (ticket.unreadCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(8)),
-                    child: Text(
-                      '${ticket.unreadCount} NEW',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'TICKET #${ticket.id.substring(0, 8).toUpperCase()}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: primary,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: secondaryTextColor.withOpacity(0.3)),
+                    _StatusChip(status: ticket.status),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  ticket.title,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: textColor),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  ticket.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: secondaryTextColor, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 20),
+                Container(height: 1, color: divider),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _MetaItem(icon: Icons.category_outlined, label: ticket.category, color: secondaryTextColor),
+                    const SizedBox(width: 16),
+                    _MetaItem(icon: Icons.calendar_today_rounded, label: DateFormat('MMM dd').format(ticket.createdAt), color: secondaryTextColor),
+                    const Spacer(),
+                    if (ticket.unreadCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(8)),
+                        child: Text(
+                          '${ticket.unreadCount} NEW',
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: secondaryTextColor.withOpacity(0.3)),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

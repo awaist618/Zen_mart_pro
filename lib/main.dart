@@ -40,23 +40,24 @@ class ZenMartProApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final settings = ref.watch(settingsProvider);
     
-    // Theme Logic: Apply Premium Light Theme ONLY to Customer module and Auth screens.
-    // Admin, Vendor, and Rider dashboards are forced to stay Dark Mode as per requirements.
+    // Theme Logic: Apply Premium Light/Dark Theme to Customer module and Auth screens.
+    // Admin, Vendor, and Rider dashboards are forced to stay in Legacy Dark Mode as per requirements.
     final userModel = ref.watch(userModelProvider);
     
     ThemeMode activeThemeMode = settings.themeMode;
+    ThemeData activeDarkTheme = AppTheme.dark; 
     
-    userModel.whenData((user) {
-      if (user != null && user.role != UserRole.customer) {
-        activeThemeMode = ThemeMode.dark;
-      }
-    });
+    final user = userModel.asData?.value;
+    if (user != null && user.role != UserRole.customer) {
+      activeThemeMode = ThemeMode.dark;
+      activeDarkTheme = AppTheme.legacyDark;
+    }
 
     return MaterialApp.router(
       title: 'Zen Mart Pro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      darkTheme: activeDarkTheme,
       themeMode: activeThemeMode,
       locale: settings.locale,
       routerConfig: router,

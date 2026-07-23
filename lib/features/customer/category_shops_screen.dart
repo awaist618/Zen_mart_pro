@@ -20,23 +20,40 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
   @override
   Widget build(BuildContext context) {
     final shopsAsync = ref.watch(categoryShopsProvider(widget.category));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('${widget.category} Stores', style: const TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: AppColors.background,
+        title: Text('${widget.category} Stores', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onBackground)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+          onPressed: () => context.pop(),
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: TextField(
-              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-              decoration: InputDecoration(
-                hintText: 'Search for ${widget.category.toLowerCase()} stores...',
-                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.primary),
-                fillColor: AppColors.surface,
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 1.0 : 0.2)),
+              ),
+              child: TextField(
+                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  hintText: 'Search for ${widget.category.toLowerCase()} stores...',
+                  hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 14),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: colorScheme.primary),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                ),
               ),
             ),
           ),
@@ -51,9 +68,9 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.storefront_rounded, size: 64, color: AppColors.surface),
+                  Icon(Icons.storefront_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.1)),
                   const SizedBox(height: 16),
-                  Text('No stores found in ${widget.category}', style: const TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w500)),
+                  Text('No stores found in ${widget.category}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
                 ],
               ),
             );
@@ -62,12 +79,17 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: filtered.length,
+            physics: const BouncingScrollPhysics(),
             separatorBuilder: (_, __) => const SizedBox(height: 20),
-            itemBuilder: (context, index) => _ShopListTile(shop: filtered[index]),
+            itemBuilder: (context, index) => _ShopListTile(
+              shop: filtered[index],
+              isLight: isLight,
+              colorScheme: colorScheme,
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
+        loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+        error: (e, s) => Center(child: Text('Error: $e', style: TextStyle(color: colorScheme.error))),
       ),
     );
   }
@@ -75,7 +97,10 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
 
 class _ShopListTile extends StatelessWidget {
   final ShopModel shop;
-  const _ShopListTile({required this.shop});
+  final bool isLight;
+  final ColorScheme colorScheme;
+
+  const _ShopListTile({required this.shop, required this.isLight, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -84,11 +109,16 @@ class _ShopListTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(32),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(
+              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              blurRadius: 20, 
+              offset: const Offset(0, 8)
+            ),
           ],
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : Border.all(color: colorScheme.outline.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,14 +130,14 @@ class _ShopListTile extends StatelessWidget {
                   child: Container(
                     height: 160,
                     decoration: BoxDecoration(
-                      color: AppColors.secondaryBackground,
+                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       image: shop.imageUrl.isNotEmpty 
                           ? DecorationImage(image: NetworkImage(shop.imageUrl), fit: BoxFit.cover)
                           : null,
                     ),
                     child: shop.imageUrl.isEmpty 
-                        ? const Center(child: Icon(Icons.storefront, size: 48, color: Colors.white10))
+                        ? Center(child: Icon(Icons.storefront, size: 48, color: colorScheme.onSurface.withOpacity(0.1)))
                         : null,
                   ),
                 ),
@@ -121,7 +151,7 @@ class _ShopListTile extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.background.withOpacity(0.5),
+                          color: Colors.black.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -129,7 +159,7 @@ class _ShopListTile extends StatelessWidget {
                           children: [
                             const Icon(Icons.star_rounded, color: AppColors.warning, size: 16),
                             const SizedBox(width: 4),
-                            Text(shop.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.white)),
+                            Text(shop.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white)),
                           ],
                         ),
                       ),
@@ -148,12 +178,12 @@ class _ShopListTile extends StatelessWidget {
                       children: [
                         Text(
                           shop.name, 
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.white, letterSpacing: -0.2)
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.onSurface, letterSpacing: -0.2)
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '${shop.deliveryTime} • ${shop.address}', 
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w500), 
+                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500), 
                           maxLines: 1, 
                           overflow: TextOverflow.ellipsis
                         ),
@@ -163,10 +193,10 @@ class _ShopListTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.primary),
+                    child: Icon(Icons.arrow_forward_rounded, size: 18, color: colorScheme.primary),
                   ),
                 ],
               ),

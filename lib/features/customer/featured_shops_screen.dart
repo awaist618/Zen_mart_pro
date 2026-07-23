@@ -19,28 +19,32 @@ class _FeaturedShopsScreenState extends ConsumerState<FeaturedShopsScreen> {
   @override
   Widget build(BuildContext context) {
     final featuredAsync = ref.watch(featuredShopsProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Featured Stores', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: AppColors.background,
+        title: Text('Featured Stores', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onBackground)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
           onPressed: () => context.pop(),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.sort_rounded, color: AppColors.primary),
-            color: AppColors.dialog,
+            icon: Icon(Icons.sort_rounded, color: colorScheme.primary),
+            color: colorScheme.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (val) => setState(() => _sortBy = val),
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'Rating', child: Text('Rating', style: TextStyle(color: Colors.white))),
-              const PopupMenuItem(value: 'Delivery Time', child: Text('Speed', style: TextStyle(color: Colors.white))),
+              PopupMenuItem(value: 'Rating', child: Text('Rating', style: TextStyle(color: colorScheme.onSurface))),
+              PopupMenuItem(value: 'Delivery Time', child: Text('Speed', style: TextStyle(color: colorScheme.onSurface))),
             ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: featuredAsync.when(
@@ -55,12 +59,17 @@ class _FeaturedShopsScreenState extends ConsumerState<FeaturedShopsScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: sortedShops.length,
+            physics: const BouncingScrollPhysics(),
             separatorBuilder: (_, __) => const SizedBox(height: 24),
-            itemBuilder: (context, index) => _FeaturedShopBigCard(shop: sortedShops[index]),
+            itemBuilder: (context, index) => _FeaturedShopBigCard(
+              shop: sortedShops[index],
+              isLight: isLight,
+              colorScheme: colorScheme,
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-        error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
+        loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+        error: (e, s) => Center(child: Text('Error: $e', style: TextStyle(color: colorScheme.error))),
       ),
     );
   }
@@ -68,7 +77,10 @@ class _FeaturedShopsScreenState extends ConsumerState<FeaturedShopsScreen> {
 
 class _FeaturedShopBigCard extends StatelessWidget {
   final ShopModel shop;
-  const _FeaturedShopBigCard({required this.shop});
+  final bool isLight;
+  final ColorScheme colorScheme;
+
+  const _FeaturedShopBigCard({required this.shop, required this.isLight, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +89,16 @@ class _FeaturedShopBigCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(32),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 30, offset: const Offset(0, 10)),
+            BoxShadow(
+              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              blurRadius: 30, 
+              offset: const Offset(0, 10)
+            ),
           ],
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : Border.all(color: colorScheme.outline.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,10 +114,10 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       image: shop.imageUrl.isNotEmpty 
                           ? DecorationImage(image: NetworkImage(shop.imageUrl), fit: BoxFit.cover)
                           : null,
-                      color: AppColors.secondaryBackground,
+                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
                     ),
                     child: shop.imageUrl.isEmpty 
-                        ? const Center(child: Icon(Icons.storefront, size: 64, color: Colors.white12))
+                        ? Center(child: Icon(Icons.storefront, size: 64, color: colorScheme.onSurface.withOpacity(0.1)))
                         : null,
                   ),
                 ),
@@ -114,7 +131,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.background.withOpacity(0.6),
+                          color: Colors.black.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.white12),
                         ),
@@ -123,7 +140,7 @@ class _FeaturedShopBigCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.star_rounded, color: AppColors.warning, size: 18),
                             const SizedBox(width: 4),
-                            Text(shop.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
+                            Text(shop.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 13)),
                           ],
                         ),
                       ),
@@ -143,18 +160,18 @@ class _FeaturedShopBigCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           shop.name, 
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.background,
+                          color: colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           shop.deliveryTime, 
-                          style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 11, letterSpacing: 0.5)
+                          style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 11, letterSpacing: 0.5)
                         ),
                       ),
                     ],
@@ -162,19 +179,19 @@ class _FeaturedShopBigCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${shop.category} • ${shop.address}', 
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      _Tag(label: 'Featured', color: AppColors.info),
+                      _Tag(label: 'Featured', color: colorScheme.primary),
                       const SizedBox(width: 10),
                       if (shop.isOpen) 
                         const _Tag(label: 'Open Now', color: AppColors.success)
                       else
-                        const _Tag(label: 'Closed', color: AppColors.error),
+                        _Tag(label: 'Closed', color: colorScheme.error),
                     ],
                   ),
                 ],

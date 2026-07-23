@@ -88,7 +88,7 @@ class OrderModel {
       paymentStatus: data['paymentStatus'] ?? 'pending',
       deliveryOtp: data['deliveryOtp'],
       rejectedBy: data['rejectedBy'] != null ? List<String>.from(data['rejectedBy']) : null,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : DateTime.now(),
       deliveredAt: data['deliveredAt'] != null ? (data['deliveredAt'] as Timestamp).toDate() : null,
     );
   }

@@ -144,7 +144,7 @@ class CustomerProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
       ),
-      bottomNavigationBar: const CustomerBottomNav(currentIndex: 3),
+      bottomNavigationBar: const CustomerBottomNav(currentIndex: 4),
     );
   }
 

@@ -224,7 +224,10 @@ class RiderProfileScreen extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
-              await ref.read(riderServiceProvider).toggleOnlineStatus(ref.read(userModelProvider).value!.uid, false);
+              final uid = ref.read(userModelProvider).value?.uid;
+              if (uid != null) {
+                await ref.read(riderServiceProvider).toggleOnlineStatus(uid, false);
+              }
               ref.read(authServiceProvider).signOut();
               if (context.mounted) context.go('/welcome');
             },

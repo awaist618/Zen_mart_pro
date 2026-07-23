@@ -220,15 +220,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
-        color: isLight ? Colors.white : AppColors.bottomNav,
+        color: isLight ? Colors.white : AppColors.premiumDarkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.2), 
+            color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.3), 
             blurRadius: 30
           )
         ],
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+        border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : colorScheme.outline.withOpacity(0.1)),
       ),
       child: ElevatedButton(
         onPressed: (_isPlacingOrder || address == null) ? null : () {
@@ -317,6 +317,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _placeOrder(BuildContext context, dynamic cart, dynamic address, dynamic user, {bool isPrepaid = false}) async {
+    if (cart.items.isEmpty) return;
+
     setState(() => _isPlacingOrder = true);
     
     try {

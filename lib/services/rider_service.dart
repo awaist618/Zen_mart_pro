@@ -44,6 +44,15 @@ class RiderService {
     });
   }
 
+  /// Update order status
+  Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
+    final Map<String, dynamic> data = {'status': status.name};
+    if (status == OrderStatus.delivered) {
+      data['deliveredAt'] = FieldValue.serverTimestamp();
+    }
+    await _db.collection('orders').doc(orderId).update(data);
+  }
+
   /// Get active tasks for a rider
   Stream<List<OrderModel>> getActiveRiderOrders(String riderId) {
     return _db
@@ -110,63 +119,26 @@ class RiderService {
         });
   }
 
-  /// Update Rider Profile
-  Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
-    await _db.collection('users').doc(uid).update(data);
-  }
-
   /// Mark notification as read
-  Future<void> markAsRead(String riderId, String notificationId) async {
-    await _db
-        .collection('users')
-        .doc(riderId)
-        .collection('notifications')
-        .doc(notificationId)
-        .update({'isRead': true});
+  Future<void> markAsRead(String userId, String notificationId) async {
+    await _db.collection('users').doc(userId).collection('notifications').doc(notificationId).update({'isRead': true});
   }
 
   /// Delete notification
-  Future<void> deleteNotification(String riderId, String notificationId) async {
-    await _db
-        .collection('users')
-        .doc(riderId)
-        .collection('notifications')
-        .doc(notificationId)
-        .delete();
+  Future<void> deleteNotification(String userId, String notificationId) async {
+    await _db.collection('users').doc(userId).collection('notifications').doc(notificationId).delete();
   }
 
-  /// Upload Document
-  Future<void> uploadDocument(String uid, String docType, String url) async {
+  /// Upload document
+  Future<void> uploadDocument(String uid, String type, String url) async {
     await _db.collection('users').doc(uid).update({
-      'documents.$docType': 'pending',
-      'documentUrls.$docType': url,
+      'documents.$type': 'uploaded',
+      'documentUrls.$type': url,
     });
   }
 
-  Future<void> updateVehicleInfo(String uid, Map<String, dynamic> data) async {
+  /// Update Rider Profile
+  Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);
-  }
-
-  Future<void> requestWithdrawal(String uid, double amount) async {
-    final userDoc = await _db.collection('users').doc(uid).get();
-    final earnings = (userDoc.data()?['totalEarnings'] ?? 0.0).toDouble();
-
-    if (amount > earnings) {
-      throw Exception('Insufficient balance');
-    }
-
-    await _db.collection('payouts').add({
-      'userId': uid,
-      'userName': userDoc.data()?['name'] ?? 'Unknown',
-      'userRole': 'rider',
-      'amount': amount,
-      'status': 'pending',
-      'requestedAt': FieldValue.serverTimestamp(),
-      'bankDetails': userDoc.data()?['bankDetails'] ?? {},
-    });
-
-    await _db.collection('users').doc(uid).update({
-      'totalEarnings': FieldValue.increment(-amount),
-    });
   }
 }

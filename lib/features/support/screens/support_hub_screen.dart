@@ -771,17 +771,20 @@ class _FAQTileState extends State<_FAQTile> {
       ),
       child: Column(
         children: [
-          ListTile(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            title: Text(
-              widget.question, 
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: widget.textColor)
-            ),
-            trailing: AnimatedRotation(
-              duration: const Duration(milliseconds: 200),
-              turns: _isExpanded ? 0.5 : 0,
-              child: Icon(Icons.keyboard_arrow_down_rounded, color: widget.secondaryTextColor.withOpacity(0.5)),
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              title: Text(
+                widget.question, 
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: widget.textColor)
+              ),
+              trailing: AnimatedRotation(
+                duration: const Duration(milliseconds: 200),
+                turns: _isExpanded ? 0.5 : 0,
+                child: Icon(Icons.keyboard_arrow_down_rounded, color: widget.secondaryTextColor.withOpacity(0.5)),
+              ),
             ),
           ),
           AnimatedCrossFade(

@@ -60,8 +60,8 @@ class OrderSuccessScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.surface, 
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
-                  border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+                  boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : [BoxShadow(color: colorScheme.primary.withOpacity(0.05), blurRadius: 20)],
+                  border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : Border.all(color: colorScheme.outline.withOpacity(0.1)),
                 ),
                 child: Column(
                   children: [

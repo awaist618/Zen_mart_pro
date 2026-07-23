@@ -53,6 +53,8 @@ import '../features/customer/customer_orders_screen.dart';
 import '../features/customer/customer_order_details_screen.dart';
 import '../features/customer/category_shops_screen.dart';
 import '../features/customer/featured_shops_screen.dart';
+import '../features/customer/nearby_shops_screen.dart';
+import '../features/customer/trending_products_screen.dart';
 import '../features/customer/offer_details_screen.dart';
 import '../features/customer/product_details_screen.dart';
 import '../features/customer/notifications_screen.dart';
@@ -185,6 +187,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/order-details/:id', builder: (context, state) => CustomerOrderDetailsScreen(orderId: state.pathParameters['id']!)),
       GoRoute(path: '/customer/order-success/:id', builder: (context, state) => OrderSuccessScreen(orderId: state.pathParameters['id']!)),
       GoRoute(path: '/customer/featured-shops', builder: (context, state) => const FeaturedShopsScreen()),
+      GoRoute(path: '/customer/nearby-shops', builder: (context, state) => const NearbyShopsScreen()),
+      GoRoute(path: '/customer/trending-products', builder: (context, state) => const TrendingProductsScreen()),
       GoRoute(path: '/customer/category/:name', builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!)),
       GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
       GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),

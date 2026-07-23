@@ -281,4 +281,37 @@ class CustomerService {
             .map((doc) => NotificationModel.fromFirestore(doc))
             .toList());
   }
+
+  Future<void> deleteNotification(String userId, String notificationId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .doc(notificationId)
+        .delete();
+  }
+
+  Future<void> markNotificationAsRead(String userId, String notificationId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .doc(notificationId)
+        .update({'isRead': true});
+  }
+
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    final batch = _db.batch();
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
+  }
 }

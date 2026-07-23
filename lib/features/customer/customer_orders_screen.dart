@@ -52,25 +52,35 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(customerOrdersProvider);
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final colorScheme = theme.colorScheme;
+    
+    final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+    final dividerColor = isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Track My Orders', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: Colors.white)),
-        backgroundColor: AppColors.background,
+        title: Text('My Orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: textColor)),
+        backgroundColor: bgColor,
         elevation: 0,
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: dividerColor, width: 0.5)),
             ),
             child: TabBar(
               controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textHint,
-              indicatorColor: AppColors.primary,
+              labelColor: primaryColor,
+              unselectedLabelColor: secondaryTextColor,
+              indicatorColor: primaryColor,
               indicatorWeight: 3,
               indicatorSize: TabBarIndicatorSize.label,
               dividerColor: Colors.transparent,
@@ -91,7 +101,7 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
               final filtered = orders.where((o) => statusList.contains(o.status)).toList();
 
               if (filtered.isEmpty) {
-                return _EmptyOrdersState(label: _tabs[index]);
+                return _EmptyOrdersState(label: _tabs[index], cardColor: cardColor, secondaryTextColor: secondaryTextColor, textColor: textColor);
               }
 
               return ListView.separated(
@@ -99,22 +109,59 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> wit
                 itemCount: filtered.length,
                 physics: const BouncingScrollPhysics(),
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) => _OrderCard(order: filtered[index]),
+                itemBuilder: (context, index) => _OrderCard(
+                  order: filtered[index],
+                  isLight: isLight,
+                  cardColor: cardColor,
+                  primaryColor: primaryColor,
+                  textColor: textColor,
+                  secondaryTextColor: secondaryTextColor,
+                  dividerColor: dividerColor,
+                ),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-            error: (e, s) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.error))),
+            loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
+            error: (e, s) {
+              final isPermissionError = e.toString().contains('PERMISSION_DENIED');
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_person_rounded, size: 64, color: AppColors.error.withOpacity(0.2)),
+                      const SizedBox(height: 24),
+                      Text(
+                        isPermissionError ? 'Access Restricted' : 'Error Loading Orders',
+                        style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isPermissionError 
+                            ? 'Your account doesn\'t have permission to view these orders. Please contact support if this is a mistake.' 
+                            : 'Something went wrong while fetching your orders. Please try again later.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: secondaryTextColor, fontSize: 13, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         }),
       ),
-      bottomNavigationBar: const CustomerBottomNav(currentIndex: 2),
+      bottomNavigationBar: const CustomerBottomNav(currentIndex: 3),
     );
   }
 }
 
 class _EmptyOrdersState extends StatelessWidget {
   final String label;
-  const _EmptyOrdersState({required this.label});
+  final Color cardColor;
+  final Color secondaryTextColor;
+  final Color textColor;
+  const _EmptyOrdersState({required this.label, required this.cardColor, required this.secondaryTextColor, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -124,13 +171,13 @@ class _EmptyOrdersState extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(32),
-            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-            child: const Icon(Icons.receipt_long_rounded, size: 48, color: Colors.white24),
+            decoration: BoxDecoration(color: cardColor, shape: BoxShape.circle),
+            child: Icon(Icons.receipt_long_rounded, size: 48, color: secondaryTextColor.withOpacity(0.2)),
           ),
           const SizedBox(height: 24),
-          Text('No ${label.toLowerCase()} orders', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+          Text('No ${label.toLowerCase()} orders', style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18, letterSpacing: -0.5)),
           const SizedBox(height: 8),
-          const Text('Place your first order to start tracking', style: TextStyle(color: AppColors.textHint, fontSize: 13, fontWeight: FontWeight.w500)),
+          Text('Place your first order to start tracking', style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -139,18 +186,35 @@ class _EmptyOrdersState extends StatelessWidget {
 
 class _OrderCard extends StatelessWidget {
   final OrderModel order;
-  const _OrderCard({required this.order});
+  final bool isLight;
+  final Color cardColor;
+  final Color primaryColor;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final Color dividerColor;
+
+  const _OrderCard({
+    required this.order, 
+    required this.isLight, 
+    required this.cardColor, 
+    required this.primaryColor, 
+    required this.textColor, 
+    required this.secondaryTextColor, 
+    required this.dividerColor
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/customer/order-details/${order.id}'),
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
+          border: isLight ? Border.all(color: dividerColor) : Border.all(color: dividerColor.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -159,10 +223,10 @@ class _OrderCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 24),
+                  child: Icon(Icons.storefront_rounded, color: primaryColor, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -171,12 +235,12 @@ class _OrderCard extends StatelessWidget {
                     children: [
                       Text(
                         order.shopName, 
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: textColor, letterSpacing: -0.2)
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '#${order.id.substring(0, 8).toUpperCase()}',
-                        style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
+                        style: TextStyle(color: secondaryTextColor.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -184,9 +248,9 @@ class _OrderCard extends StatelessWidget {
                 _StatusBadge(status: order.status),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Divider(color: AppColors.border, thickness: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Container(height: 1, color: dividerColor.withOpacity(isLight ? 1 : 0.2)),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -196,27 +260,27 @@ class _OrderCard extends StatelessWidget {
                   children: [
                     Text(
                       '${order.items.length} ${order.items.length == 1 ? 'ITEM' : 'ITEMS'} • Rs ${order.totalAmount.toStringAsFixed(0)}',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       DateFormat('MMM dd • h:mm a').format(order.createdAt),
-                      style: const TextStyle(color: AppColors.textHint, fontSize: 11, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: secondaryTextColor, fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(10),
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text('TRACK', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.primary),
+                    children: [
+                      Text('TRACK', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
+                      const SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
                     ],
                   ),
                 ),
@@ -256,7 +320,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1), 
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,

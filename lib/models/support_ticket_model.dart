@@ -60,8 +60,8 @@ class SupportTicketModel {
       status: _parseStatus(data['status']),
       priority: _parsePriority(data['priority']),
       attachmentUrls: data['attachmentUrls'] != null ? List<String>.from(data['attachmentUrls']) : [],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : DateTime.now(),
+      updatedAt: data['updatedAt'] != null ? (data['updatedAt'] as Timestamp).toDate() : DateTime.now(),
       unreadCount: data['unreadCount'] ?? 0,
     );
   }
@@ -136,7 +136,7 @@ class SupportMessageModel {
       senderRole: data['senderRole'] ?? 'customer',
       message: data['message'] ?? '',
       imageUrl: data['imageUrl'],
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now(),
     );
   }
 

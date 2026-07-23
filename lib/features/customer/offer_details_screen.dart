@@ -14,21 +14,26 @@ class OfferDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shopsAsync = ref.watch(offerShopsProvider(offer.applicableShopIds));
     final productsAsync = ref.watch(offerProductsProvider(offer.applicableProductIds));
+    
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
-            backgroundColor: AppColors.background,
+            backgroundColor: theme.scaffoldBackgroundColor,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: AppColors.surface.withOpacity(0.8),
+                backgroundColor: isLight ? Colors.white.withOpacity(0.8) : AppColors.premiumDarkSurface.withOpacity(0.8),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: colorScheme.onSurface),
                   onPressed: () => context.canPop() ? context.pop() : context.go('/customer'),
                 ),
               ),
@@ -38,8 +43,8 @@ class OfferDetailsScreen extends ConsumerWidget {
                 offer.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (c, e, s) => Container(
-                  color: AppColors.surface,
-                  child: const Icon(Icons.local_offer_rounded, size: 80, color: Colors.white10),
+                  color: colorScheme.surface,
+                  child: Icon(Icons.local_offer_rounded, size: 80, color: colorScheme.onSurface.withOpacity(0.1)),
                 ),
               ),
             ),
@@ -56,7 +61,7 @@ class OfferDetailsScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -65,23 +70,23 @@ class OfferDetailsScreen extends ConsumerWidget {
                               : offer.offerType == 'free_delivery' 
                                   ? 'FREE DELIVERY' 
                                   : 'Rs ${offer.value.round()} OFF',
-                          style: const TextStyle(color: AppColors.background, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+                          style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
                         ),
                       ),
                       if (offer.couponCode != null)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+                            border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1.5),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.qr_code_rounded, size: 16, color: AppColors.primary),
+                              Icon(Icons.qr_code_rounded, size: 16, color: colorScheme.primary),
                               const SizedBox(width: 10),
                               Text(
                                 offer.couponCode!,
-                                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
+                                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
                               ),
                             ],
                           ),
@@ -89,15 +94,15 @@ class OfferDetailsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Text(offer.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -1)),
+                  Text(offer.title, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: colorScheme.onBackground, letterSpacing: -1)),
                   const SizedBox(height: 12),
                   Text(
                     offer.description,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.6, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 15, height: 1.6, fontWeight: FontWeight.w500),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Divider(color: AppColors.border),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Divider(color: colorScheme.outline.withOpacity(0.1)),
                   ),
                 ],
               ),
@@ -105,10 +110,10 @@ class OfferDetailsScreen extends ConsumerWidget {
           ),
 
           if (offer.applicableShopIds.isNotEmpty) ...[
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               sliver: SliverToBoxAdapter(
-                child: Text('PARTICIPATING STORES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1.5)),
+                child: Text('PARTICIPATING STORES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colorScheme.primary, letterSpacing: 1.5)),
               ),
             ),
             SliverPadding(
@@ -116,21 +121,21 @@ class OfferDetailsScreen extends ConsumerWidget {
               sliver: shopsAsync.when(
                 data: (shops) => SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => _SmallShopTile(shop: shops[index]),
+                    (context, index) => _SmallShopTile(shop: shops[index], colorScheme: colorScheme, isLight: isLight),
                     childCount: shops.length,
                   ),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+                loading: () => SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: colorScheme.primary))),
                 error: (e, s) => const SliverToBoxAdapter(child: Center(child: Text('Error loading shops'))),
               ),
             ),
           ],
 
           if (offer.applicableProductIds.isNotEmpty) ...[
-            const SliverPadding(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: Text('ELIGIBLE PRODUCTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1.5)),
+                child: Text('ELIGIBLE PRODUCTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colorScheme.primary, letterSpacing: 1.5)),
               ),
             ),
             SliverPadding(
@@ -144,11 +149,11 @@ class OfferDetailsScreen extends ConsumerWidget {
                     childAspectRatio: 0.82,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => _ProductOfferCard(product: products[index]),
+                    (context, index) => _ProductOfferCard(product: products[index], colorScheme: colorScheme, isLight: isLight),
                     childCount: products.length,
                   ),
                 ),
-                loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+                loading: () => SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: colorScheme.primary))),
                 error: (e, s) => const SliverToBoxAdapter(child: Center(child: Text('Error loading products'))),
               ),
             ),
@@ -161,30 +166,33 @@ class OfferDetailsScreen extends ConsumerWidget {
 }
 
 class _SmallShopTile extends StatelessWidget {
-  final dynamic shop; // ShopModel
-  const _SmallShopTile({required this.shop});
+  final dynamic shop; 
+  final ColorScheme colorScheme;
+  final bool isLight;
+  const _SmallShopTile({required this.shop, required this.colorScheme, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
+        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
       child: ListTile(
         onTap: () => context.push('/customer/shop/${shop.id}'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: AppColors.elevatedSurface, child: const Icon(Icons.storefront, color: AppColors.textHint, size: 20))),
+          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: colorScheme.surface, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1), size: 20))),
         ),
-        title: Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
-        subtitle: Text(shop.category, style: const TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)),
+        title: Text(shop.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: colorScheme.onSurface)),
+        subtitle: Text(shop.category, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
         trailing: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
-          child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
+          decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.primary),
         ),
       ),
     );
@@ -192,8 +200,10 @@ class _SmallShopTile extends StatelessWidget {
 }
 
 class _ProductOfferCard extends StatelessWidget {
-  final dynamic product; // ProductModel
-  const _ProductOfferCard({required this.product});
+  final dynamic product;
+  final ColorScheme colorScheme;
+  final bool isLight;
+  const _ProductOfferCard({required this.product, required this.colorScheme, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
@@ -202,8 +212,9 @@ class _ProductOfferCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
+          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +224,7 @@ class _ProductOfferCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 child: product.imageUrl.isNotEmpty 
                   ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                  : Container(color: AppColors.secondaryBackground, child: const Icon(Icons.image, color: Colors.white10)),
+                  : Container(color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Icon(Icons.image, color: colorScheme.onSurface.withOpacity(0.1))),
               ),
             ),
             Padding(
@@ -223,14 +234,14 @@ class _ProductOfferCard extends StatelessWidget {
                 children: [
                   Text(
                     product.name, 
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white), 
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: colorScheme.onSurface), 
                     maxLines: 1, 
                     overflow: TextOverflow.ellipsis
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Rs ${product.price.toStringAsFixed(0)}', 
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 15)
+                    style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 15)
                   ),
                 ],
               ),

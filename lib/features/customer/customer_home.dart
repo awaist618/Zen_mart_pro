@@ -15,11 +15,16 @@ class CustomerHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    
+    // Dynamic Theme Mapping
+    final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: bgColor,
       body: Stack(
         children: [
           // Background Gradient Glow
@@ -32,7 +37,7 @@ class CustomerHome extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [colorScheme.primary.withOpacity(isLight ? 0.12 : 0.08), Colors.transparent],
+                  colors: [primaryColor.withOpacity(isLight ? 0.12 : 0.08), Colors.transparent],
                 ),
               ),
             ),
@@ -46,7 +51,7 @@ class CustomerHome extends ConsumerWidget {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: theme.scaffoldBackgroundColor.withOpacity(0.8),
+                backgroundColor: bgColor.withOpacity(0.8),
                 flexibleSpace: FlexibleSpaceBar(
                   background: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -71,7 +76,7 @@ class CustomerHome extends ConsumerWidget {
                       const SizedBox(height: 10),
                       const _PromoBanner(),
                       const SizedBox(height: 40),
-                      _SectionHeader(title: 'Quick Categories', showSeeAll: false),
+                      _SectionHeader(title: 'Quick Categories', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
                       const SizedBox(height: 20),
                       const _CategoryGrid(),
                       const SizedBox(height: 40),
@@ -79,15 +84,29 @@ class CustomerHome extends ConsumerWidget {
                         title: 'Premium Stores', 
                         showSeeAll: true,
                         onSeeAll: '/customer/featured-shops',
+                        textColor: textColor,
+                        primaryColor: primaryColor,
                       ),
                       const SizedBox(height: 20),
                       const _FeaturedShops(),
                       const SizedBox(height: 40),
-                      _SectionHeader(title: 'Trending Now', showSeeAll: true),
+                      _SectionHeader(
+                        title: 'Trending Now', 
+                        showSeeAll: true, 
+                        onSeeAll: '/customer/trending-products',
+                        textColor: textColor, 
+                        primaryColor: primaryColor
+                      ),
                       const SizedBox(height: 20),
                       const _TrendingProducts(),
                       const SizedBox(height: 40),
-                      _SectionHeader(title: 'Stores Near You', showSeeAll: true),
+                      _SectionHeader(
+                        title: 'Stores Near You', 
+                        showSeeAll: true, 
+                        onSeeAll: '/customer/nearby-shops',
+                        textColor: textColor, 
+                        primaryColor: primaryColor
+                      ),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -119,7 +138,12 @@ class _LocationHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final defaultAddress = ref.watch(defaultAddressProvider);
     final user = ref.watch(userModelProvider).asData?.value;
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final colorScheme = Theme.of(context).colorScheme;
+    
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
 
     return Row(
       children: [
@@ -132,10 +156,10 @@ class _LocationHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 20),
+                  child: Icon(Icons.location_on_rounded, color: primaryColor, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -146,7 +170,7 @@ class _LocationHeader extends StatelessWidget {
                       Text(
                         'DELIVERING TO',
                         style: TextStyle(
-                          color: colorScheme.primary.withOpacity(0.8),
+                          color: primaryColor.withOpacity(0.8),
                           fontSize: 9,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
@@ -160,10 +184,10 @@ class _LocationHeader extends StatelessWidget {
                               defaultAddress?.fullAddress ?? 'Select Location',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colorScheme.onBackground),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: colorScheme.onSurface.withOpacity(0.4)),
+                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textColor.withOpacity(0.4)),
                         ],
                       ),
                     ],
@@ -175,7 +199,10 @@ class _LocationHeader extends StatelessWidget {
         ),
         _HeaderActionBtn(
           icon: Icons.notifications_none_rounded, 
-          onTap: () => context.push('/customer/notifications')
+          onTap: () => context.push('/customer/notifications'),
+          cardColor: cardColor,
+          textColor: textColor,
+          isLight: isLight,
         ),
         const SizedBox(width: 12),
         GestureDetector(
@@ -186,18 +213,18 @@ class _LocationHeader extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1.5),
+                border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
               ),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: colorScheme.surface,
+                backgroundColor: cardColor,
                 backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
                     ? NetworkImage(user.profilePicture!)
                     : null,
                 child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
                     ? Text(
                         user?.name.substring(0, 1).toUpperCase() ?? '?',
-                        style: TextStyle(color: colorScheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
                       )
                     : null,
               ),
@@ -212,26 +239,25 @@ class _LocationHeader extends StatelessWidget {
 class _HeaderActionBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _HeaderActionBtn({required this.icon, required this.onTap});
+  final Color cardColor;
+  final Color textColor;
+  final bool isLight;
+  const _HeaderActionBtn({required this.icon, required this.onTap, required this.cardColor, required this.textColor, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.05)),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider),
           boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : null,
         ),
-        child: Icon(icon, color: colorScheme.onSurface, size: 20),
+        child: Icon(icon, color: textColor, size: 20),
       ),
     );
   }
@@ -242,9 +268,11 @@ class _SearchBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isLight = theme.brightness == Brightness.light;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return GestureDetector(
       onTap: () => context.push('/customer/search'),
@@ -252,7 +280,7 @@ class _SearchBar extends ConsumerWidget {
         height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -261,21 +289,21 @@ class _SearchBar extends ConsumerWidget {
               offset: const Offset(0, 10)
             ),
           ],
-          border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : Colors.white.withOpacity(0.03)),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: colorScheme.primary, size: 24),
+            Icon(Icons.search_rounded, color: primaryColor, size: 24),
             const SizedBox(width: 14),
             Text(
               'search_hint'.tr(ref),
-              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 15, fontWeight: FontWeight.w500),
+              style: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w500),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Icon(Icons.tune_rounded, color: colorScheme.primary, size: 18),
+              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(Icons.tune_rounded, color: primaryColor, size: 18),
             ),
           ],
         ),
@@ -290,6 +318,8 @@ class _PromoBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final offersAsync = ref.watch(activeOffersProvider);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
 
     return offersAsync.when(
       data: (offers) {
@@ -302,7 +332,11 @@ class _PromoBanner extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(36),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 40, offset: const Offset(0, 20)),
+              BoxShadow(
+                color: isLight ? primaryColor.withOpacity(0.1) : Colors.black.withOpacity(0.3), 
+                blurRadius: 40, 
+                offset: const Offset(0, 20)
+              ),
             ],
           ),
           child: ClipRRect(
@@ -334,10 +368,10 @@ class _PromoBanner extends ConsumerWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
                         child: Text(
                           offer.offerType == 'percentage' ? '${offer.value.round()}% OFF' : 'VIP DEAL',
-                          style: const TextStyle(color: AppColors.background, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                          style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -374,12 +408,12 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final bool showSeeAll;
   final String? onSeeAll;
-  const _SectionHeader({required this.title, required this.showSeeAll, this.onSeeAll});
+  final Color textColor;
+  final Color primaryColor;
+  const _SectionHeader({required this.title, required this.showSeeAll, this.onSeeAll, required this.textColor, required this.primaryColor});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -387,8 +421,8 @@ class _SectionHeader extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: 22, 
-            fontWeight: FontWeight.w800, 
-            color: colorScheme.onBackground, 
+            fontWeight: FontWeight.w900, 
+            color: textColor, 
             letterSpacing: -0.5
           ),
         ),
@@ -397,9 +431,9 @@ class _SectionHeader extends StatelessWidget {
             onPressed: onSeeAll != null ? () => context.push(onSeeAll!) : null,
             child: Row(
               children: [
-                Text('View All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 13)),
+                Text('View All', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800, fontSize: 13)),
                 const SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: colorScheme.primary),
+                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
               ],
             ),
           ),
@@ -413,6 +447,10 @@ class _CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+
     return Consumer(
       builder: (context, ref, child) {
         final categories = [
@@ -435,14 +473,15 @@ class _CategoryGrid extends StatelessWidget {
                     width: 78,
                     height: 78,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(26),
-                      border: Border.all(color: color.withOpacity(0.15), width: 1),
+                      border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
+                      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15)] : null,
                     ),
                     child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 30)),
                   ),
                   const SizedBox(height: 12),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
                 ],
               ),
             );
@@ -487,8 +526,10 @@ class _FeaturedShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
@@ -496,16 +537,16 @@ class _FeaturedShopCard extends StatelessWidget {
       child: Container(
         width: 290,
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: cardColor,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.15), 
+              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
               blurRadius: 30, 
               offset: const Offset(0, 10)
             )
           ],
-          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +557,7 @@ class _FeaturedShopCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                   child: shop.imageUrl.isNotEmpty 
                       ? Image.network(shop.imageUrl, height: 155, width: double.infinity, fit: BoxFit.cover)
-                      : Container(height: 155, color: colorScheme.secondaryContainer, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1), size: 50)),
+                      : Container(height: 155, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1), size: 50))),
                 ),
                 Positioned(
                   top: 16,
@@ -533,9 +574,9 @@ class _FeaturedShopCard extends StatelessWidget {
                   Text(
                     shop.name, 
                     style: TextStyle(
-                      fontWeight: FontWeight.w800, 
+                      fontWeight: FontWeight.w900, 
                       fontSize: 17, 
-                      color: colorScheme.onSurface, 
+                      color: textColor, 
                       letterSpacing: -0.2
                     ), 
                     maxLines: 1
@@ -544,7 +585,7 @@ class _FeaturedShopCard extends StatelessWidget {
                   Text(
                     '${shop.category} • ${shop.deliveryTime}', 
                     style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.5), 
+                      color: secondaryTextColor, 
                       fontSize: 12, 
                       fontWeight: FontWeight.w600
                     )
@@ -599,8 +640,10 @@ class _SmallProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
 
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
@@ -609,10 +652,10 @@ class _SmallProductCard extends StatelessWidget {
         width: 240,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: colorScheme.surface, 
+          color: cardColor, 
           borderRadius: BorderRadius.circular(20),
           boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
-          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
         ),
         child: Row(
           children: [
@@ -629,9 +672,9 @@ class _SmallProductCard extends StatelessWidget {
                   Text(
                     product.name, 
                     style: TextStyle(
-                      fontWeight: FontWeight.w700, 
+                      fontWeight: FontWeight.w800, 
                       fontSize: 14, 
-                      color: colorScheme.onSurface
+                      color: textColor
                     ), 
                     maxLines: 1
                   ),
@@ -639,7 +682,7 @@ class _SmallProductCard extends StatelessWidget {
                   Text(
                     'Rs ${product.price.round()}', 
                     style: TextStyle(
-                      color: colorScheme.primary, 
+                      color: primaryColor, 
                       fontWeight: FontWeight.w900, 
                       fontSize: 15
                     )
@@ -660,6 +703,8 @@ class _NearbyShopsGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nearbyAsync = ref.watch(nearbyShopsProvider);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
 
     return nearbyAsync.when(
       data: (shops) => SliverPadding(
@@ -677,7 +722,7 @@ class _NearbyShopsGrid extends ConsumerWidget {
           ),
         ),
       ),
-      loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
+      loading: () => SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: primaryColor))),
       error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
     );
   }
@@ -689,18 +734,21 @@ class _ShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
       borderRadius: BorderRadius.circular(22),
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.surface, 
+          color: cardColor, 
           borderRadius: BorderRadius.circular(22),
           boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15)] : null,
-          border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,7 +758,7 @@ class _ShopCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
                 child: shop.imageUrl.isNotEmpty 
                     ? Image.network(shop.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                    : Container(color: colorScheme.secondaryContainer, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1))),
+                    : Container(color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1)))),
               ),
             ),
             Padding(
@@ -721,9 +769,9 @@ class _ShopCard extends StatelessWidget {
                   Text(
                     shop.name, 
                     style: TextStyle(
-                      fontWeight: FontWeight.w700, 
+                      fontWeight: FontWeight.w800, 
                       fontSize: 13, 
-                      color: colorScheme.onSurface
+                      color: textColor
                     ), 
                     maxLines: 1
                   ),
@@ -734,12 +782,12 @@ class _ShopCard extends StatelessWidget {
                       Text(
                         shop.hasFreeDelivery ? 'FREE' : 'Rs ${shop.deliveryFee.round()}', 
                         style: TextStyle(
-                          color: colorScheme.primary, 
+                          color: primaryColor, 
                           fontSize: 10, 
-                          fontWeight: FontWeight.w800
+                          fontWeight: FontWeight.w900
                         )
                       ),
-                      Icon(Icons.arrow_forward_rounded, size: 12, color: colorScheme.onSurface.withOpacity(0.3)),
+                      Icon(Icons.arrow_forward_rounded, size: 12, color: secondaryTextColor.withOpacity(0.3)),
                     ],
                   ),
                 ],
@@ -793,11 +841,12 @@ class _Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface,
         borderRadius: BorderRadius.circular(radius),
       ),
     );

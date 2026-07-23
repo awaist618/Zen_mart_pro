@@ -17,15 +17,25 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    
+    final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+    final dividerColor = isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Order Tracking', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.white)),
-        backgroundColor: AppColors.background,
+        title: Text('Order Details', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)),
+        backgroundColor: bgColor,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: textColor),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -34,7 +44,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data != null) {
                 return IconButton(
-                  icon: const Icon(Icons.download_rounded, size: 22, color: AppColors.primary),
+                  icon: Icon(Icons.download_rounded, size: 22, color: primaryColor),
                   onPressed: () => PdfService.generateOrderInvoice(snapshot.data!),
                 );
               }
@@ -48,16 +58,16 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
         stream: ref.read(customerServiceProvider).getOrderStream(orderId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return Center(child: CircularProgressIndicator(color: primaryColor));
           }
           final order = snapshot.data;
-          if (order == null) return const Center(child: Text('Order not found', style: TextStyle(color: AppColors.textHint)));
+          if (order == null) return Center(child: Text('Order not found', style: TextStyle(color: secondaryTextColor)));
 
           return Column(
             children: [
               SizedBox(
                 height: 220,
-                child: _OSMMap(order: order),
+                child: _OSMMap(order: order, primaryColor: primaryColor),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -66,7 +76,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStatusTracker(context, order.status),
+                      _buildStatusTracker(context, order.status, cardColor, textColor, secondaryTextColor, primaryColor, dividerColor, isLight),
                       
                       if (order.status != OrderStatus.delivered && 
                           order.status != OrderStatus.cancelled && 
@@ -75,9 +85,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08), 
+                            color: primaryColor.withOpacity(0.08), 
                             borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1.5),
+                            border: Border.all(color: primaryColor.withOpacity(0.15), width: 1.5),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -85,14 +95,14 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'DELIVERY OTP', 
-                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.primary, letterSpacing: 1.5)
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: primaryColor, letterSpacing: 1.5)
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     'Give this to your rider', 
-                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)
+                                    style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500)
                                   ),
                                 ],
                               ),
@@ -101,10 +111,11 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.2), blurRadius: 15)],
                                 ),
                                 child: Text(
                                   order.deliveryOtp ?? '----', 
-                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 28, color: AppColors.background, letterSpacing: 4)
+                                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 28, color: AppColors.premiumDarkBackground, letterSpacing: 4)
                                 ),
                               ),
                             ],
@@ -113,26 +124,29 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       ],
 
                       const SizedBox(height: 32),
-                      const _SectionHeader(title: 'Delivery Address', icon: Icons.location_on_rounded),
+                      _SectionHeader(title: 'Delivery Address', icon: Icons.location_on_rounded, primaryColor: primaryColor, textColor: textColor),
                       const SizedBox(height: 16),
                       _InfoCard(
+                        cardColor: cardColor,
+                        dividerColor: dividerColor,
+                        isLight: isLight,
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                              child: const Icon(Icons.home_rounded, color: AppColors.primary, size: 20),
+                              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                              child: Icon(Icons.home_rounded, color: primaryColor, size: 20),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Delivery Location', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Colors.white)),
+                                  Text('Delivery Location', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
                                   const SizedBox(height: 2),
                                   Text(
                                     order.deliveryAddress, 
-                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)
+                                    style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500)
                                   ),
                                 ],
                               ),
@@ -143,17 +157,17 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       
                       if (order.riderId != null) ...[
                         const SizedBox(height: 32),
-                        const _SectionHeader(title: 'Rider Details', icon: Icons.directions_bike_rounded),
+                        _SectionHeader(title: 'Rider Details', icon: Icons.directions_bike_rounded, primaryColor: primaryColor, textColor: textColor),
                         const SizedBox(height: 16),
-                        _buildRiderCard(context, order),
+                        _buildRiderCard(context, order, cardColor, textColor, secondaryTextColor, primaryColor, bgColor),
                       ],
 
                       const SizedBox(height: 32),
-                      const _SectionHeader(title: 'Order Summary', icon: Icons.receipt_long_rounded),
+                      _SectionHeader(title: 'Order Summary', icon: Icons.receipt_long_rounded, primaryColor: primaryColor, textColor: textColor),
                       const SizedBox(height: 16),
-                      _buildOrderSummary(order),
+                      _buildOrderSummary(order, cardColor, textColor, secondaryTextColor, primaryColor, dividerColor, isLight, bgColor),
                       const SizedBox(height: 40),
-                      _buildActionButtons(context, ref, order),
+                      _buildActionButtons(context, ref, order, primaryColor, isLight),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -166,12 +180,14 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusTracker(BuildContext context, OrderStatus status) {
+  Widget _buildStatusTracker(BuildContext context, OrderStatus status, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color divider, bool isLight) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cardColor,
         borderRadius: BorderRadius.circular(32),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
+        border: isLight ? Border.all(color: divider) : Border.all(color: divider.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -181,53 +197,54 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('ORDER STATUS', style: TextStyle(color: AppColors.textHint, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  Text('ORDER STATUS', style: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                   const SizedBox(height: 6),
                   Text(
                     status.name.toUpperCase(), 
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: -0.5)
+                    style: TextStyle(color: textColor, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_graph_rounded, color: AppColors.primary, size: 24),
+                child: Icon(Icons.auto_graph_rounded, color: primary, size: 24),
               ),
             ],
           ),
           const SizedBox(height: 28),
-          _CustomProgressBar(status: status),
+          _CustomProgressBar(status: status, primaryColor: primary, bgColor: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground),
         ],
       ),
     );
   }
 
-  Widget _buildRiderCard(BuildContext context, OrderModel order) {
+  Widget _buildRiderCard(BuildContext context, OrderModel order, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color bgColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: primary.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 26,
-            backgroundColor: AppColors.background, 
-            child: Icon(Icons.person_rounded, color: AppColors.primary, size: 32)
+            backgroundColor: primary.withOpacity(0.1), 
+            child: Icon(Icons.person_rounded, color: primary, size: 32)
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Professional Rider', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
-                SizedBox(height: 2),
-                Text('Heading your way', style: TextStyle(color: AppColors.textHint, fontSize: 12, fontWeight: FontWeight.w600)),
+              children: [
+                Text('Professional Rider', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textColor)),
+                const SizedBox(height: 2),
+                Text('Heading your way', style: TextStyle(color: secondaryTextColor, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -239,7 +256,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
           const SizedBox(width: 10),
           _SmallRoundBtn(
             icon: Icons.chat_bubble_rounded, 
-            color: AppColors.primary, 
+            color: primary, 
             onTap: () => context.push('/chat/${order.id}/Rider')
           ),
         ],
@@ -247,8 +264,11 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOrderSummary(OrderModel order) {
+  Widget _buildOrderSummary(OrderModel order, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color divider, bool isLight, Color bgColor) {
     return _InfoCard(
+      cardColor: cardColor,
+      dividerColor: divider,
+      isLight: isLight,
       child: Column(
         children: [
           ...order.items.map((item) => Padding(
@@ -259,26 +279,33 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Text('${item['quantity']}x', style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 13)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
+                          borderRadius: BorderRadius.circular(8)
+                        ),
+                        child: Text('${item['quantity']}x', style: TextStyle(fontWeight: FontWeight.w900, color: primary, fontSize: 11)),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(item['name'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white))),
+                      Expanded(child: Text(item['name'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor))),
                     ],
                   ),
                 ),
-                Text('Rs ${item['price'] * item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white)),
+                Text('Rs ${item['price'] * item['quantity']}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textColor)),
               ],
             ),
           )),
-          const Divider(color: AppColors.border, height: 32),
-          _SummaryLine(label: 'Total Items', value: 'Rs ${(order.totalAmount - order.deliveryFee).toStringAsFixed(0)}'),
+          Divider(color: divider.withOpacity(isLight ? 1 : 0.2), height: 32),
+          _SummaryLine(label: 'Total Items', value: 'Rs ${(order.totalAmount - order.deliveryFee).toStringAsFixed(0)}', textColor: textColor, secondaryTextColor: secondaryTextColor),
           const SizedBox(height: 10),
-          _SummaryLine(label: 'Delivery Fee', value: 'Rs ${order.deliveryFee.toStringAsFixed(0)}', color: AppColors.success),
-          const Divider(color: AppColors.border, height: 32),
+          _SummaryLine(label: 'Delivery Fee', value: 'Rs ${order.deliveryFee.toStringAsFixed(0)}', color: AppColors.success, textColor: textColor, secondaryTextColor: secondaryTextColor),
+          Divider(color: divider.withOpacity(isLight ? 1 : 0.2), height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Grand Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-              Text('Rs ${order.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: AppColors.primary)),
+              Text('Grand Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColor)),
+              Text('Rs ${order.totalAmount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: primary)),
             ],
           ),
         ],
@@ -286,18 +313,28 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, WidgetRef ref, OrderModel order) {
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref, OrderModel order, Color primary, bool isLight) {
     if (order.status == OrderStatus.delivered) {
       return Column(
         children: [
           ElevatedButton(
             onPressed: () {},
-            child: const Text('REORDER NOW'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 60),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: const Text('REORDER NOW', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: () => _showReviewDialog(context, ref, order),
-            child: const Text('RATE EXPERIENCE'),
+            onPressed: () => _showReviewDialog(context, ref, order, isLight, primary),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 60),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: const Text('RATE EXPERIENCE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
           ),
         ],
       );
@@ -306,15 +343,20 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     if (order.status == OrderStatus.pending) {
       return OutlinedButton(
         onPressed: () {},
-        style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error)),
-        child: const Text('CANCEL ORDER'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.error, 
+          side: const BorderSide(color: AppColors.error, width: 1.5),
+          minimumSize: const Size(double.infinity, 60),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        child: const Text('CANCEL ORDER', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
       );
     }
 
     return const SizedBox.shrink();
   }
 
-  void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order) {
+  void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order, bool isLight, Color primary) {
     int rating = 5;
     final reviewController = TextEditingController();
 
@@ -322,9 +364,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.dialog,
+          backgroundColor: isLight ? Colors.white : AppColors.dialog,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          title: const Text('Rate your experience', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
+          title: Text('Rate your experience', style: TextStyle(fontWeight: FontWeight.w900, color: isLight ? Colors.black : Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -332,21 +374,26 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) => IconButton(
                   onPressed: () => setState(() => rating = index + 1),
-                  icon: Icon(Icons.star_rounded, color: index < rating ? AppColors.warning : AppColors.surface, size: 40),
+                  icon: Icon(Icons.star_rounded, color: index < rating ? AppColors.warning : (isLight ? Colors.grey[200] : Colors.white12), size: 40),
                 )),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: reviewController,
                 maxLines: 3,
-                decoration: const InputDecoration(
+                style: TextStyle(color: isLight ? Colors.black : Colors.white),
+                decoration: InputDecoration(
                   hintText: 'Any specific feedback?',
+                  hintStyle: TextStyle(color: isLight ? Colors.grey : Colors.white38),
+                  filled: true,
+                  fillColor: isLight ? Colors.grey[100] : Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('SKIP', style: TextStyle(color: AppColors.textHint))),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('SKIP', style: TextStyle(color: AppColors.textHint, fontWeight: FontWeight.w800))),
             ElevatedButton(
               onPressed: () async {
                 await ref.read(customerServiceProvider).submitReview(
@@ -359,8 +406,8 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                 );
                 if (context.mounted) Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48)),
-              child: const Text('SUBMIT'),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48), backgroundColor: primary),
+              child: const Text('SUBMIT', style: TextStyle(fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -371,7 +418,9 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
 
 class _CustomProgressBar extends StatelessWidget {
   final OrderStatus status;
-  const _CustomProgressBar({required this.status});
+  final Color primaryColor;
+  final Color bgColor;
+  const _CustomProgressBar({required this.status, required this.primaryColor, required this.bgColor});
 
   double _getVal() {
     switch (status) {
@@ -396,18 +445,18 @@ class _CustomProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: _getVal(),
             minHeight: 8,
-            backgroundColor: AppColors.background,
-            color: AppColors.primary,
+            backgroundColor: bgColor,
+            color: primaryColor,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _StepDot(label: 'Placed', active: true),
-            _StepDot(label: 'Preparing', active: _getVal() >= 0.3),
-            _StepDot(label: 'Rider', active: _getVal() >= 0.6),
-            _StepDot(label: 'Delivered', active: _getVal() == 1.0),
+            _StepDot(label: 'Placed', active: true, primary: primaryColor),
+            _StepDot(label: 'Preparing', active: _getVal() >= 0.3, primary: primaryColor),
+            _StepDot(label: 'Rider', active: _getVal() >= 0.6, primary: primaryColor),
+            _StepDot(label: 'Delivered', active: _getVal() == 1.0, primary: primaryColor),
           ],
         ),
       ],
@@ -418,14 +467,24 @@ class _CustomProgressBar extends StatelessWidget {
 class _StepDot extends StatelessWidget {
   final String label;
   final bool active;
-  const _StepDot({required this.label, required this.active});
+  final Color primary;
+  const _StepDot({required this.label, required this.active, required this.primary});
   @override
-  Widget build(BuildContext context) => Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: active ? AppColors.primary : AppColors.textDisabled));
+  Widget build(BuildContext context) => Text(
+    label, 
+    style: TextStyle(
+      fontSize: 10, 
+      fontWeight: FontWeight.w900, 
+      color: active ? primary : AppColors.textDisabled,
+      letterSpacing: 0.5
+    )
+  );
 }
 
 class _OSMMap extends StatelessWidget {
   final OrderModel order;
-  const _OSMMap({required this.order});
+  final Color primaryColor;
+  const _OSMMap({required this.order, required this.primaryColor});
   @override
   Widget build(BuildContext context) {
     final pickupRaw = order.pickupLocation;
@@ -445,7 +504,7 @@ class _OSMMap extends StatelessWidget {
         TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.example.zen_mart_pro'),
         MarkerLayer(markers: [
           Marker(point: pickup, width: 40, height: 40, child: const Icon(Icons.storefront_rounded, color: AppColors.info, size: 32)),
-          Marker(point: delivery, width: 40, height: 40, child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 32)),
+          Marker(point: delivery, width: 40, height: 40, child: Icon(Icons.location_on_rounded, color: primaryColor, size: 32)),
         ]),
       ],
     );
@@ -455,25 +514,42 @@ class _OSMMap extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final IconData icon;
-  const _SectionHeader({required this.title, required this.icon});
+  final Color primaryColor;
+  final Color textColor;
+  const _SectionHeader({required this.title, required this.icon, required this.primaryColor, required this.textColor});
   @override
-  Widget build(BuildContext context) => Row(children: [Icon(icon, size: 18, color: AppColors.primary), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white))]);
+  Widget build(BuildContext context) => Row(children: [Icon(icon, size: 18, color: primaryColor), const SizedBox(width: 10), Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColor, letterSpacing: -0.2))]);
 }
 
 class _InfoCard extends StatelessWidget {
   final Widget child;
-  const _InfoCard({required this.child});
+  final Color cardColor;
+  final Color dividerColor;
+  final bool isLight;
+  const _InfoCard({required this.child, required this.cardColor, required this.dividerColor, required this.isLight});
   @override
-  Widget build(BuildContext context) => Container(width: double.infinity, padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24)), child: child);
+  Widget build(BuildContext context) => Container(
+    width: double.infinity, 
+    padding: const EdgeInsets.all(24), 
+    decoration: BoxDecoration(
+      color: cardColor, 
+      borderRadius: BorderRadius.circular(32),
+      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
+      border: isLight ? Border.all(color: dividerColor) : Border.all(color: dividerColor.withOpacity(0.3)),
+    ), 
+    child: child
+  );
 }
 
 class _SummaryLine extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
-  const _SummaryLine({required this.label, required this.value, this.color});
+  final Color textColor;
+  final Color secondaryTextColor;
+  const _SummaryLine({required this.label, required this.value, this.color, required this.textColor, required this.secondaryTextColor});
   @override
-  Widget build(BuildContext context) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)), Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: color ?? Colors.white))]);
+  Widget build(BuildContext context) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: TextStyle(color: secondaryTextColor, fontSize: 14, fontWeight: FontWeight.w600)), Text(value, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: color ?? textColor))]);
 }
 
 class _SmallRoundBtn extends StatelessWidget {
