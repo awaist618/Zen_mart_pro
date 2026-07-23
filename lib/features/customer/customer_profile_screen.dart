@@ -426,7 +426,10 @@ class _SettingsGroup extends StatelessWidget {
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 30)] : null,
         border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
       ),
-      child: Column(children: children),
+      child: Material(
+        color: Colors.transparent,
+        child: Column(children: children),
+      ),
     );
   }
 }

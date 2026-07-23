@@ -180,19 +180,22 @@ class _SmallShopTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
-      child: ListTile(
-        onTap: () => context.push('/customer/shop/${shop.id}'),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: colorScheme.surface, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1), size: 20))),
-        ),
-        title: Text(shop.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: colorScheme.onSurface)),
-        subtitle: Text(shop.category, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
-        trailing: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-          child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.primary),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () => context.push('/customer/shop/${shop.id}'),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.network(shop.imageUrl, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(width: 48, height: 48, color: colorScheme.surface, child: Icon(Icons.storefront, color: colorScheme.onSurface.withOpacity(0.1), size: 20))),
+          ),
+          title: Text(shop.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: colorScheme.onSurface)),
+          subtitle: Text(shop.category, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w600)),
+          trailing: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.primary),
+          ),
         ),
       ),
     );

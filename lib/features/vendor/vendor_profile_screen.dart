@@ -407,10 +407,8 @@ class _SettingsGroup extends StatelessWidget {
   Widget build(BuildContext context) => Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
           ),

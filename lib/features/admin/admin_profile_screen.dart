@@ -218,7 +218,17 @@ class _SettingsGroup extends StatelessWidget {
   final List<Widget> children;
   const _SettingsGroup({required this.children});
   @override
-  Widget build(BuildContext context) => Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]), child: Column(children: children));
+  Widget build(BuildContext context) => Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24), 
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
+          ),
+          child: Column(children: children),
+        ),
+      );
 }
 
 class _SettingsTile extends StatelessWidget {
