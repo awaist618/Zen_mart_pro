@@ -78,6 +78,30 @@ class _RatingCard extends StatelessWidget {
             'Delivered on ${DateFormat('MMM dd, yyyy').format(review.createdAt)}',
             style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
           ),
+          if (review.reply != null && review.reply!.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.reply_rounded, color: AppColors.primary, size: 14),
+                      const SizedBox(width: 8),
+                      Text('RESPONSE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: AppColors.primary.withOpacity(0.8), letterSpacing: 1)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(review.reply!, style: TextStyle(fontSize: 13, height: 1.4, color: Colors.black.withOpacity(0.7), fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
         ],
       ),
     );

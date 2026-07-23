@@ -56,7 +56,11 @@ class ProductReviewsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             itemCount: reviews.length,
             separatorBuilder: (_, __) => Divider(color: textColor.withValues(alpha: 0.1), height: 40),
-            itemBuilder: (context, index) => _ReviewItem(review: reviews[index], textColor: textColor),
+            itemBuilder: (context, index) => _ReviewItem(
+              review: reviews[index], 
+              textColor: textColor,
+              primaryColor: primaryColor,
+            ),
           );
         },
         loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
@@ -69,7 +73,8 @@ class ProductReviewsScreen extends ConsumerWidget {
 class _ReviewItem extends StatelessWidget {
   final ReviewModel review;
   final Color textColor;
-  const _ReviewItem({required this.review, required this.textColor});
+  final Color primaryColor;
+  const _ReviewItem({required this.review, required this.textColor, required this.primaryColor});
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +104,33 @@ class _ReviewItem extends StatelessWidget {
           review.review,
           style: TextStyle(color: textColor.withValues(alpha: 0.8), fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
         ),
+        if (review.reply != null && review.reply!.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.reply_rounded, color: primaryColor, size: 16),
+                    const SizedBox(width: 8),
+                    Text('RESPONSE FROM VENDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: primaryColor, letterSpacing: 1)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  review.reply!,
+                  style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13, height: 1.4, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

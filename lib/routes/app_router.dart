@@ -87,6 +87,8 @@ import '../features/support/screens/emergency_details_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   final userModel = ref.watch(userModelProvider);
+  final splashWait = ref.watch(splashDurationProvider);
+  final forcedSplash = ref.watch(forcedSplashProvider);
 
   return GoRouter(
     initialLocation: '/',
@@ -95,8 +97,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                          state.matchedLocation == '/welcome' || 
                          state.matchedLocation == '/signup';
 
-      // If either is loading, stay on the current screen (Splash)
-      if (authState.isLoading || userModel.isLoading) return null;
+      // If either is loading, or we are still in the splash duration, stay on the current screen (Splash)
+      if (authState.isLoading || userModel.isLoading || splashWait.isLoading) return null;
+
+      // Force navigation to Splash if forcedSplash is active (e.g., during login transition)
+      if (forcedSplash && state.matchedLocation != '/') return '/';
 
       // Handle auth errors
       if (authState.hasError || userModel.hasError) {

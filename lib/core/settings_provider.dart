@@ -27,7 +27,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   SettingsNotifier(this._prefs)
       : super(SettingsState(
-          themeMode: ThemeMode.values[_prefs.getInt('themeMode') ?? 0],
+          themeMode: ThemeMode.values[_prefs.getInt('themeMode') ?? ThemeMode.dark.index],
           locale: Locale(_prefs.getString('languageCode') ?? 'en'),
         ));
 

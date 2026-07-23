@@ -43,6 +43,12 @@ final supportServiceProvider = Provider((ref) => SupportService());
 final emergencyServiceProvider = Provider((ref) => EmergencyService());
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
+final splashDurationProvider = FutureProvider<void>((ref) async {
+  await Future.delayed(const Duration(seconds: 3));
+});
+
+final forcedSplashProvider = StateProvider<bool>((ref) => false);
+
 final authStateProvider = StreamProvider((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
