@@ -1,32 +1,58 @@
-name: iOS Build
+name: iOS Production Build
 
 on:
-  workflow_dispatch: # This allows you to start the build manually whenever you want
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
 
 jobs:
   build:
+    name: Build iOS Artifacts
     runs-on: macos-latest
+    
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          
-      - name: Create Secrets File (Fix Compilation)
+          cache: true
+
+      - name: Create Secrets File
         run: |
           mkdir -p lib/core
-          echo "class AppSecrets { static const String smtpEmail = 'dummy@mail.com'; static const String smtpPassword = 'dummy'; }" > lib/core/secrets.dart
-          
+          cat <<EOF > lib/core/secrets.dart
+          class AppSecrets {
+            static const String smtpEmail = "${{ secrets.SMTP_EMAIL }}";
+            static const String smtpPassword = "${{ secrets.SMTP_PASSWORD }}";
+            static const String cloudinaryCloudName = "${{ secrets.CLOUDINARY_CLOUD_NAME }}";
+            static const String cloudinaryUploadPreset = "${{ secrets.CLOUDINARY_UPLOAD_PRESET }}";
+          }
+          EOF
+
       - name: Install Dependencies
         run: flutter pub get
 
       - name: Build iOS No-Codesign
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --no-tree-shake-icons
 
-      - name: Upload iOS Build Artifact
-        uses: actions/upload-artifact@v3
+      - name: Create Unsigned IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa && zip -r ZenMartPro.ipa Payload
+          echo "Unsigned IPA created successfully"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: build/ios/iphoneos
+          name: ios-ipa
+          path: build/ios/ipa/ZenMartPro.ipa
+
+      - name: Upload Runner.app (For Simulation)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app
+          path: build/ios/iphoneos/Runner.app

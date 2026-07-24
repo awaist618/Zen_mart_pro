@@ -76,6 +76,28 @@
 	<string>Zen Mart Pro needs camera access to allow vendors to take product photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Zen Mart Pro needs library access to upload product and profile images.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Zen Mart Pro needs microphone access to record voice messages for support.</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.794852400780-udcmput5h9s2fgiolqgteg9uui1gcn7e</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- UI Background Modes for Notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 
 	<!-- URL Schemes for External Apps -->
 	<key>LSApplicationQueriesSchemes</key>
