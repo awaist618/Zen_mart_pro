@@ -46,13 +46,8 @@ jobs:
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa && zip -r ZenMartPro.ipa Payload
-          echo "Unsigned IPA created successfully"
 
-      - name: Zip Simulator App
-        run: |
-          cd build/ios/iphonesimulator && zip -r ../../ios/ipa/Runner_Simulator.zip Runner.app
-
-      - name: Upload IPA (For Testing)
+      - name: Upload IPA (For Distribution)
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
@@ -62,4 +57,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-app
-          path: build/ios/ipa/Runner_Simulator.zip
+          path: build/ios/iphonesimulator/Runner.app
