@@ -35,8 +35,11 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build iOS No-Codesign
+      - name: Build iOS Physical (For IPA)
         run: flutter build ios --release --no-codesign --no-tree-shake-icons
+
+      - name: Build iOS Simulator (For Appetize)
+        run: flutter build ios --simulator --debug --no-codesign --no-tree-shake-icons
 
       - name: Create Unsigned IPA
         run: |
@@ -45,14 +48,18 @@ jobs:
           cd build/ios/ipa && zip -r ZenMartPro.ipa Payload
           echo "Unsigned IPA created successfully"
 
-      - name: Upload Artifact
+      - name: Zip Simulator App
+        run: |
+          cd build/ios/iphonesimulator && zip -r ../../ios/ipa/Runner_Simulator.zip Runner.app
+
+      - name: Upload IPA (For Testing)
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: build/ios/ipa/ZenMartPro.ipa
 
-      - name: Upload Runner.app (For Simulation)
+      - name: Upload Simulator App (FOR APPETIZE)
         uses: actions/upload-artifact@v4
         with:
-          name: ios-app
-          path: build/ios/iphoneos/Runner.app
+          name: ios-simulator-app
+          path: build/ios/ipa/Runner_Simulator.zip
