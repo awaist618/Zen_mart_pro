@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
+import '../../models/user_model.dart';
 
 class VendorEarningsScreen extends ConsumerStatefulWidget {
   const VendorEarningsScreen({super.key});
@@ -70,7 +71,7 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
     );
   }
 
-  Widget _buildEarningsHero(dynamic user, ColorScheme colorScheme, bool isLight) {
+  Widget _buildEarningsHero(UserModel user, ColorScheme colorScheme, bool isLight) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
@@ -108,7 +109,7 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
     );
   }
 
-  Widget _buildWithdrawalCard(dynamic user, ColorScheme colorScheme, bool isLight) {
+  Widget _buildWithdrawalCard(UserModel user, ColorScheme colorScheme, bool isLight) {
     final hasBankDetails = user.bankDetails != null && user.bankDetails!.isNotEmpty;
 
     return Container(
@@ -183,7 +184,7 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: payouts.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final data = payouts[index].data() as Map<String, dynamic>;
             final status = data['status'] ?? 'pending';

@@ -15,9 +15,8 @@ void main() async {
   
   try {
     await Firebase.initializeApp();
-    // Initialize Notifications
-    final notificationService = NotificationService();
-    await notificationService.initialize();
+    // Initialize Notifications - Don't await to prevent blocking app startup if FCM hangs
+    NotificationService().initialize();
   } catch (e) {
     debugPrint("Firebase Initialization Error: $e");
   }
@@ -45,19 +44,18 @@ class ZenMartProApp extends ConsumerWidget {
     final userModel = ref.watch(userModelProvider);
     
     ThemeMode activeThemeMode = settings.themeMode;
-    ThemeData activeDarkTheme = AppTheme.dark; 
     
     final user = userModel.asData?.value;
+    // Force Dark Mode for Dashboard Roles (Admin, Vendor, Rider)
     if (user != null && user.role != UserRole.customer) {
       activeThemeMode = ThemeMode.dark;
-      activeDarkTheme = AppTheme.legacyDark;
     }
 
     return MaterialApp.router(
       title: 'Zen Mart Pro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: activeDarkTheme,
+      darkTheme: AppTheme.dark,
       themeMode: activeThemeMode,
       locale: settings.locale,
       routerConfig: router,

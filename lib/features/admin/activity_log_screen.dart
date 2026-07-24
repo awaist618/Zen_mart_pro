@@ -36,17 +36,23 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
   Widget build(BuildContext context) {
     final filterDate = _getFilterDate();
     final activitiesAsync = ref.watch(activityLogsProvider(filterDate));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Activity Log', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Activity Log', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download_outlined),
+            icon: Icon(Icons.file_download_outlined, color: colorScheme.primary),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Exporting activity log...')),
@@ -60,33 +66,32 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
         children: [
           // Filter & Search Bar
           Container(
-            color: Colors.white,
+            color: theme.scaffoldBackgroundColor,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                          decoration: const InputDecoration(
-                            hintText: 'Search logs...',
-                            border: InputBorder.none,
-                            icon: Icon(Icons.search, size: 20),
-                          ),
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Search logs...',
+                      hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      icon: Icon(Icons.search, size: 20, color: colorScheme.primary),
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: ['Today', 'Week', 'Month', 'All'].map((f) {
@@ -95,13 +100,15 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
                       label: Text(f),
                       selected: isSelected,
                       onSelected: (s) => setState(() => _filter = f),
-                      selectedColor: AppColors.primary.withOpacity(0.1),
+                      selectedColor: colorScheme.primary.withValues(alpha: 0.1),
                       labelStyle: TextStyle(
-                        color: isSelected ? AppColors.primary : Colors.grey,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.4),
+                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                        fontSize: 12,
                       ),
                       backgroundColor: Colors.transparent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      side: BorderSide(color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.1)),
                       showCheckmark: false,
                     );
                   }).toList(),
@@ -120,11 +127,21 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
                 ).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No matching activities found.'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                        const SizedBox(height: 16),
+                        Text('No matching logs found.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  );
                 }
 
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
+                  physics: const BouncingScrollPhysics(),
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) => _LogTile(activity: filtered[index]),
@@ -146,18 +163,21 @@ class _LogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: activity.color.withOpacity(0.1),
+              color: activity.color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(activity.icon, color: activity.color, size: 20),
@@ -169,11 +189,12 @@ class _LogTile extends StatelessWidget {
               children: [
                 Text(
                   activity.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   activity.subtitle,
-                  style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -183,11 +204,11 @@ class _LogTile extends StatelessWidget {
             children: [
               Text(
                 DateFormat('h:mm a').format(activity.timestamp),
-                style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
               ),
               Text(
                 DateFormat('MMM dd').format(activity.timestamp),
-                style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 10),
+                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.2), fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
           ),

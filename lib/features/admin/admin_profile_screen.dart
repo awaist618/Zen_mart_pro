@@ -12,17 +12,23 @@ class AdminProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userModelProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final shopsCount = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
     final ridersCount = ref.watch(totalRidersCountProvider).asData?.value ?? 0;
     final customersCount = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Admin Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Admin Settings', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: userAsync.when(
         data: (user) {
@@ -30,26 +36,28 @@ class AdminProfileScreen extends ConsumerWidget {
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
+            physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
                 // Admin Identity Card
                 _buildAdminCard(context, user),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                _SectionHeader(title: 'System Information'),
-                const SizedBox(height: 12),
+                const _SectionHeader(title: 'System Information'),
+                const SizedBox(height: 16),
                 InkWell(
                   onTap: () => context.push('/admin/system-info'),
+                  borderRadius: BorderRadius.circular(20),
                   child: _SystemInfoGrid(
                     shops: shopsCount,
                     riders: ridersCount,
                     customers: customersCount,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                _SectionHeader(title: 'Administrative Controls'),
-                const SizedBox(height: 12),
+                const _SectionHeader(title: 'Administrative Controls'),
+                const SizedBox(height: 16),
                 _SettingsGroup(
                   children: [
                     _SettingsTile(
@@ -72,10 +80,10 @@ class AdminProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                _SectionHeader(title: 'Personal & Security'),
-                const SizedBox(height: 12),
+                const _SectionHeader(title: 'Personal & Security'),
+                const SizedBox(height: 16),
                 _SettingsGroup(
                   children: [
                     _SettingsTile(
@@ -92,21 +100,21 @@ class AdminProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 48),
 
                 // Logout Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => _showLogoutDialog(context, ref),
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Logout Admin Session', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.logout_rounded, size: 20),
+                    label: const Text('LOGOUT ADMIN SESSION', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.1),
-                      foregroundColor: Colors.red,
+                      backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                      foregroundColor: const Color(0xFFEF4444),
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      minimumSize: const Size(0, 64),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),
                 ),
@@ -122,36 +130,42 @@ class AdminProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildAdminCard(BuildContext context, UserModel user) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
-            backgroundImage: user.profilePicture != null ? NetworkImage(user.profilePicture!) : null,
-            child: user.profilePicture == null
-                ? Text(user.name.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primary))
-                : null,
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2), width: 2)),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+              backgroundImage: (user.profilePicture != null && user.profilePicture!.isNotEmpty) ? NetworkImage(user.profilePicture!) : null,
+              child: (user.profilePicture == null || user.profilePicture!.isEmpty)
+                  ? Text(user.name.substring(0, 1).toUpperCase(),
+                      style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: colorScheme.primary))
+                  : null,
+            ),
           ),
           const SizedBox(height: 20),
-          Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-            child: const Text('SUPER ADMIN', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-          ),
-          const SizedBox(height: 16),
-          Text(user.email, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+          Text(user.name, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)),
           const SizedBox(height: 8),
-          Text('Admin ID: ${user.uid.substring(0, 8).toUpperCase()}', style: TextStyle(color: Colors.grey[300], fontSize: 10, letterSpacing: 1)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            child: Text('SUPER ADMIN', style: TextStyle(color: colorScheme.primary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          ),
+          const SizedBox(height: 24),
+          Text(user.email, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text('ID: ${user.uid.substring(0, 12).toUpperCase()}', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.2), fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -204,31 +218,56 @@ class _InfoBox extends StatelessWidget {
   final Color color;
   const _InfoBox({required this.label, required this.value, required this.color});
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.1))), child: Column(children: [Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)), const SizedBox(height: 2), Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 10))]));
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16), 
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface, 
+        borderRadius: BorderRadius.circular(20), 
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1))
+      ), 
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: theme.colorScheme.onSurface)), 
+          const SizedBox(height: 4), 
+          Text(label.toUpperCase(), style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5))
+        ]
+      )
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
   @override
-  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 8), Text(title.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[400], letterSpacing: 1.5))]);
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        const SizedBox(width: 8), 
+        Text(title.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.3), letterSpacing: 1.5))
+      ]
+    );
+  }
 }
 
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> children;
   const _SettingsGroup({required this.children});
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24), 
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
-          ),
-          child: Column(children: children),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+      ),
+      child: Column(children: children),
+    );
+  }
 }
 
 class _SettingsTile extends StatelessWidget {
@@ -238,5 +277,19 @@ class _SettingsTile extends StatelessWidget {
   final VoidCallback onTap;
   const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
   @override
-  Widget build(BuildContext context) => ListTile(onTap: onTap, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppColors.primary, size: 20)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[500])), trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20));
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ListTile(
+      onTap: onTap, 
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), 
+      leading: Container(
+        padding: const EdgeInsets.all(10), 
+        decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), 
+        child: Icon(icon, color: colorScheme.primary, size: 20)
+      ), 
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface)), 
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.4))), 
+      trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurface.withValues(alpha: 0.2), size: 20)
+    );
+  }
 }

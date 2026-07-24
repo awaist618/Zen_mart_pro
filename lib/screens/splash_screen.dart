@@ -79,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Hero(
                       tag: 'app_logo',
                       child: Image.asset(
-                        'assets/images/image.png',
+                        'assets/images/rounded-image.png',
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.auto_awesome_mosaic_rounded,

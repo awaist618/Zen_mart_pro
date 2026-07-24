@@ -10,8 +10,9 @@ class AdminDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -45,17 +46,16 @@ class _HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 100),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
         ),
       ),
       child: Column(
@@ -71,21 +71,22 @@ class _HeroHeader extends StatelessWidget {
                     Text(
                       'SUPER ADMIN',
                       style: TextStyle(
-                        color: AppColors.accent.withOpacity(0.8),
+                        color: colorScheme.primary.withValues(alpha: 0.8),
                         fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 2,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    const SizedBox(height: 6),
+                    Text(
                       'Zen Mart Control',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ],
@@ -99,47 +100,48 @@ class _HeroHeader extends StatelessWidget {
                     onTap: () => context.push('/admin/notifications'),
                   ),
                   const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => context.push('/admin/profile'),
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.accent, width: 2),
+                  GestureDetector(
+                    onTap: () => context.push('/admin/profile'),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final user = ref.watch(userModelProvider).asData?.value;
+                          return CircleAvatar(
+                            radius: 18,
+                            backgroundColor: colorScheme.surface,
+                            backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                                ? NetworkImage(user.profilePicture!)
+                                : null,
+                            child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                                ? Text(
+                                    user?.name.substring(0, 1).toUpperCase() ?? 'A',
+                                    style: TextStyle(color: colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.bold),
+                                  )
+                                : null,
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final user = ref.watch(userModelProvider).asData?.value;
-                      return CircleAvatar(
-                        radius: 18,
-                        backgroundColor: const Color(0xFF1E293B),
-                        backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
-                            ? NetworkImage(user.profilePicture!)
-                            : null,
-                        child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
-                            ? Text(
-                                user?.name.substring(0, 1).toUpperCase() ?? 'AD',
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-              ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
           InkWell(
             onTap: () => context.push('/admin/analytics'),
+            borderRadius: BorderRadius.circular(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Total Revenue (Monthly)',
-                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -151,13 +153,14 @@ class _HeroHeader extends StatelessWidget {
                           final revenueAsync = ref.watch(monthlyRevenueProvider);
                           return revenueAsync.when(
                             data: (revenue) => Text(
-                              'Rs ${NumberFormat.compact().format(revenue)}',
+                              'Rs ${NumberFormat('#,###').format(revenue)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.w800,
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontSize: 38,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1,
                               ),
                             ),
                             loading: () => const SizedBox(
@@ -165,30 +168,31 @@ class _HeroHeader extends StatelessWidget {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             ),
-                            error: (e, s) => const Text(
+                            error: (e, s) => Text(
                               'Rs 0',
-                              style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800),
+                              style: TextStyle(color: colorScheme.onSurface, fontSize: 38, fontWeight: FontWeight.w900),
                             ),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: Colors.greenAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.arrow_upward_rounded, color: Colors.greenAccent, size: 14),
-                          SizedBox(width: 4),
+                          Icon(Icons.trending_up_rounded, color: Color(0xFF10B981), size: 14),
+                          SizedBox(width: 6),
                           Text(
                             '+18%',
-                            style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w800),
                           ),
                         ],
                       ),
@@ -211,16 +215,18 @@ class _HeaderActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        child: Icon(icon, color: colorScheme.onSurface, size: 22),
       ),
     );
   }
@@ -233,7 +239,7 @@ class _KpiGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shopsCount = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
     final ridersCount = ref.watch(totalRidersCountProvider).asData?.value ?? 0;
-    final customersCount = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
+    final payoutCount = ref.watch(pendingPayoutsCountProvider).asData?.value ?? 0;
     final pendingCount = ref.watch(pendingOrdersCountProvider).asData?.value ?? 0;
 
     return GridView.count(
@@ -245,19 +251,17 @@ class _KpiGrid extends ConsumerWidget {
       childAspectRatio: 1.1,
       children: [
         _KpiCard(
-          title: 'Total Shops',
-          value: shopsCount.toString(),
-          icon: Icons.storefront_rounded,
-          color: const Color(0xFF6366F1),
-          trend: 'Active on Platform',
-          onTap: () => context.push('/admin/all-shops'),
+          title: 'Payout Requests',
+          value: payoutCount.toString().padLeft(2, '0'),
+          icon: Icons.payments_rounded,
+          color: const Color(0xFFF59E0B),
+          onTap: () => context.push('/admin/payouts'),
         ),
         _KpiCard(
           title: 'Active Riders',
           value: ridersCount.toString(),
           icon: Icons.two_wheeler_rounded,
-          color: const Color(0xFFF59E0B),
-          trend: 'Verified Fleet',
+          color: const Color(0xFF38BDF8),
           onTap: () => context.push('/admin/riders'),
         ),
         _KpiCard(
@@ -265,16 +269,14 @@ class _KpiGrid extends ConsumerWidget {
           value: pendingCount.toString(),
           icon: Icons.pending_actions_rounded,
           color: const Color(0xFFEF4444),
-          trend: 'Needs Action',
           onTap: () => context.push('/admin/pending-orders'),
         ),
         _KpiCard(
-          title: 'Total Customers',
-          value: customersCount.toString(),
-          icon: Icons.people_alt_rounded,
-          color: const Color(0xFF10B981),
-          trend: 'Growth Stats',
-          onTap: () => context.push('/admin/customers'),
+          title: 'Total Shops',
+          value: shopsCount.toString(),
+          icon: Icons.storefront_rounded,
+          color: const Color(0xFF8B5CF6),
+          onTap: () => context.push('/admin/all-shops'),
         ),
       ],
     );
@@ -286,7 +288,6 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  final String trend;
   final VoidCallback? onTap;
 
   const _KpiCard({
@@ -294,27 +295,22 @@ class _KpiCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
-    required this.trend,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,6 +327,7 @@ class _KpiCard extends StatelessWidget {
                   ),
                   child: Icon(icon, color: color, size: 16),
                 ),
+                Icon(Icons.chevron_right_rounded, color: colorScheme.onSurface.withValues(alpha: 0.2), size: 14),
               ],
             ),
             Column(
@@ -341,23 +338,24 @@ class _KpiCard extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1E293B),
+                      color: colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  title,
+                  title.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.black.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w700,
+                    fontSize: 8,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
@@ -374,15 +372,16 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Manage Platform',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 16),
@@ -394,7 +393,7 @@ class _QuickActions extends StatelessWidget {
               SizedBox(width: 12),
               _ActionItem(label: 'Vendors', icon: Icons.person_add_rounded, color: Color(0xFF6366F1), route: '/admin/users?tab=0'),
               SizedBox(width: 12),
-              _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: AppColors.rider, route: '/admin/users?tab=2'),
+              _ActionItem(label: 'Riders', icon: Icons.directions_bike_rounded, color: const Color(0xFFD6B08A), route: '/admin/users?tab=2'),
               SizedBox(width: 12),
               _ActionItem(label: 'Support', icon: Icons.support_agent_rounded, color: Colors.blue, route: '/admin/support'),
               SizedBox(width: 12),
@@ -419,6 +418,7 @@ class _ActionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () {
         if (route != null) {
@@ -431,18 +431,16 @@ class _ActionItem extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5)),
-              ],
+              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -455,16 +453,15 @@ class _RecentActivity extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final activityAsync = ref.watch(activityLogsProvider(null));
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
-        ],
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,13 +469,13 @@ class _RecentActivity extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Events',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
               ),
               TextButton(
                 onPressed: () => context.push('/admin/activity-log'),
-                child: const Text('View All'),
+                child: Text('View All', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -540,6 +537,7 @@ class _ActivityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () {
         if (title.contains('Vendor')) {
@@ -559,7 +557,7 @@ class _ActivityTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 20),
@@ -573,14 +571,14 @@ class _ActivityTile extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 12),
+                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 12),
                   ),
                 ],
               ),
@@ -591,9 +589,9 @@ class _ActivityTile extends StatelessWidget {
               children: [
                 Text(
                   time,
-                  style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.grey),
+                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
               ],
             ),
           ],
@@ -608,13 +606,12 @@ class _AdminBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
-        ],
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -644,6 +641,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -651,14 +649,14 @@ class _BottomNavItem extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
+            color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.3),
             size: 26,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? AppColors.primary : const Color(0xFF94A3B8),
+              color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.3),
               fontSize: 11,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),

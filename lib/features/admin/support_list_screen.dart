@@ -16,19 +16,23 @@ class SupportListScreen extends ConsumerStatefulWidget {
 }
 
 class _SupportListScreenState extends ConsumerState<SupportListScreen> {
-  String _searchQuery = '';
   String _selectedFilter = 'All';
-  TicketStatus? _statusFilter;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Support Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Support Dashboard', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: Column(
         children: [
@@ -108,7 +112,7 @@ class _SupportListScreenState extends ConsumerState<SupportListScreen> {
         return ListView.separated(
           padding: const EdgeInsets.all(20),
           itemCount: tickets.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final ticket = tickets[index];
             return _AdminTicketCard(ticket: ticket);
@@ -127,21 +131,23 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       width: 140,
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.1)),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(count.toString(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+          Text(count.toString(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color)),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+          Text(label.toUpperCase(), style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
         ],
       ),
     );
@@ -156,14 +162,23 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTap(),
-        selectedColor: AppColors.primary,
-        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold),
+        selectedColor: colorScheme.primary,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.4), 
+          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+          fontSize: 12,
+        ),
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.1)),
+        showCheckmark: false,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
@@ -175,24 +190,25 @@ class _AdminTicketCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool isResolved = ticket.status == TicketStatus.resolved || ticket.status == TicketStatus.closed;
 
     return Container(
       decoration: BoxDecoration(
-        color: isResolved ? Colors.grey[50] : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: ticket.priority == TicketPriority.high ? Colors.red.withOpacity(0.2) : Colors.transparent,
+          color: ticket.priority == TicketPriority.high ? const Color(0xFFEF4444).withValues(alpha: 0.2) : colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: () => context.push('/support/ticket-chat/${ticket.id}'),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -203,7 +219,7 @@ class _AdminTicketCard extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _getRoleColor(ticket.userRole).withOpacity(0.1),
+                        color: _getRoleColor(ticket.userRole).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -211,7 +227,8 @@ class _AdminTicketCard extends ConsumerWidget {
                         style: TextStyle(
                           color: _getRoleColor(ticket.userRole),
                           fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -220,21 +237,21 @@ class _AdminTicketCard extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: const [
-                            Icon(Icons.flash_on_rounded, color: Colors.red, size: 10),
+                            Icon(Icons.flash_on_rounded, color: Color(0xFFEF4444), size: 10),
                             SizedBox(width: 4),
-                            Text('URGENT', style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold)),
+                            Text('URGENT', style: TextStyle(color: Color(0xFFEF4444), fontSize: 9, fontWeight: FontWeight.w900)),
                           ],
                         ),
                       ),
                     const Spacer(),
                     Text(
-                      '#${ticket.id.substring(0, 5).toUpperCase()}',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 10, fontWeight: FontWeight.bold),
+                      '#${ticket.id.substring(0, 8).toUpperCase()}',
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.2), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
                   ],
                 ),
@@ -244,67 +261,69 @@ class _AdminTicketCard extends ConsumerWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isResolved ? Colors.grey[600] : Colors.black.withOpacity(0.87),
+                    color: isResolved ? colorScheme.onSurface.withValues(alpha: 0.4) : colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'From: ${ticket.userName}',
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Colors.grey[700]),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   ticket.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.4),
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13, height: 1.4),
                 ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
                     _StatusBadge(status: ticket.status),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: colorScheme.onSurface.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        ticket.category,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 10, fontWeight: FontWeight.w600),
+                        ticket.category.toUpperCase(),
+                        style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                       ),
                     ),
                     const Spacer(),
                     if (ticket.status == TicketStatus.open || ticket.status == TicketStatus.inProgress)
-                      TextButton(
+                      ElevatedButton(
                         onPressed: () {
                           ref.read(supportServiceProvider).updateTicketStatus(ticket.id, TicketStatus.resolved);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Ticket marked as Resolved')),
                           );
                         },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          backgroundColor: Colors.green.withOpacity(0.05),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          foregroundColor: const Color(0xFF10B981),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          minimumSize: const Size(0, 36),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Resolve', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: const Text('RESOLVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ),
                   ],
                 ),
                 const Divider(height: 32),
                 Row(
                   children: [
-                    Icon(Icons.access_time_rounded, size: 14, color: Colors.grey[400]),
+                    Icon(Icons.access_time_rounded, size: 14, color: colorScheme.onSurface.withValues(alpha: 0.2)),
                     const SizedBox(width: 6),
                     Text(
-                      'Last updated ${DateFormat('MMM d, hh:mm a').format(ticket.updatedAt)}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                      'Updated ${DateFormat('MMM d, h:mm a').format(ticket.updatedAt)}',
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.2), fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
-                    const Icon(Icons.arrow_forward_rounded, size: 16, color: Colors.grey),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.1)),
                   ],
                 ),
               ],
@@ -317,10 +336,10 @@ class _AdminTicketCard extends ConsumerWidget {
 
   Color _getRoleColor(UserRole role) {
     switch (role) {
-      case UserRole.customer: return AppColors.customer;
-      case UserRole.vendor: return AppColors.vendor;
-      case UserRole.rider: return AppColors.rider;
-      default: return AppColors.primary;
+      case UserRole.customer: return const Color(0xFFC9A27E); // primary
+      case UserRole.vendor: return const Color(0xFFD6B08A); // secondaryAccent
+      case UserRole.rider: return const Color(0xFFD6B08A); // secondaryAccent
+      default: return const Color(0xFFC9A27E); // primary
     }
   }
 }
@@ -333,17 +352,17 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     switch (status) {
-      case TicketStatus.open: color = Colors.blue; break;
-      case TicketStatus.assigned: color = Colors.purple; break;
-      case TicketStatus.inProgress: color = Colors.orange; break;
-      case TicketStatus.waitingForUser: color = Colors.cyan; break;
-      case TicketStatus.resolved: color = Colors.green; break;
-      case TicketStatus.closed: color = Colors.grey; break;
+      case TicketStatus.open: color = const Color(0xFF38BDF8); break;
+      case TicketStatus.assigned: color = const Color(0xFF8B5CF6); break;
+      case TicketStatus.inProgress: color = const Color(0xFFF59E0B); break;
+      case TicketStatus.waitingForUser: color = const Color(0xFF06B6D4); break;
+      case TicketStatus.resolved: color = const Color(0xFF10B981); break;
+      case TicketStatus.closed: color = const Color(0xFF64748B); break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-      child: Text(status.name.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+      child: Text(status.name.toUpperCase(), style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
     );
   }
 }

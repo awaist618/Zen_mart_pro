@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/shop_model.dart';
-import '../../theme/app_colors.dart';
 
 class AllShopsScreen extends ConsumerWidget {
   const AllShopsScreen({super.key});
@@ -11,24 +10,40 @@ class AllShopsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shopsAsync = ref.watch(allShopsProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('All Shops', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('All Shops', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: shopsAsync.when(
         data: (shops) {
           if (shops.isEmpty) {
-            return const Center(child: Text('No shops registered yet.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.storefront_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                  const SizedBox(height: 16),
+                  Text('No shops registered yet.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: shops.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _ShopListTile(shop: shops[index]),
           );
         },
@@ -36,10 +51,10 @@ class AllShopsScreen extends ConsumerWidget {
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/admin/add-vendor'), // Reusing add-vendor since it creates a shop
-        backgroundColor: AppColors.primary,
+        onPressed: () => context.push('/admin/add-vendor'), 
+        backgroundColor: colorScheme.primary,
         icon: const Icon(Icons.add_business_rounded, color: Colors.white),
-        label: const Text('Create Shop', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('CREATE SHOP', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
     );
   }
@@ -51,16 +66,16 @@ class _ShopListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool isDisabled = shop.status == 'disabled';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -72,8 +87,8 @@ class _ShopListTile extends ConsumerWidget {
                   ? Image.network(shop.imageUrl, width: 64, height: 64, fit: BoxFit.cover)
                   : Container(
                       width: 64, height: 64, 
-                      color: AppColors.primary.withOpacity(0.1),
-                      child: const Icon(Icons.storefront_rounded, color: AppColors.primary),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      child: Icon(Icons.storefront_rounded, color: colorScheme.primary),
                     ),
               ),
               const SizedBox(width: 16),
@@ -83,17 +98,17 @@ class _ShopListTile extends ConsumerWidget {
                   children: [
                     Text(
                       shop.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Vendor: ${shop.vendorName}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Category: ${shop.category}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -104,23 +119,23 @@ class _ShopListTile extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isDisabled ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                      color: (isDisabled ? const Color(0xFFEF4444) : const Color(0xFF10B981)).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       shop.status.toUpperCase(),
                       style: TextStyle(
-                        color: isDisabled ? Colors.red : Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        color: isDisabled ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                      Text(' ${shop.rating}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                      Text(' ${shop.rating}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: colorScheme.onSurface)),
                     ],
                   ),
                 ],
@@ -144,7 +159,7 @@ class _ShopListTile extends ConsumerWidget {
               _ActionButton(
                 icon: isDisabled ? Icons.play_circle_outline_rounded : Icons.block_rounded,
                 label: isDisabled ? 'Enable' : 'Disable',
-                color: isDisabled ? Colors.green : Colors.orange,
+                color: isDisabled ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                 onTap: () {
                   ref.read(adminServiceProvider).updateShopStatus(
                     shop.id, 
@@ -155,7 +170,7 @@ class _ShopListTile extends ConsumerWidget {
               _ActionButton(
                 icon: Icons.delete_outline_rounded,
                 label: 'Delete',
-                color: Colors.red,
+                color: const Color(0xFFEF4444),
                 onTap: () => _showDeleteDialog(context, ref, shop),
               ),
             ],
@@ -196,13 +211,15 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return InkWell(
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color ?? Colors.black.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: color ?? Colors.black.withOpacity(0.6))),
+          Icon(icon, size: 20, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6))),
         ],
       ),
     );

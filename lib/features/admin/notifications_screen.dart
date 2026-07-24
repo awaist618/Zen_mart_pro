@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/notification_model.dart';
@@ -11,17 +12,23 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(adminNotificationsProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.done_all_rounded),
+            icon: Icon(Icons.done_all_rounded, color: colorScheme.primary),
             onPressed: () {
               // TODO: Mark all as read
             },
@@ -36,15 +43,16 @@ class NotificationsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: Colors.grey.withOpacity(0.5)),
+                  Icon(Icons.notifications_none_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
                   const SizedBox(height: 16),
-                  const Text('No notifications yet', style: TextStyle(color: Colors.grey)),
+                  Text('No notifications yet', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
                 ],
               ),
             );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) => _NotificationTile(notification: notifications[index]),
@@ -87,12 +95,15 @@ class _NotificationTile extends ConsumerWidget {
       case NotificationType.maintenance: return Colors.blueGrey;
       case NotificationType.securityAlert: return Colors.deepOrange;
       case NotificationType.supportTicket: return Colors.blue;
-      default: return AppColors.primary;
+      default: return const Color(0xFFC9A27E);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
@@ -103,7 +114,7 @@ class _NotificationTile extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Colors.redAccent,
+          color: const Color(0xFFEF4444),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
@@ -113,18 +124,13 @@ class _NotificationTile extends ConsumerWidget {
           if (!notification.isRead) {
             ref.read(adminServiceProvider).markAsRead(notification.id);
           }
-          // TODO: Navigate based on type
         },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: notification.isRead ? Colors.white : Colors.blue.withOpacity(0.05),
+            color: notification.isRead ? colorScheme.surface : colorScheme.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(20),
-            border: notification.isRead ? Border.all(color: Colors.grey.withOpacity(0.1)) : Border.all(color: Colors.blue.withOpacity(0.2)),
-            boxShadow: [
-              if (notification.isRead)
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
+            border: Border.all(color: notification.isRead ? colorScheme.outline.withValues(alpha: 0.1) : colorScheme.primary.withValues(alpha: 0.2)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +138,7 @@ class _NotificationTile extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _getColor().withOpacity(0.1),
+                  color: _getColor().withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(_getIcon(), color: _getColor(), size: 20),
@@ -145,38 +151,44 @@ class _NotificationTile extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          notification.title,
-                          style: TextStyle(
-                            fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.bold,
-                            fontSize: 15,
-                            color: const Color(0xFF1E293B),
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: notification.isRead ? FontWeight.bold : FontWeight.w900,
+                              fontSize: 15,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           DateFormat('h:mm a').format(notification.timestamp),
-                          style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+                          style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       notification.message,
                       style: TextStyle(
-                        color: Colors.black.withOpacity(0.6),
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                         fontSize: 13,
                         height: 1.4,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (!notification.isRead)
                       Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(4),
+                          color: colorScheme.primary,
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text('New', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ),
                   ],
                 ),

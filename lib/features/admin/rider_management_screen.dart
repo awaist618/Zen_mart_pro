@@ -18,9 +18,11 @@ class _RiderManagementScreenState extends ConsumerState<RiderManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final ridersAsync = ref.watch(allRidersProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: Padding(
@@ -28,16 +30,20 @@ class _RiderManagementScreenState extends ConsumerState<RiderManagementScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4)],
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
             ),
             child: TextField(
               onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-              decoration: const InputDecoration(
+              style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+              decoration: InputDecoration(
                 hintText: 'Search riders...',
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
                 border: InputBorder.none,
-                icon: Icon(Icons.search, size: 20),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                icon: Icon(Icons.search, size: 20, color: const Color(0xFFD6B08A)),
               ),
             ),
           ),
@@ -48,12 +54,22 @@ class _RiderManagementScreenState extends ConsumerState<RiderManagementScreen> {
           final filtered = riders.where((r) => r.name.toLowerCase().contains(_searchQuery)).toList();
 
           if (filtered.isEmpty) {
-            return const Center(child: Text('No riders found.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_search_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                  const SizedBox(height: 16),
+                  Text('No riders found.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _RiderListTile(rider: filtered[index]),
           );
         },
@@ -63,9 +79,9 @@ class _RiderManagementScreenState extends ConsumerState<RiderManagementScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add_rider_fab',
         onPressed: () => context.push('/admin/add-rider'),
-        backgroundColor: AppColors.rider,
+        backgroundColor: const Color(0xFFD6B08A),
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-        label: const Text('Add Rider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('ADD RIDER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
     );
   }
@@ -77,27 +93,25 @@ class _RiderListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool isSuspended = rider.status == 'suspended';
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Column(
-          children: [
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 32,
-                backgroundColor: Color(0xFFF1F5F9),
-                child: Icon(Icons.directions_bike_rounded, color: AppColors.rider, size: 32),
+                backgroundColor: const Color(0xFFD6B08A).withValues(alpha: 0.1),
+                child: const Icon(Icons.directions_bike_rounded, color: Color(0xFFD6B08A), size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -106,17 +120,17 @@ class _RiderListTile extends ConsumerWidget {
                   children: [
                     Text(
                       rider.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       rider.phone,
-                      style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Vehicle: ${rider.vehicleInfo ?? "Not Set"}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -127,26 +141,26 @@ class _RiderListTile extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSuspended ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                      color: (isSuspended ? const Color(0xFFF59E0B) : const Color(0xFF10B981)).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       rider.status.toUpperCase(),
                       style: TextStyle(
-                        color: isSuspended ? Colors.orange : Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        color: isSuspended ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
-                    'Earnings: Rs ${rider.totalEarnings.toStringAsFixed(0)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.green),
+                    'Rs ${rider.totalEarnings.toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF10B981)),
                   ),
                   Text(
                     '${rider.totalDeliveries} Deliveries',
-                    style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 11),
+                    style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -169,7 +183,7 @@ class _RiderListTile extends ConsumerWidget {
               _ActionButton(
                 icon: isSuspended ? Icons.check_circle_outline : Icons.block_rounded,
                 label: isSuspended ? 'Activate' : 'Suspend',
-                color: isSuspended ? Colors.green : Colors.orange,
+                color: isSuspended ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                 onTap: () {
                   ref.read(adminServiceProvider).updateRiderStatus(
                     rider.uid, 
@@ -180,16 +194,15 @@ class _RiderListTile extends ConsumerWidget {
               _ActionButton(
                 icon: Icons.delete_outline_rounded,
                 label: 'Delete',
-                color: Colors.red,
+                color: const Color(0xFFEF4444),
                 onTap: () => _showDeleteDialog(context, ref, rider),
               ),
             ],
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showDeleteDialog(BuildContext context, WidgetRef ref, UserModel rider) {
     showDialog(
@@ -222,13 +235,15 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return InkWell(
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color ?? Colors.black.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: color ?? Colors.black.withOpacity(0.6))),
+          Icon(icon, size: 20, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6))),
         ],
       ),
     );

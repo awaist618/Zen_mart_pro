@@ -8,6 +8,7 @@ import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../models/order_model.dart';
 import '../../models/coupon_model.dart';
+import '../../models/shop_model.dart';
 import '../../theme/app_colors.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -38,7 +39,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
-    final shopAsync = ref.watch(shopDetailProvider(cart.shopId ?? ''));
+    
+    // Safety check for shop details
+    final shopId = cart.shopId ?? '';
+    final shopAsync = shopId.isNotEmpty 
+        ? ref.watch(shopDetailProvider(shopId))
+        : const AsyncData<ShopModel?>(null);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -48,49 +54,50 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
-      body: shopAsync.when(
-        data: (shop) {
-          final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
-                const SizedBox(height: 16),
-                _buildAddressCard(context, address, colorScheme, isLight),
-                const SizedBox(height: 32),
-                _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
-                const SizedBox(height: 16),
-                _buildPaymentOptions(colorScheme, isLight),
-                const SizedBox(height: 32),
-                _buildSectionHeader('Available Coupons', Icons.confirmation_number_rounded, colorScheme),
-                const SizedBox(height: 16),
-                _buildCouponSelector(cart, colorScheme, isLight),
-                const SizedBox(height: 32),
-                _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
-                const SizedBox(height: 16),
-                _buildOrderSummary(cart, colorScheme, isLight, deliveryFee),
-                const SizedBox(height: 40),
-              ],
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
+            const SizedBox(height: 16),
+            _buildAddressCard(context, address, colorScheme, isLight),
+            const SizedBox(height: 32),
+            _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
+            const SizedBox(height: 16),
+            _buildPaymentOptions(colorScheme, isLight),
+            const SizedBox(height: 32),
+            _buildSectionHeader('Available Coupons', Icons.confirmation_number_rounded, colorScheme),
+            const SizedBox(height: 16),
+            _buildCouponSelector(cart, colorScheme, isLight),
+            const SizedBox(height: 32),
+            _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
+            const SizedBox(height: 16),
+            shopAsync.when(
+              data: (shop) {
+                final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
+                return _buildOrderSummary(cart, colorScheme, isLight, deliveryFee);
+              },
+              loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+              error: (_, __) => _buildOrderSummary(cart, colorScheme, isLight, 100.0), // Fallback
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
-      bottomNavigationBar: shopAsync.when(
-        data: (shop) {
-           final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
-           return _buildBottomAction(context, cart, address, user, colorScheme, isLight, deliveryFee);
-        },
-        loading: () => const SizedBox.shrink(),
-        error: (e, s) => const SizedBox.shrink(),
+      bottomNavigationBar: _buildBottomAction(
+        context, 
+        cart, 
+        address, 
+        user, 
+        colorScheme, 
+        isLight, 
+        shopAsync.value?.deliveryFee ?? 100.0,
       ),
     );
   }
@@ -111,7 +118,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)] : null,
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
         border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
       child: Row(
@@ -163,7 +170,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)] : null,
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
         border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
       child: Column(
@@ -305,7 +312,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)] : null,
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
         border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
       ),
       child: Column(
@@ -434,7 +441,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 data: 'PAYMENT_ID_${DateTime.now().millisecondsSinceEpoch}_AMT_$total',
                 version: QrVersions.auto,
                 size: 200.0,
-                foregroundColor: isLight ? colorScheme.onBackground : AppColors.background,
+                eyeStyle: QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: isLight ? colorScheme.onSurface : Colors.white,
+                ),
+                dataModuleStyle: QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: isLight ? colorScheme.onSurface : Colors.white,
+                ),
               ),
             ),
             
@@ -521,6 +535,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       final orderId = await ref.read(customerServiceProvider).placeOrder(orderData);
       
+      // Clear cart before navigating to success
       ref.read(cartProvider.notifier).clearCart();
       
       if (context.mounted) {
@@ -531,8 +546,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         context.go('/customer/order-success/$orderId');
       }
     } catch (e) {
+      debugPrint('CRITICAL: Order placement error: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order placement failed: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order placement failed: $e'), 
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+          )
+        );
       }
     } finally {
       if (mounted) setState(() => _isPlacingOrder = false);

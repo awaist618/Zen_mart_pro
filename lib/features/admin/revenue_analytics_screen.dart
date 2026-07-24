@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
@@ -13,17 +14,24 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
     final dailyAsync = ref.watch(dailyRevenueProvider);
     final weeklyAsync = ref.watch(weeklyRevenueProvider);
     final monthlyAsync = ref.watch(monthlyRevenueProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Revenue Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Revenue Analytics', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,18 +40,18 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _RevenueStatCard(
-                    title: 'Today',
+                    title: 'TODAY',
                     amount: dailyAsync.asData?.value ?? 0.0,
-                    color: AppColors.accent,
+                    color: const Color(0xFF6366F1),
                     isLoading: dailyAsync.isLoading,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _RevenueStatCard(
-                    title: 'This Week',
+                    title: 'THIS WEEK',
                     amount: weeklyAsync.asData?.value ?? 0.0,
-                    color: Colors.indigo,
+                    color: const Color(0xFF8B5CF6),
                     isLoading: weeklyAsync.isLoading,
                   ),
                 ),
@@ -51,15 +59,15 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _RevenueStatCard(
-              title: 'This Month',
+              title: 'THIS MONTH',
               amount: monthlyAsync.asData?.value ?? 0.0,
-              color: AppColors.primary,
+              color: colorScheme.primary,
               isLarge: true,
               isLoading: monthlyAsync.isLoading,
             ),
             
             const SizedBox(height: 32),
-            const Text('Revenue Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Revenue Overview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: 0.5)),
             const SizedBox(height: 16),
             
             // Chart Container
@@ -67,9 +75,9 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
               height: 300,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15)],
+                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
               ),
               child: LineChart(
                 LineChartData(
@@ -88,13 +96,13 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
                         const FlSpot(11, 4),
                       ],
                       isCurved: true,
-                      color: AppColors.primary,
+                      color: colorScheme.primary,
                       barWidth: 4,
                       isStrokeCapRound: true,
                       dotData: FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
                       ),
                     ),
                   ],
@@ -103,12 +111,12 @@ class RevenueAnalyticsScreen extends ConsumerWidget {
             ),
             
             const SizedBox(height: 32),
-            const Text('Detailed Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Detailed Breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: 0.5)),
             const SizedBox(height: 16),
             
-            _BreakdownTile(title: 'Shop Revenue', icon: Icons.storefront_rounded, color: Colors.blue),
-            _BreakdownTile(title: 'Vendor Payouts', icon: Icons.person_pin_rounded, color: Colors.purple),
-            _BreakdownTile(title: 'Order Fees', icon: Icons.receipt_long_rounded, color: Colors.green),
+            _BreakdownTile(title: 'Shop Revenue', icon: Icons.storefront_rounded, color: const Color(0xFF38BDF8)),
+            _BreakdownTile(title: 'Vendor Payouts', icon: Icons.person_pin_rounded, color: const Color(0xFF8B5CF6)),
+            _BreakdownTile(title: 'Order Fees', icon: Icons.receipt_long_rounded, color: const Color(0xFF10B981)),
             
             const SizedBox(height: 40),
           ],
@@ -140,7 +148,7 @@ class _RevenueStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,23 +180,26 @@ class _BreakdownTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 16),
-          Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600))),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+          Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface))),
+          Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.2)),
         ],
       ),
     );

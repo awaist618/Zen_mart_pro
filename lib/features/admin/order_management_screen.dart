@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
-import '../../theme/app_colors.dart';
 
 class OrderManagementScreen extends ConsumerStatefulWidget {
   const OrderManagementScreen({super.key});
@@ -48,36 +47,49 @@ class _OrderManagementScreenState extends ConsumerState<OrderManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final allOrdersAsync = ref.watch(allOrdersProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Order Management', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Order Management', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Enter Order ID...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.send_rounded),
-                  onPressed: _searchOrder,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
               ),
-              onSubmitted: (_) => _searchOrder(),
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Enter Order ID...',
+                  hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
+                  prefixIcon: Icon(Icons.search, color: colorScheme.primary),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.send_rounded, color: colorScheme.primary, size: 20),
+                    onPressed: _searchOrder,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                onSubmitted: (_) => _searchOrder(),
+              ),
             ),
           ),
           if (_isSearching)
@@ -97,7 +109,7 @@ class _OrderManagementScreenState extends ConsumerState<OrderManagementScreen> {
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     itemCount: orders.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
                     itemBuilder: (context, index) => _OrderCard(order: orders[index]),
                   );
                 },
@@ -117,16 +129,16 @@ class _OrderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isCancelled = order.status == OrderStatus.cancelled;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,8 +147,8 @@ class _OrderCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'ID: #${order.id.toUpperCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                'ID: #${order.id.substring(0, 8).toUpperCase()}',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onSurface),
               ),
               _StatusBadge(status: order.status),
             ],
@@ -144,24 +156,26 @@ class _OrderCard extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             DateFormat('dd MMM yyyy, h:mm a').format(order.createdAt),
-            style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 11),
+            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
           ),
-          const Divider(height: 24),
+          const Divider(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Customer', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                  Text(order.customerName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text('CUSTOMER', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  const SizedBox(height: 4),
+                  Text(order.customerName, style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Amount', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                  Text('Rs ${order.totalAmount}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  Text('AMOUNT', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  const SizedBox(height: 4),
+                  Text('Rs ${order.totalAmount}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 15)),
                 ],
               ),
             ],
@@ -173,12 +187,13 @@ class _OrderCard extends ConsumerWidget {
               child: ElevatedButton.icon(
                 onPressed: () => _showCancelDialog(context, ref),
                 icon: const Icon(Icons.cancel_outlined, size: 18),
-                label: const Text('Cancel Order'),
+                label: const Text('CANCEL ORDER', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.withOpacity(0.1),
-                  foregroundColor: Colors.red,
+                  backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                  foregroundColor: const Color(0xFFEF4444),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size(0, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
@@ -217,21 +232,21 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     switch (status) {
-      case OrderStatus.pending: color = Colors.orange; break;
-      case OrderStatus.delivered: color = Colors.green; break;
-      case OrderStatus.cancelled: color = Colors.red; break;
-      default: color = Colors.blue;
+      case OrderStatus.pending: color = const Color(0xFFF59E0B); break;
+      case OrderStatus.delivered: color = const Color(0xFF10B981); break;
+      case OrderStatus.cancelled: color = const Color(0xFFEF4444); break;
+      default: color = const Color(0xFF6366F1);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         status.name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
     );
   }

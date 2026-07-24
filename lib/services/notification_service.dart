@@ -138,12 +138,16 @@ class NotificationService {
   }
 
   Future<void> saveTokenToFirestore(String userId) async {
-    String? token = await getToken();
-    if (token != null) {
-      await _db.collection('users').doc(userId).update({
-        'fcmToken': token,
-        'lastActive': FieldValue.serverTimestamp(),
-      });
+    try {
+      String? token = await getToken();
+      if (token != null) {
+        await _db.collection('users').doc(userId).update({
+          'fcmToken': token,
+          'lastActive': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('FCM Token Save Error (Non-critical): $e');
     }
   }
 }

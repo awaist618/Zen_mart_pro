@@ -72,10 +72,12 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          Container(decoration: const BoxDecoration(color: Color(0xFF0F172A))),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -86,27 +88,31 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-                      style: IconButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.05)),
+                      icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface, size: 20),
+                      style: IconButton.styleFrom(
+                        backgroundColor: colorScheme.surface,
+                        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Register New Rider',
-                      style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Create a rider account and provide vehicle credentials.',
-                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 16),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 32),
                     
-                    _SectionTitle(title: 'Rider Information'),
+                    const _SectionTitle(title: 'Rider Information'),
                     const SizedBox(height: 16),
-                    _buildGlassContainer(
+                    _buildFormCard(
                       child: Column(
                         children: [
                           _buildTextField(
+                            context: context,
                             controller: _nameController,
                             label: 'Full Name',
                             icon: Icons.person_outline,
@@ -114,6 +120,7 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
+                            context: context,
                             controller: _emailController,
                             label: 'Email Address',
                             icon: Icons.email_outlined,
@@ -121,6 +128,7 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
+                            context: context,
                             controller: _phoneController,
                             label: 'Phone Number',
                             icon: Icons.phone_outlined,
@@ -128,6 +136,7 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
+                            context: context,
                             controller: _passwordController,
                             label: 'Temporary Password',
                             icon: Icons.lock_outline,
@@ -139,12 +148,13 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                     ),
                     
                     const SizedBox(height: 32),
-                    _SectionTitle(title: 'Vehicle Details'),
+                    const _SectionTitle(title: 'Vehicle Details'),
                     const SizedBox(height: 16),
-                    _buildGlassContainer(
+                    _buildFormCard(
                       child: Column(
                         children: [
                           _buildTextField(
+                            context: context,
                             controller: _vehicleInfoController,
                             label: 'Vehicle (e.g. Honda CD 70 - ABC 123)',
                             icon: Icons.directions_bike_rounded,
@@ -152,6 +162,7 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
+                            context: context,
                             controller: _licenseNumberController,
                             label: 'License Number',
                             icon: Icons.badge_outlined,
@@ -165,14 +176,15 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
                     ElevatedButton(
                       onPressed: _isLoading ? null : _createRider,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.rider,
+                        backgroundColor: const Color(0xFFD6B08A),
                         foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        minimumSize: const Size(double.infinity, 64),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 0,
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Create Rider Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('CREATE RIDER ACCOUNT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
                     ),
                     const SizedBox(height: 40),
                   ],
@@ -185,44 +197,42 @@ class _AddRiderScreenState extends ConsumerState<AddRiderScreen> {
     );
   }
 
-  Widget _buildGlassContainer({required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: child,
-        ),
+  Widget _buildFormCard({required Widget child}) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
+      child: child,
     );
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool isPassword = false,
     String? Function(String?)? validator,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
       validator: validator,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: AppColors.rider, size: 20),
+        labelStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
+        prefixIcon: Icon(icon, color: const Color(0xFFD6B08A), size: 20),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.05),
+        fillColor: colorScheme.onSurface.withValues(alpha: 0.02),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.05))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD6B08A), width: 1.5)),
       ),
     );
   }
@@ -236,7 +246,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title.toUpperCase(),
-      style: const TextStyle(color: AppColors.rider, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
+      style: const TextStyle(color: Color(0xFFD6B08A), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
     );
   }
 }

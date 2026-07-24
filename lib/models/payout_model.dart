@@ -23,6 +23,7 @@ class PayoutModel {
   final DateTime? processedAt;
   final String? paymentMethod;
   final String? transactionId;
+  final Map<String, dynamic>? bankDetails;
 
   PayoutModel({
     required this.id,
@@ -35,6 +36,7 @@ class PayoutModel {
     this.processedAt,
     this.paymentMethod,
     this.transactionId,
+    this.bankDetails,
   });
 
   factory PayoutModel.fromFirestore(DocumentSnapshot doc) {
@@ -50,6 +52,7 @@ class PayoutModel {
       processedAt: data['processedAt'] != null ? (data['processedAt'] as Timestamp).toDate() : null,
       paymentMethod: data['paymentMethod'],
       transactionId: data['transactionId'],
+      bankDetails: data['bankDetails'],
     );
   }
 
@@ -71,6 +74,7 @@ class PayoutModel {
       'processedAt': processedAt != null ? Timestamp.fromDate(processedAt!) : null,
       'paymentMethod': paymentMethod,
       'transactionId': transactionId,
+      'bankDetails': bankDetails,
     };
   }
 }

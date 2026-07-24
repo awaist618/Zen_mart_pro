@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
@@ -55,13 +56,29 @@ final authStateProvider = StreamProvider((ref) {
 
 final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   final authState = ref.watch(authStateProvider);
+  
+  if (authState.isLoading) {
+    return; // Keep current state while auth is loading
+  }
+
   final user = authState.asData?.value;
+  
   if (user == null) {
     yield null;
   } else {
-    // Save FCM Token when user logs in
-    ref.read(notificationServiceProvider).saveTokenToFirestore(user.uid);
-    yield* ref.read(authServiceProvider).getUserStream(user.uid);
+    // Save FCM Token when user logs in - Wrap in error handling
+    try {
+      ref.read(notificationServiceProvider).saveTokenToFirestore(user.uid);
+    } catch (e) {
+      debugPrint('FCM Token Save Failed (Non-critical): $e');
+    }
+    
+    // Using a more resilient stream handling
+    final stream = ref.read(authServiceProvider).getUserStream(user.uid);
+    
+    yield* stream.handleError((e) {
+      debugPrint('Firestore User Stream Error: $e');
+    });
   }
 });
 
@@ -360,6 +377,14 @@ final pendingOrdersCountProvider = StreamProvider<int>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('orders')
+      .where('status', isEqualTo: 'pending')
+      .snapshots().map((s) => s.docs.length);
+});
+
+final pendingPayoutsCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('payouts')
       .where('status', isEqualTo: 'pending')
       .snapshots().map((s) => s.docs.length);
 });

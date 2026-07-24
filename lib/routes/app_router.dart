@@ -86,42 +86,51 @@ import '../features/support/screens/emergency_report_screen.dart';
 import '../features/support/screens/emergency_details_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final userModel = ref.watch(userModelProvider);
-  final splashWait = ref.watch(splashDurationProvider);
-  final forcedSplash = ref.watch(forcedSplashProvider);
+  final listenable = RouterRefreshNotifier(ref);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: listenable,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
+      final userModel = ref.read(userModelProvider);
+      final splashWait = ref.read(splashDurationProvider);
+
       final loggingIn = state.matchedLocation == '/login' || 
                          state.matchedLocation == '/welcome' || 
                          state.matchedLocation == '/signup';
 
-      // If either is loading, or we are still in the splash duration, stay on the current screen (Splash)
-      if (authState.isLoading || userModel.isLoading || splashWait.isLoading) return null;
+      // 1. Splash Duration logic
+      if (splashWait.isLoading) return null;
 
-      // Force navigation to Splash if forcedSplash is active (e.g., during login transition)
-      if (forcedSplash && state.matchedLocation != '/') return '/';
+      // 2. Auth Loading logic
+      if (authState.isLoading) return null;
 
       final user = authState.asData?.value;
-      final model = userModel.asData?.value;
       
-      // If no user is logged in
+      // 3. Not Logged In logic
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
+
+      // 4. Logged In logic (Check Profile)
+      if (userModel.isLoading) return null;
+
+      final model = userModel.asData?.value;
       
-      // If user exists in Auth but document is missing in Firestore after loading
-      if (model == null && !userModel.isLoading) {
-        debugPrint('Router: User logged in but no Firestore profile found for UID: ${user.uid}');
+      // 5. Handle Error/Missing Profile
+      if (userModel.hasError || model == null) {
+        // If we have an error, we check if we were already logged in and just had a blip
+        // But if it's the first load, we might need to go to welcome
+        if (loggingIn || state.matchedLocation == '/') return null;
+        
+        // If the user was already on a dashboard, don't kick them out immediately on a timeout
+        if (userModel.hasError && userModel.error is! Exception) return null;
+        
         return '/welcome';
       }
 
-      // Still fetching profile data
-      if (model == null) return null;
-
-      // Logic to prevent redirect loops and correctly route based on role
+      // 6. Role-based Dashboard Redirection
       final isPublicScreen = loggingIn || state.matchedLocation == '/' || state.matchedLocation == '/welcome';
       
       if (isPublicScreen) {
@@ -134,7 +143,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           default: target = '/welcome';
         }
         
-        // ONLY redirect if the current location isn't already the target
         if (state.matchedLocation != target) {
           return target;
         }
@@ -243,3 +251,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class RouterRefreshNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterRefreshNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, __) => notifyListeners());
+    _ref.listen(userModelProvider, (_, __) => notifyListeners());
+    _ref.listen(splashDurationProvider, (_, __) => notifyListeners());
+  }
+}

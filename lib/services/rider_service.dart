@@ -181,4 +181,30 @@ class RiderService {
   Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);
   }
+
+  /// Request a withdrawal
+  Future<void> requestWithdrawal(String riderId, double amount) async {
+    final userDoc = await _db.collection('users').doc(riderId).get();
+    final earnings = (userDoc.data()?['totalEarnings'] ?? 0.0).toDouble();
+
+    if (amount > earnings) {
+      throw Exception('Insufficient balance');
+    }
+
+    // 1. Create payout request
+    await _db.collection('payouts').add({
+      'userId': riderId,
+      'userName': userDoc.data()?['name'] ?? 'Rider',
+      'userType': 'rider',
+      'amount': amount,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'bankDetails': userDoc.data()?['bankDetails'] ?? {},
+    });
+
+    // 2. Deduct from totalEarnings immediately (escrow)
+    await _db.collection('users').doc(riderId).update({
+      'totalEarnings': FieldValue.increment(-amount),
+    });
+  }
 }

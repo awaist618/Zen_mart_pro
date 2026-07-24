@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/address_model.dart';
 import '../models/product_model.dart';
@@ -78,22 +79,31 @@ class CustomerService {
 
   /// Place a new order
   Future<String> placeOrder(Map<String, dynamic> orderData) async {
-    final docRef = await _db.collection('orders').add(orderData);
-    
-    // Notify Vendor of New Order
-    final vendorId = orderData['vendorId'];
-    if (vendorId != null) {
-      await _db.collection('users').doc(vendorId).collection('notifications').add({
-        'title': 'New Order Received! 🛍️',
-        'message': 'Order #${docRef.id.substring(0, 5)} for Rs ${orderData['totalAmount']}',
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-        'orderId': docRef.id,
-        'type': 'new_order',
-      });
-    }
+    try {
+      final docRef = await _db.collection('orders').add(orderData);
+      
+      // Notify Vendor of New Order - Wrap in isolated try-catch
+      try {
+        final vendorId = orderData['vendorId'];
+        if (vendorId != null) {
+          await _db.collection('users').doc(vendorId).collection('notifications').add({
+            'title': 'New Order Received! 🛍️',
+            'message': 'Order #${docRef.id.substring(0, 5)} for Rs ${orderData['totalAmount']}',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+            'orderId': docRef.id,
+            'type': 'new_order',
+          });
+        }
+      } catch (e) {
+        debugPrint('Non-critical: Vendor notification failed: $e');
+      }
 
-    return docRef.id;
+      return docRef.id;
+    } catch (e) {
+      debugPrint('CRITICAL: Firestore order placement failed: $e');
+      rethrow;
+    }
   }
 
   /// Get stream of a single order
@@ -109,10 +119,16 @@ class CustomerService {
     return _db
         .collection('orders')
         .where('customerId', isEqualTo: userId)
-        .where('isDeletedByCustomer', isNotEqualTo: true)
         .snapshots()
         .map((snapshot) {
-      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+      final orders = snapshot.docs
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['isDeletedByCustomer'] != true;
+          })
+          .map((doc) => OrderModel.fromFirestore(doc))
+          .toList();
+
       // Sort in memory to avoid complex index requirement for combined query
       orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return orders;

@@ -442,8 +442,8 @@ class _ShopStatusCard extends ConsumerWidget {
               ),
               Switch.adaptive(
                 value: isOnline,
-                activeColor: AppColors.success,
                 activeTrackColor: AppColors.success.withValues(alpha: 0.3),
+                activeColor: AppColors.success,
                 onChanged: (v) {
                   ref.read(vendorServiceProvider).updateShopStatus(
                     shop.id, 
@@ -456,7 +456,10 @@ class _ShopStatusCard extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => const SizedBox.shrink(),
+      error: (e, s) {
+        debugPrint('Shop Status Error: $e');
+        return const SizedBox.shrink();
+      },
     );
   }
 }
@@ -631,7 +634,21 @@ class _IncomingOrders extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Text('Error: $e'),
+            error: (e, s) {
+              debugPrint('Vendor Dashboard Error: $e');
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.error_outline_rounded, color: AppColors.error, size: 48),
+                      SizedBox(height: 16),
+                      Text('Unable to load recent orders', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

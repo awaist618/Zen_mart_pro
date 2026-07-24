@@ -303,7 +303,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Hero(
                             tag: 'app_logo',
                             child: Image.asset(
-                              'assets/images/image.png', // Assuming this is the ZENVYRO logo
+                              'assets/images/rounded-image.png', // Updated logo
                               fit: BoxFit.contain,
                               errorBuilder: (c, e, s) => const Icon(Icons.auto_awesome_mosaic_rounded, color: accentColor, size: 48),
                             ),

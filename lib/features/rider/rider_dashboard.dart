@@ -223,6 +223,7 @@ class _RiderKpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -235,7 +236,7 @@ class _RiderKpiGrid extends StatelessWidget {
           title: 'Active Tasks',
           value: activeOrdersCount.toString().padLeft(2, '0'),
           icon: Icons.directions_bike_rounded,
-          color: const Color(0xFF6366F1),
+          color: colorScheme.primary,
           onTap: () => context.push('/rider/active-tasks'),
         ),
         _KpiCard(

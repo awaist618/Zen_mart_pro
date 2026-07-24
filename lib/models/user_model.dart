@@ -41,6 +41,7 @@ class UserModel {
   final VerificationStatus verificationStatus;
   final Map<String, String>? documents; // docType -> status (uploaded, pending, approved, rejected)
   final Map<String, String>? documentUrls; // docType -> url
+  final Map<String, dynamic>? bankDetails;
   final String? fcmToken;
 
   UserModel({
@@ -68,6 +69,7 @@ class UserModel {
     this.verificationStatus = VerificationStatus.pending,
     this.documents,
     this.documentUrls,
+    this.bankDetails,
     this.fcmToken,
   });
 
@@ -100,6 +102,7 @@ class UserModel {
       verificationStatus: _parseVerificationStatus(data['verificationStatus']),
       documents: data['documents'] != null ? Map<String, String>.from(data['documents']) : null,
       documentUrls: data['documentUrls'] != null ? Map<String, String>.from(data['documentUrls']) : null,
+      bankDetails: data['bankDetails'] != null ? Map<String, dynamic>.from(data['bankDetails']) : null,
       fcmToken: data['fcmToken'],
     );
   }
@@ -153,6 +156,7 @@ class UserModel {
       'verificationStatus': verificationStatus.name,
       'documents': documents,
       'documentUrls': documentUrls,
+      'bankDetails': bankDetails,
       'fcmToken': fcmToken,
     };
   }

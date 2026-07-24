@@ -101,21 +101,29 @@ class _ActiveTaskCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _ActionButton(
-                icon: Icons.near_me_rounded, 
-                label: 'Navigate', 
-                color: Colors.blue,
-                onTap: () => launchUrl(Uri.parse('google.navigation:q=${order.deliveryAddress}')),
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.near_me_rounded, 
+                  label: 'Navigate', 
+                  color: Colors.blue,
+                  onTap: () => launchUrl(Uri.parse('google.navigation:q=${order.deliveryAddress}')),
+                ),
               ),
-              _ActionButton(
-                icon: Icons.chat_bubble_rounded, 
-                label: 'Chat',
-                onTap: () => context.push('/chat/${order.id}/${order.customerName}'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.chat_bubble_rounded, 
+                  label: 'Chat',
+                  onTap: () => context.push('/chat/${order.id}/${order.customerName}'),
+                ),
               ),
-              _ActionButton(
-                icon: Icons.call_rounded, 
-                label: 'Call',
-                onTap: () => launchUrl(Uri.parse('tel:${order.customerPhone}')),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.call_rounded, 
+                  label: 'Call',
+                  onTap: () => launchUrl(Uri.parse('tel:${order.customerPhone}')),
+                ),
               ),
             ],
           ),
@@ -195,13 +203,22 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(color: accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16, color: accent),
-            const SizedBox(width: 8),
-            Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: accent, letterSpacing: 0.5)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label.toUpperCase(), 
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: accent, letterSpacing: 0.5)
+                ),
+              ),
+            ),
           ],
         ),
       ),

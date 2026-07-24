@@ -69,13 +69,48 @@ class AdminService {
 
   /// Update payout status
   Future<void> updatePayoutStatus(String id, PayoutStatus status, {String? txId, String? method}) async {
+    final payoutDoc = await _db.collection('payouts').doc(id).get();
+    if (!payoutDoc.exists) return;
+    
+    final payout = PayoutModel.fromFirestore(payoutDoc);
+    final batch = _db.batch();
+
     Map<String, dynamic> updateData = {'status': status.name};
+    
     if (status == PayoutStatus.paid) {
       updateData['processedAt'] = FieldValue.serverTimestamp();
       updateData['transactionId'] = txId;
       updateData['paymentMethod'] = method;
+      
+      // Notify user
+      _db.collection('users').doc(payout.userId).collection('notifications').add({
+        'title': 'Payout Successful ✅',
+        'message': 'Rs ${payout.amount.toInt()} has been transferred to your account.',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'type': 'payment_received',
+      });
     }
-    await _db.collection('payouts').doc(id).update(updateData);
+
+    if (status == PayoutStatus.rejected) {
+      // Refund money back to user's totalEarnings if rejected
+      final userRef = _db.collection('users').doc(payout.userId);
+      batch.update(userRef, {
+        'totalEarnings': FieldValue.increment(payout.amount),
+      });
+
+      // Notify user
+      _db.collection('users').doc(payout.userId).collection('notifications').add({
+        'title': 'Payout Rejected ❌',
+        'message': 'Your payout request for Rs ${payout.amount.toInt()} was rejected. Amount returned to balance.',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'type': 'payout_rejected',
+      });
+    }
+
+    batch.update(_db.collection('payouts').doc(id), updateData);
+    await batch.commit();
   }
 
   /// Get stream of all customers

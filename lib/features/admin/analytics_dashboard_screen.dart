@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
@@ -11,30 +12,40 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          title: const Text('Platform Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
+          title: const Text('Platform Analytics', style: TextStyle(fontWeight: FontWeight.w900)),
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          foregroundColor: Colors.black,
-          bottom: const TabBar(
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+            onPressed: () => Navigator.pop(context),
+          ),
+          bottom: TabBar(
             isScrollable: true,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: AppColors.primary,
-            tabs: [
-              Tab(text: 'Overview'),
-              Tab(text: 'Financials'),
-              Tab(text: 'Users & Shops'),
-              Tab(text: 'Reports'),
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.4),
+            indicatorColor: colorScheme.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            tabs: const [
+              Tab(text: 'OVERVIEW'),
+              Tab(text: 'FINANCIALS'),
+              Tab(text: 'DISTRIBUTION'),
+              Tab(text: 'REPORTS'),
             ],
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.picture_as_pdf_outlined),
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
               onPressed: () {
                 final shops = ref.read(totalShopsCountProvider).asData?.value ?? 0;
                 final riders = ref.read(totalRidersCountProvider).asData?.value ?? 0;
@@ -50,12 +61,6 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
                   pendingOrders: pending,
                 );
               },
-              tooltip: 'Export PDF',
-            ),
-            IconButton(
-              icon: const Icon(Icons.explicit_outlined),
-              onPressed: () => _showExportDialog(context, 'Excel'),
-              tooltip: 'Export Excel',
             ),
           ],
         ),
@@ -106,7 +111,7 @@ class _OverviewTab extends ConsumerWidget {
       children: [
         const _SectionHeader(title: 'Growth Overview'),
         const SizedBox(height: 16),
-        _buildMainChart(),
+        _buildMainChart(context),
         const SizedBox(height: 32),
         const _SectionHeader(title: 'Key Metrics'),
         const SizedBox(height: 16),
@@ -128,14 +133,15 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildMainChart() {
+  Widget _buildMainChart(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       height: 240,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)],
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: LineChart(
         LineChartData(
@@ -146,9 +152,9 @@ class _OverviewTab extends ConsumerWidget {
             LineChartBarData(
               spots: [const FlSpot(0, 3), const FlSpot(2, 5), const FlSpot(4, 3.5), const FlSpot(6, 6), const FlSpot(8, 4), const FlSpot(10, 7)],
               isCurved: true,
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
               barWidth: 4,
-              belowBarData: BarAreaData(show: true, color: AppColors.primary.withOpacity(0.1)),
+              belowBarData: BarAreaData(show: true, color: theme.colorScheme.primary.withValues(alpha: 0.1)),
             ),
           ],
         ),
@@ -171,7 +177,7 @@ class _FinancialsTab extends ConsumerWidget {
       children: [
         _RevenueRow(title: 'Daily Revenue', amount: daily, color: Colors.teal),
         _RevenueRow(title: 'Weekly Revenue', amount: weekly, color: Colors.indigo),
-        _RevenueRow(title: 'Monthly Revenue', amount: monthly, color: AppColors.primary),
+        _RevenueRow(title: 'Monthly Revenue', amount: monthly, color: const Color(0xFFC9A27E)),
         const SizedBox(height: 32),
         const _SectionHeader(title: 'Revenue Stream Breakdown'),
         const SizedBox(height: 16),
@@ -198,6 +204,7 @@ class _UserShopTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final vendors = ref.watch(totalRidersCountProvider).asData?.value ?? 0; // Using riders as proxy for now
     final customers = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
     final shops = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
@@ -210,13 +217,17 @@ class _UserShopTab extends ConsumerWidget {
         Container(
           height: 300,
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28)),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface, 
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+          ),
           child: BarChart(
             BarChartData(
               barGroups: [
-                BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: vendors.toDouble(), color: Colors.purple, width: 20)]),
-                BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: customers.toDouble() / 10, color: Colors.green, width: 20)]),
-                BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: shops.toDouble(), color: Colors.blue, width: 20)]),
+                BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: vendors.toDouble(), color: const Color(0xFF6366F1), width: 20)]),
+                BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: customers.toDouble() / 10, color: const Color(0xFF10B981), width: 20)]),
+                BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: shops.toDouble(), color: const Color(0xFF38BDF8), width: 20)]),
               ],
               titlesData: FlTitlesData(
                 show: true,
@@ -224,15 +235,19 @@ class _UserShopTab extends ConsumerWidget {
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
+                      final style = TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold);
                       switch (value.toInt()) {
-                        case 0: return const Text('Vendors', style: TextStyle(fontSize: 10));
-                        case 1: return const Text('Customers (x10)', style: TextStyle(fontSize: 10));
-                        case 2: return const Text('Shops', style: TextStyle(fontSize: 10));
+                        case 0: return Text('Vendors', style: style);
+                        case 1: return Text('Users', style: style);
+                        case 2: return Text('Shops', style: style);
                         default: return const Text('');
                       }
                     },
                   ),
                 ),
+                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               borderData: FlBorderData(show: false),
               gridData: FlGridData(show: false),
@@ -263,18 +278,24 @@ class _ReportsTab extends StatelessWidget {
   }
 
   Widget _buildReportItem(BuildContext context, String title, String subtitle, IconData icon) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: AppColors.primary, size: 22),
+          decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: colorScheme.primary, size: 22),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-        trailing: const Icon(Icons.file_download_outlined, color: Colors.grey),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface)),
+        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+        trailing: Icon(Icons.file_download_outlined, color: colorScheme.onSurface.withValues(alpha: 0.3)),
         onTap: () {},
       ),
     );
@@ -287,7 +308,8 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)));
+    final colorScheme = Theme.of(context).colorScheme;
+    return Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: 0.5));
   }
 }
 
@@ -301,16 +323,27 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 20),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: color, size: 16),
+          ),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          const SizedBox(height: 2),
+          Text(title, style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -326,23 +359,30 @@ class _RevenueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(Icons.wallet, color: color),
           ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              Text('Rs ${NumberFormat.simpleCurrency(name: '').format(amount)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(title, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+              const SizedBox(height: 4),
+              Text('Rs ${NumberFormat('#,###').format(amount)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
             ],
           ),
         ],

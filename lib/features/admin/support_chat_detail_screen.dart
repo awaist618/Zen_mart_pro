@@ -104,26 +104,28 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
   @override
   Widget build(BuildContext context) {
     if (_chatId == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-            const Text('LIVE CHAT SUPPORT', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            Text(widget.userName, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: colorScheme.onSurface)),
+            Text('LIVE CHAT SUPPORT', style: TextStyle(fontSize: 9, color: colorScheme.primary, fontWeight: FontWeight.w900, letterSpacing: 1)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check_circle_outline_rounded, color: AppColors.success),
+            icon: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981)),
             tooltip: 'Resolve Chat',
             onPressed: _handleEndChat,
           ),
@@ -136,7 +138,7 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
             child: StreamBuilder<List<SupportMessageModel>>(
               stream: ref.watch(supportServiceProvider).getSupportMessages(_chatId!),
               builder: (context, snapshot) {
-                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Color(0xFFEF4444))));
                 if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
                 
                 final messages = snapshot.data ?? [];
@@ -159,27 +161,28 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
           
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: Colors.white10)),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1))),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
                     ),
                     child: TextField(
                       controller: _messageController,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                       onChanged: (v) => ref.read(supportServiceProvider).setTypingStatus(_chatId!, false, v.isNotEmpty),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Type your reply...',
-                        hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
+                        hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 14),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
                     ),
                   ),
@@ -189,11 +192,11 @@ class _SupportChatDetailScreenState extends ConsumerState<SupportChatDetailScree
                   onTap: _sendMessage,
                   child: Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.send_rounded, color: AppColors.background, size: 20),
+                    child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -213,6 +216,9 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
@@ -222,24 +228,25 @@ class _ChatBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
             decoration: BoxDecoration(
-              color: isMe ? AppColors.primary : AppColors.elevatedSurface,
+              color: isMe ? colorScheme.primary : colorScheme.surface,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),
-                bottomLeft: Radius.circular(isMe ? 20 : 0),
-                bottomRight: Radius.circular(isMe ? 0 : 20),
+                bottomLeft: Radius.circular(isMe ? 20 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 20),
               ),
+              border: isMe ? null : Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
             ),
             child: Text(
               message.message,
-              style: TextStyle(color: isMe ? AppColors.background : Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+              style: TextStyle(color: isMe ? Colors.white : colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
             child: Text(
               DateFormat('hh:mm a').format(message.timestamp),
-              style: const TextStyle(color: AppColors.textHint, fontSize: 10),
+              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 12),

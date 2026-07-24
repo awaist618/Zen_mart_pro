@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/user_model.dart';
-import '../../theme/app_colors.dart';
 
 class VendorManagementScreen extends ConsumerStatefulWidget {
   const VendorManagementScreen({super.key});
@@ -18,9 +17,11 @@ class _VendorManagementScreenState extends ConsumerState<VendorManagementScreen>
   @override
   Widget build(BuildContext context) {
     final vendorsAsync = ref.watch(allVendorsProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
         child: Padding(
@@ -28,16 +29,20 @@ class _VendorManagementScreenState extends ConsumerState<VendorManagementScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4)],
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
             ),
             child: TextField(
               onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-              decoration: const InputDecoration(
+              style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+              decoration: InputDecoration(
                 hintText: 'Search vendors...',
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
                 border: InputBorder.none,
-                icon: Icon(Icons.search, size: 20),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                icon: Icon(Icons.search, size: 20, color: colorScheme.primary),
               ),
             ),
           ),
@@ -48,12 +53,22 @@ class _VendorManagementScreenState extends ConsumerState<VendorManagementScreen>
           final filtered = vendors.where((v) => v.name.toLowerCase().contains(_searchQuery)).toList();
           
           if (filtered.isEmpty) {
-            return const Center(child: Text('No vendors found.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_search_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                  const SizedBox(height: 16),
+                  Text('No vendors found.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _VendorListTile(vendor: filtered[index]),
           );
         },
@@ -63,9 +78,9 @@ class _VendorManagementScreenState extends ConsumerState<VendorManagementScreen>
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add_vendor_fab',
         onPressed: () => context.push('/admin/add-vendor'),
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: colorScheme.primary,
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-        label: const Text('Create Vendor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text('CREATE VENDOR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
     );
   }
@@ -77,132 +92,129 @@ class _VendorListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool isSuspended = vendor.status == 'suspended';
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Color(0xFFF1F5F9),
-                  child: Icon(Icons.storefront_rounded, color: Color(0xFF8B5CF6), size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vendor.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Shop ID: ${vendor.shopId ?? "Not Assigned"}',
-                        style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        vendor.phone,
-                        style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                child: Icon(Icons.storefront_rounded, color: colorScheme.primary, size: 32),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isSuspended ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        vendor.status.toUpperCase(),
-                        style: TextStyle(
-                          color: isSuspended ? Colors.orange : Colors.green,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    Text(
+                      vendor.name,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                        Text(' ${vendor.rating}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Shop ID: ${vendor.shopId ?? "Not Assigned"}',
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      vendor.phone,
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
-              ],
-            ),
-            const Divider(height: 32),
-            Wrap(
-              spacing: 20,
-              runSpacing: 16,
-              alignment: WrapAlignment.center,
-              children: [
-                _ActionButton(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit',
-                  onTap: () {},
-                ),
-                _ActionButton(
-                  icon: Icons.assignment_outlined,
-                  label: 'Assign Shop',
-                  onTap: () {},
-                ),
-                _ActionButton(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Products',
-                  onTap: () {},
-                ),
-                _ActionButton(
-                  icon: Icons.receipt_long_outlined,
-                  label: 'Orders',
-                  onTap: () {},
-                ),
-                _ActionButton(
-                  icon: isSuspended ? Icons.check_circle_outline : Icons.block_rounded,
-                  label: isSuspended ? 'Activate' : 'Suspend',
-                  color: isSuspended ? Colors.green : Colors.orange,
-                  onTap: () {
-                    ref.read(adminServiceProvider).updateUserStatus(
-                      vendor.uid, 
-                      isSuspended ? 'active' : 'suspended'
-                    );
-                  },
-                ),
-                _ActionButton(
-                  icon: Icons.lock_reset_rounded,
-                  label: 'Reset Pwd',
-                  color: Colors.blue,
-                  onTap: () {},
-                ),
-                _ActionButton(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Delete',
-                  color: Colors.red,
-                  onTap: () => _showDeleteDialog(context, ref, vendor),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isSuspended ? const Color(0xFFF59E0B) : const Color(0xFF10B981)).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      vendor.status.toUpperCase(),
+                      style: TextStyle(
+                        color: isSuspended ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                      Text(' ${vendor.rating}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: colorScheme.onSurface)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 32),
+          Wrap(
+            spacing: 20,
+            runSpacing: 16,
+            alignment: WrapAlignment.center,
+            children: [
+              _ActionButton(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onTap: () {},
+              ),
+              _ActionButton(
+                icon: Icons.assignment_outlined,
+                label: 'Assign Shop',
+                onTap: () {},
+              ),
+              _ActionButton(
+                icon: Icons.inventory_2_outlined,
+                label: 'Products',
+                onTap: () {},
+              ),
+              _ActionButton(
+                icon: Icons.receipt_long_outlined,
+                label: 'Orders',
+                onTap: () {},
+              ),
+              _ActionButton(
+                icon: isSuspended ? Icons.check_circle_outline : Icons.block_rounded,
+                label: isSuspended ? 'Activate' : 'Suspend',
+                color: isSuspended ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                onTap: () {
+                  ref.read(adminServiceProvider).updateUserStatus(
+                    vendor.uid, 
+                    isSuspended ? 'active' : 'suspended'
+                  );
+                },
+              ),
+              _ActionButton(
+                icon: Icons.lock_reset_rounded,
+                label: 'Reset Pwd',
+                color: const Color(0xFF38BDF8),
+                onTap: () {},
+              ),
+              _ActionButton(
+                icon: Icons.delete_outline_rounded,
+                label: 'Delete',
+                color: const Color(0xFFEF4444),
+                onTap: () => _showDeleteDialog(context, ref, vendor),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -238,13 +250,15 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return InkWell(
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color ?? Colors.black.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: color ?? Colors.black.withOpacity(0.6))),
+          Icon(icon, size: 20, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6))),
         ],
       ),
     );

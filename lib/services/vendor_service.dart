@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product_model.dart';
 import '../models/order_model.dart';
@@ -13,6 +14,9 @@ class VendorService {
   Stream<ShopModel?> getShopData(String shopId) {
     return _db.collection('shops').doc(shopId).snapshots().map((doc) {
       if (doc.exists) return ShopModel.fromFirestore(doc);
+      return null;
+    }).handleError((e) {
+      debugPrint('Firestore Error (Shop Data): $e');
       return null;
     });
   }
@@ -44,7 +48,11 @@ class VendorService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => VendorNotificationModel.fromFirestore(doc))
-            .toList());
+            .toList())
+        .handleError((e) {
+      debugPrint('Firestore Error (Vendor Notifications): $e');
+      return <VendorNotificationModel>[];
+    });
   }
 
   /// Mark notification as read
@@ -114,9 +122,10 @@ class VendorService {
         .where('status', isEqualTo: OrderStatus.pending.name)
         .snapshots()
         .map((snapshot) {
-      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
-      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return orders;
+      return snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+    }).handleError((e) {
+      debugPrint('Firestore Error (Incoming Orders): $e');
+      // On error, we emit an empty list so the UI doesn't hang
     });
   }
 
@@ -127,9 +136,9 @@ class VendorService {
         .where('shopId', isEqualTo: shopId)
         .snapshots()
         .map((snapshot) {
-      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
-      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return orders;
+      return snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+    }).handleError((e) {
+      debugPrint('Firestore Error (All Shop Orders): $e');
     });
   }
 

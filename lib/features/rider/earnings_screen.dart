@@ -244,22 +244,29 @@ class _WithdrawalStatusCard extends StatelessWidget {
   }
 }
 
-class _WithdrawalAction extends StatelessWidget {
+class _WithdrawalAction extends ConsumerStatefulWidget {
   final double balance;
   final UserModel user;
   final ThemeData theme;
   const _WithdrawalAction({required this.balance, required this.user, required this.theme});
 
   @override
+  ConsumerState<_WithdrawalAction> createState() => _WithdrawalActionState();
+}
+
+class _WithdrawalActionState extends ConsumerState<_WithdrawalAction> {
+  bool _isRequesting = false;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
+        color: widget.theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: widget.theme.colorScheme.outline.withValues(alpha: 0.1))),
       ),
       child: ElevatedButton(
-        onPressed: balance < 500 ? null : () => _showWithdrawalSheet(context),
+        onPressed: (widget.balance < 500 || _isRequesting) ? null : () => _showWithdrawalSheet(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.rider,
           foregroundColor: Colors.white,
@@ -267,12 +274,17 @@ class _WithdrawalAction extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 0,
         ),
-        child: Text('REQUEST PAYOUT', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
+        child: _isRequesting 
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          : Text('REQUEST PAYOUT', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
       ),
     );
   }
 
   void _showWithdrawalSheet(BuildContext context) {
+    final amountController = TextEditingController(text: widget.balance.toInt().toString());
+    final hasBankDetails = widget.user.bankDetails != null && widget.user.bankDetails!.isNotEmpty;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -286,21 +298,74 @@ class _WithdrawalAction extends StatelessWidget {
           children: [
             const Text('Payout Request', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
             const SizedBox(height: 8),
-            Text('Balance: Rs ${balance.toStringAsFixed(0)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
+            Text('Available: Rs ${widget.balance.toStringAsFixed(0)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
             const SizedBox(height: 32),
-            _buildField(label: 'Amount', hint: '0.00', icon: Icons.payments_rounded, prefix: 'Rs '),
-            const SizedBox(height: 20),
-            _buildField(label: 'Method', hint: 'Select Method', icon: Icons.account_balance_wallet_rounded),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.rider,
-                minimumSize: const Size(double.infinity, 64),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            
+            if (!hasBankDetails)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.red.withValues(alpha: 0.3))),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: Colors.red),
+                    const SizedBox(width: 16),
+                    Expanded(child: Text('Add bank details in profile to withdraw.', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13))),
+                  ],
+                ),
+              )
+            else ...[
+              _buildField(label: 'Amount', hint: '0.00', icon: Icons.payments_rounded, prefix: 'Rs ', controller: amountController),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.account_balance_rounded, color: AppColors.rider, size: 20),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('WITHDRAWING TO', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900)),
+                        Text(widget.user.bankDetails!['bankName'] ?? 'Bank Account', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              child: const Text('SUBMIT REQUEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
-            ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () async {
+                  final amount = double.tryParse(amountController.text);
+                  if (amount == null || amount < 500) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimum Rs 500 required')));
+                    return;
+                  }
+                  
+                  Navigator.pop(context);
+                  setState(() => _isRequesting = true);
+                  
+                  try {
+                    await ref.read(riderServiceProvider).requestWithdrawal(widget.user.uid, amount);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request Sent! Balance adjusted.'), backgroundColor: AppColors.success));
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isRequesting = false);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.rider,
+                  minimumSize: const Size(double.infinity, 64),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: const Text('SUBMIT REQUEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
+              ),
+            ],
             const SizedBox(height: 40),
           ],
         ),
@@ -308,13 +373,15 @@ class _WithdrawalAction extends StatelessWidget {
     );
   }
 
-  Widget _buildField({required String label, required String hint, required IconData icon, String? prefix}) {
+  Widget _buildField({required String label, required String hint, required IconData icon, String? prefix, TextEditingController? controller}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label.toUpperCase(), style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
           decoration: InputDecoration(
             hintText: hint,

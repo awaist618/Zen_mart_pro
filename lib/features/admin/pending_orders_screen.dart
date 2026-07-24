@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
-import '../../theme/app_colors.dart';
 
 class PendingOrdersScreen extends ConsumerWidget {
   const PendingOrdersScreen({super.key});
@@ -13,24 +12,40 @@ class PendingOrdersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(allPendingOrdersProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Pending Orders', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Pending Orders', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: ordersAsync.when(
         data: (orders) {
           if (orders.isEmpty) {
-            return const Center(child: Text('No pending orders.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.pending_actions_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                  const SizedBox(height: 16),
+                  Text('No pending orders.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: orders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _OrderListTile(order: orders[index]),
           );
         },
@@ -47,14 +62,15 @@ class _OrderListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -63,38 +79,38 @@ class _OrderListTile extends ConsumerWidget {
             children: [
               Text(
                 'ID: #${order.id.substring(0, 8).toUpperCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onSurface),
               ),
               Text(
                 DateFormat('h:mm a').format(order.createdAt),
-                style: TextStyle(color: Colors.black.withOpacity(0.3), fontSize: 12),
+                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const Divider(height: 24),
+          const Divider(height: 32),
           Row(
             children: [
-              _OrderInfo(label: 'Customer', value: order.customerName, icon: Icons.person_outline),
-              _OrderInfo(label: 'Vendor', value: order.shopName, icon: Icons.storefront_rounded),
+              _OrderInfo(label: 'CUSTOMER', value: order.customerName, icon: Icons.person_outline),
+              _OrderInfo(label: 'VENDOR', value: order.shopName, icon: Icons.storefront_rounded),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Amount: Rs ${order.totalAmount}',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.primary),
+                'Rs ${order.totalAmount}',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.primary),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   'PENDING',
-                  style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Color(0xFFF59E0B), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                 ),
               ),
             ],
@@ -111,13 +127,13 @@ class _OrderListTile extends ConsumerWidget {
               _ActionButton(
                 icon: Icons.person_add_outlined,
                 label: 'Assign Rider',
-                color: Colors.orange,
+                color: const Color(0xFFF59E0B),
                 onTap: () {},
               ),
               _ActionButton(
                 icon: Icons.cancel_outlined,
                 label: 'Cancel',
-                color: Colors.red,
+                color: const Color(0xFFEF4444),
                 onTap: () => _showCancelDialog(context, ref, order),
               ),
               _ActionButton(
@@ -162,17 +178,19 @@ class _OrderInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.black.withOpacity(0.4)),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: colorScheme.onSurface.withValues(alpha: 0.3)),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10)),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                const SizedBox(height: 2),
+                Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -192,13 +210,14 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color ?? Colors.black.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: color ?? Colors.black.withOpacity(0.6))),
+          Icon(icon, size: 20, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color ?? colorScheme.onSurface.withValues(alpha: 0.6))),
         ],
       ),
     );
