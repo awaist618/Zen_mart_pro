@@ -2,9 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/order_model.dart';
 import '../models/user_model.dart';
+import 'notification_service.dart';
 
 class OrderService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final NotificationService _notifications;
+
+  OrderService(this._notifications);
 
   /// Central method to update order status and trigger all side effects
   Future<void> updateStatus(String orderId, OrderStatus newStatus, {String? riderId, String? reason}) async {
@@ -78,6 +82,8 @@ class OrderService {
     
     try {
       await batch.commit();
+      // 7. Trigger Push Notifications after successful DB update
+      _triggerPushNotifications(order, newStatus);
     } catch (e) {
       debugPrint("CRITICAL: Order side-effects failed: $e");
       // Fallback: Try updating only the order status if the batch fails due to permissions on other collections
@@ -152,6 +158,63 @@ class OrderService {
         'isRead': false,
         'orderId': order.id,
       });
+    }
+  }
+
+  void _triggerPushNotifications(OrderModel order, OrderStatus status) {
+    String title = '';
+    String body = '';
+
+    // Customer Push
+    switch (status) {
+      case OrderStatus.preparing:
+        title = 'Order Accepted';
+        body = 'Your order from ${order.shopName} is being prepared.';
+        break;
+      case OrderStatus.confirmed:
+        title = 'Ready for Pickup';
+        body = 'Your order is packed and waiting for a rider.';
+        break;
+      case OrderStatus.accepted:
+        title = 'Rider Assigned';
+        body = 'A rider is coming to pick up your order. Your OTP is ${order.deliveryOtp}';
+        break;
+      case OrderStatus.pickedUp:
+        title = 'Out for Delivery';
+        body = 'Your order from ${order.shopName} is on its way!';
+        break;
+      case OrderStatus.delivered:
+        title = 'Enjoy your meal!';
+        body = 'Your order #${order.id.substring(0, 5)} has been delivered.';
+        break;
+      case OrderStatus.cancelled:
+        title = 'Order Cancelled';
+        body = 'Order #${order.id.substring(0, 5)} was cancelled by the vendor.';
+        break;
+      default: break;
+    }
+
+    if (title.isNotEmpty) {
+      _notifications.notifyUser(userId: order.customerId, title: title, body: body, data: {'orderId': order.id});
+    }
+
+    // Vendor Push (e.g. when order is placed - handled elsewhere, or rider assigned)
+    if (status == OrderStatus.accepted) {
+      _notifications.notifyUser(
+        userId: order.vendorId, 
+        title: 'Rider Assigned', 
+        body: 'Rider is on the way to pick up Order #${order.id.substring(0, 5)}',
+        data: {'orderId': order.id},
+      );
+    }
+
+    // Admin Push
+    if (status == OrderStatus.delivered) {
+      _notifications.notifyRole(
+        role: UserRole.superAdmin, 
+        title: 'Platform Sale', 
+        body: 'Rs ${order.totalAmount} collected from ${order.shopName}',
+      );
     }
   }
 }

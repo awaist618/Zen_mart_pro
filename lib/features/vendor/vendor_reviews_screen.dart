@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/review_model.dart';
@@ -31,7 +32,13 @@ class _VendorReviewsScreenState extends ConsumerState<VendorReviewsScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/vendor');
+            }
+          },
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),

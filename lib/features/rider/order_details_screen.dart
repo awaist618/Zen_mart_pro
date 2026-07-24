@@ -17,14 +17,26 @@ class OrderDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeOrdersAsync = ref.watch(activeRiderOrdersProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Order #${orderId.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text('Task Detail', style: const TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/rider');
+            }
+          },
+        ),
       ),
       body: activeOrdersAsync.when(
         data: (orders) {
@@ -41,57 +53,74 @@ class OrderDetailsScreen extends ConsumerWidget {
               
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _StatusTimeline(currentStatus: order.status),
                       const SizedBox(height: 32),
                       
-                      // VENDOR CARD
+                      _SectionHeader(title: 'PICKUP', color: AppColors.rider),
+                      const SizedBox(height: 12),
                       _InfoCard(
                         orderId: order.id,
-                        title: 'PICKUP FROM VENDOR',
                         name: order.shopName,
                         address: order.pickupAddress,
                         phone: order.vendorPhone,
                         icon: Icons.storefront_rounded,
                         accentColor: AppColors.rider,
+                        colorScheme: colorScheme,
                       ),
                       
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       
-                      // CUSTOMER CARD
+                      _SectionHeader(title: 'DELIVERY', color: AppColors.success),
+                      const SizedBox(height: 12),
                       _InfoCard(
                         orderId: order.id,
-                        title: 'DELIVER TO CUSTOMER',
                         name: order.customerName,
                         address: order.deliveryAddress,
                         phone: order.customerPhone,
                         icon: Icons.person_rounded,
-                        accentColor: const Color(0xFF10B981),
+                        accentColor: AppColors.success,
+                        colorScheme: colorScheme,
                       ),
                       
                       const SizedBox(height: 32),
-                      const Text('Product Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      _SectionHeader(title: 'ORDER SUMMARY', color: colorScheme.primary),
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
                         ),
                         child: Column(
-                          children: order.items.map((item) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
+                          children: [
+                            ...order.items.map((item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(child: Text('${item['name']} x${item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
+                                  Text('Rs ${item['price']}', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+                                ],
+                              ),
+                            )),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Divider(height: 1, color: Colors.white10),
+                            ),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('${item['name']} x${item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w500)),
-                                Text('Rs ${item['price']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                const Text('Total Earnings', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                                Text('Rs ${order.deliveryFee}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.success)),
                               ],
                             ),
-                          )).toList(),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 120),
@@ -115,6 +144,14 @@ class OrderDetailsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
+  @override
+  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 4), Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color.withValues(alpha: 0.6), letterSpacing: 2))]);
 }
 
 class _OSMMap extends StatefulWidget {
@@ -219,7 +256,7 @@ class _OSMMapState extends State<_OSMMap> {
                     point: delivery,
                     width: 40,
                     height: 40,
-                    child: const _MapMarker(icon: Icons.location_on_rounded, color: Color(0xFF10B981)),
+                    child: const _MapMarker(icon: Icons.location_on_rounded, color: AppColors.success),
                   ),
               ],
             ),
@@ -232,9 +269,9 @@ class _OSMMapState extends State<_OSMMap> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+                border: Border.all(color: Colors.white10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -243,7 +280,7 @@ class _OSMMapState extends State<_OSMMap> {
                   const SizedBox(width: 6),
                   Text(
                     '${_distanceKm.toStringAsFixed(1)} KM',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white),
                   ),
                 ],
               ),
@@ -297,15 +334,18 @@ class _StatusTimeline extends StatelessWidget {
             children: [
               Container(
                 height: 4,
-                color: isActive ? AppColors.rider : Colors.grey.withOpacity(0.2),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.rider : Colors.white10,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 step['label'] as String,
                 style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                  color: isActive ? AppColors.rider : Colors.grey,
+                  fontSize: 9,
+                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                  color: isActive ? AppColors.rider : Colors.white24,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -319,66 +359,75 @@ class _StatusTimeline extends StatelessWidget {
 
 class _InfoCard extends StatelessWidget {
   final String orderId;
-  final String title;
   final String name;
   final String address;
   final String phone;
   final IconData icon;
   final Color accentColor;
+  final ColorScheme colorScheme;
 
   const _InfoCard({
     required this.orderId,
-    required this.title,
     required this.name,
     required this.address,
     required this.phone,
     required this.icon,
     required this.accentColor,
+    required this.colorScheme,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1, color: Colors.grey[600])),
-              Icon(icon, color: accentColor, size: 18),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: accentColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: accentColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const SizedBox(height: 2),
+                    Text(address, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 4),
-          Text(address, style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 13)),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(
             children: [
-              _ContactButton(
+              _ActionBtn(
                 icon: Icons.call_rounded,
-                label: 'Call',
+                label: 'CALL',
                 onTap: () => launchUrl(Uri.parse('tel:$phone')),
                 color: accentColor,
               ),
-              const SizedBox(width: 8),
-              _ContactButton(
+              const SizedBox(width: 12),
+              _ActionBtn(
                 icon: Icons.chat_bubble_rounded,
-                label: 'Chat',
-                onTap: () => GoRouter.of(context).push('/chat/$orderId/$name'),
+                label: 'CHAT',
+                onTap: () => context.push('/chat/$orderId/$name'),
                 color: accentColor,
               ),
               const Spacer(),
-              _ContactButton(
-                icon: Icons.directions_rounded,
-                label: 'Navigate',
+              _ActionBtn(
+                icon: Icons.near_me_rounded,
+                label: 'NAVIGATE',
                 onTap: () => launchUrl(Uri.parse('google.navigation:q=$address')),
                 color: Colors.blue,
               ),
@@ -390,30 +439,30 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _ContactButton extends StatelessWidget {
+class _ActionBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final Color color;
 
-  const _ContactButton({required this.icon, required this.label, required this.onTap, required this.color});
+  const _ActionBtn({required this.icon, required this.label, required this.onTap, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
           ],
         ),
       ),
@@ -429,6 +478,7 @@ class _ActionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     String buttonText = 'Next Step';
     OrderStatus nextStatus = order.status;
 
@@ -454,10 +504,10 @@ class _ActionPanel extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
       ),
       child: ElevatedButton(
         onPressed: () {
@@ -470,16 +520,16 @@ class _ActionPanel extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.rider,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          minimumSize: const Size(double.infinity, 64),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 0,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 1)),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_rounded, size: 18),
+            Text(buttonText, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            const SizedBox(width: 12),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           ],
         ),
       ),
@@ -491,28 +541,33 @@ class _ActionPanel extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Verify Delivery'),
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text('Verify Delivery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Please ask the customer for the 4-digit verification code.'),
-            const SizedBox(height: 20),
+            Text('Ask customer for the 4-digit code.', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+            const SizedBox(height: 24),
             TextField(
               controller: otpController,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: 4,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 12, color: AppColors.rider),
               decoration: InputDecoration(
                 hintText: '0000',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.1)),
+                filled: true,
+                fillColor: Colors.black26,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                 counterText: '',
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('CANCEL', style: TextStyle(color: Colors.white.withValues(alpha: 0.4)))),
           ElevatedButton(
             onPressed: () async {
               if (otpController.text == order.deliveryOtp) {
@@ -522,10 +577,11 @@ class _ActionPanel extends StatelessWidget {
                   context.pop(); // Go back to dashboard
                 }
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid Code. Please try again.'), backgroundColor: Colors.redAccent));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid Verification Code'), backgroundColor: AppColors.error));
               }
             },
-            child: const Text('Confirm Delivery'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.rider),
+            child: const Text('VERIFY & COMPLETE'),
           ),
         ],
       ),

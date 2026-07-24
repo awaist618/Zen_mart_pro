@@ -104,19 +104,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Force navigation to Splash if forcedSplash is active (e.g., during login transition)
       if (forcedSplash && state.matchedLocation != '/') return '/';
 
-      // Handle auth errors
-      if (authState.hasError || userModel.hasError) {
-        return loggingIn ? null : '/welcome';
-      }
-
       final user = authState.asData?.value;
+      final model = userModel.asData?.value;
       
       // If no user is logged in
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
-
-      final model = userModel.asData?.value;
       
       // If user exists in Auth but document is missing in Firestore after loading
       if (model == null && !userModel.isLoading) {
@@ -124,20 +118,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/welcome';
       }
 
-      // Still fetching role
+      // Still fetching profile data
       if (model == null) return null;
 
-      // If logged in but on a public screen (Splash, Welcome, Login, Signup),
-      // redirect to the appropriate dashboard
+      // Logic to prevent redirect loops and correctly route based on role
       final isPublicScreen = loggingIn || state.matchedLocation == '/' || state.matchedLocation == '/welcome';
       
       if (isPublicScreen) {
+        String target = '/welcome';
         switch (model.role) {
-          case UserRole.superAdmin: return '/admin';
-          case UserRole.vendor: return '/vendor';
-          case UserRole.customer: return '/customer';
-          case UserRole.rider: return '/rider';
-          default: return '/welcome';
+          case UserRole.superAdmin: target = '/admin'; break;
+          case UserRole.vendor: target = '/vendor'; break;
+          case UserRole.customer: target = '/customer'; break;
+          case UserRole.rider: target = '/rider'; break;
+          default: target = '/welcome';
+        }
+        
+        // ONLY redirect if the current location isn't already the target
+        if (state.matchedLocation != target) {
+          return target;
         }
       }
 

@@ -11,24 +11,37 @@ class AlertsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final notificationsAsync = ref.watch(riderNotificationsProvider);
     final user = ref.watch(userModelProvider).asData?.value;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/rider');
+            }
+          },
+        ),
         actions: [
           if (notificationsAsync.asData?.value.isNotEmpty ?? false)
             TextButton(
               onPressed: () {
-                // Logic to mark all as read could be added here
+                // Logic to mark all as read
               },
-              child: const Text('Mark all read', style: TextStyle(color: AppColors.rider)),
+              child: const Text('MARK ALL READ', style: TextStyle(color: AppColors.rider, fontWeight: FontWeight.w900, fontSize: 11)),
             ),
+          const SizedBox(width: 8),
         ],
       ),
       body: notificationsAsync.when(
@@ -38,20 +51,23 @@ class AlertsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: Colors.grey.withOpacity(0.5)),
+                  Icon(Icons.notifications_off_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.05)),
                   const SizedBox(height: 16),
-                  const Text('No notifications yet', style: TextStyle(color: Colors.grey)),
+                  Text('No notifications yet', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontWeight: FontWeight.w600)),
                 ],
               ),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
+            physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final notification = notifications[index];
               return _NotificationTile(
                 notification: notification,
+                colorScheme: colorScheme,
                 onDelete: () => ref.read(riderServiceProvider).deleteNotification(user!.uid, notification.id),
                 onTap: () {
                   ref.read(riderServiceProvider).markAsRead(user!.uid, notification.id);
@@ -72,11 +88,13 @@ class AlertsScreen extends ConsumerWidget {
 
 class _NotificationTile extends StatelessWidget {
   final RiderNotificationModel notification;
+  final ColorScheme colorScheme;
   final VoidCallback onDelete;
   final VoidCallback onTap;
 
   const _NotificationTile({
     required this.notification,
+    required this.colorScheme,
     required this.onDelete,
     required this.onTap,
   });
@@ -89,55 +107,75 @@ class _NotificationTile extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 24),
         decoration: BoxDecoration(
-          color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+        child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 28),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: Material(
-          color: notification.isRead ? Colors.white : AppColors.rider.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: notification.isRead ? Colors.transparent : AppColors.rider.withOpacity(0.1),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: notification.isRead ? colorScheme.surface : AppColors.rider.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: notification.isRead ? colorScheme.outline.withValues(alpha: 0.05) : AppColors.rider.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _getIconColor(notification.type).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(_getIcon(notification.type), color: _getIconColor(notification.type), size: 20),
               ),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: _getIconColor(notification.type).withOpacity(0.1),
-                  child: Icon(_getIcon(notification.type), color: _getIconColor(notification.type), size: 20),
-                ),
-                title: Text(
-                  notification.title,
-                  style: TextStyle(
-                    fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Column(
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(notification.message, style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.6))),
+                    Text(
+                      notification.title,
+                      style: TextStyle(
+                        fontWeight: notification.isRead ? FontWeight.w700 : FontWeight.w900,
+                        fontSize: 15,
+                        color: notification.isRead ? colorScheme.onSurface : Colors.white,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      DateFormat('MMM dd, h:mm a').format(notification.timestamp),
-                      style: TextStyle(fontSize: 10, color: Colors.black.withOpacity(0.4)),
+                      notification.message, 
+                      style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w500, height: 1.4)
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 10, color: colorScheme.onSurface.withValues(alpha: 0.2)),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('MMM dd • h:mm a').format(notification.timestamp),
+                          style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.2), fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                isThreeLine: true,
               ),
-            ),
+              if (!notification.isRead)
+                Container(
+                  width: 8, height: 8,
+                  margin: const EdgeInsets.only(top: 6),
+                  decoration: const BoxDecoration(color: AppColors.rider, shape: BoxShape.circle),
+                ),
+            ],
           ),
         ),
       ),
@@ -147,20 +185,20 @@ class _NotificationTile extends StatelessWidget {
   IconData _getIcon(RiderNotificationType type) {
     switch (type) {
       case RiderNotificationType.newRequest: return Icons.delivery_dining_rounded;
-      case RiderNotificationType.deliveryCancelled: return Icons.cancel_outlined;
-      case RiderNotificationType.assignmentUpdated: return Icons.assignment_turned_in_outlined;
-      case RiderNotificationType.paymentReceived: return Icons.account_balance_wallet_outlined;
-      case RiderNotificationType.bonusEarned: return Icons.card_giftcard_rounded;
-      case RiderNotificationType.systemAnnouncement: return Icons.campaign_outlined;
-      default: return Icons.notifications_none_rounded;
+      case RiderNotificationType.deliveryCancelled: return Icons.cancel_presentation_rounded;
+      case RiderNotificationType.assignmentUpdated: return Icons.update_rounded;
+      case RiderNotificationType.paymentReceived: return Icons.account_balance_wallet_rounded;
+      case RiderNotificationType.bonusEarned: return Icons.stars_rounded;
+      case RiderNotificationType.systemAnnouncement: return Icons.campaign_rounded;
+      default: return Icons.notifications_active_rounded;
     }
   }
 
   Color _getIconColor(RiderNotificationType type) {
     switch (type) {
-      case RiderNotificationType.deliveryCancelled: return Colors.redAccent;
+      case RiderNotificationType.deliveryCancelled: return AppColors.error;
       case RiderNotificationType.paymentReceived:
-      case RiderNotificationType.bonusEarned: return Colors.green;
+      case RiderNotificationType.bonusEarned: return AppColors.success;
       case RiderNotificationType.newRequest: return AppColors.rider;
       default: return Colors.blue;
     }

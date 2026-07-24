@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
@@ -17,20 +18,33 @@ class _RiderHistoryScreenState extends ConsumerState<RiderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final historyAsync = ref.watch(riderHistoryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Delivery History', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Delivery History', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/rider');
+            }
+          },
+        ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
+          preferredSize: const Size.fromHeight(64),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
                 _FilterChip(label: 'Today', isSelected: _filter == 'Today', onSelected: () => setState(() => _filter = 'Today')),
@@ -51,15 +65,16 @@ class _RiderHistoryScreenState extends ConsumerState<RiderHistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded, size: 64, color: Colors.grey.withOpacity(0.5)),
+                  Icon(Icons.history_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.05)),
                   const SizedBox(height: 16),
-                  Text('No deliveries found for $_filter', style: const TextStyle(color: Colors.grey)),
+                  Text('No deliveries found for $_filter', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontWeight: FontWeight.w600)),
                 ],
               ),
             );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(20),
+            physics: const BouncingScrollPhysics(),
             itemCount: filteredOrders.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) => _HistoryTile(order: filteredOrders[index]),
@@ -98,14 +113,28 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => onSelected(),
-        selectedColor: AppColors.rider,
-        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+      padding: const EdgeInsets.only(right: 10),
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.rider : colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: isSelected ? Colors.transparent : colorScheme.outline.withValues(alpha: 0.1)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -117,14 +146,16 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool isCancelled = order.status == OrderStatus.cancelled || order.status == OrderStatus.rejected;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -133,13 +164,13 @@ class _HistoryTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (isCancelled ? Colors.red : Colors.green).withOpacity(0.1), 
+                  color: (isCancelled ? AppColors.error : AppColors.success).withValues(alpha: 0.1), 
                   shape: BoxShape.circle
                 ),
                 child: Icon(
-                  isCancelled ? Icons.cancel_rounded : Icons.check_circle_rounded, 
-                  color: isCancelled ? Colors.red : Colors.green, 
-                  size: 20
+                  isCancelled ? Icons.close_rounded : Icons.check_rounded, 
+                  color: isCancelled ? AppColors.error : AppColors.success, 
+                  size: 18
                 ),
               ),
               const SizedBox(width: 16),
@@ -147,51 +178,69 @@ class _HistoryTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Order #${order.id.substring(0, 8).toUpperCase()}', 
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5)
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       '${order.shopName} → ${order.customerName}',
-                      style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
-              Text(
-                'Rs ${order.deliveryFee.toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800, 
-                  color: isCancelled ? Colors.grey : const Color(0xFF10B981)
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Rs ${order.deliveryFee.toInt()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      fontSize: 16,
+                      color: isCancelled ? colorScheme.onSurface.withValues(alpha: 0.2) : AppColors.success
+                    ),
+                  ),
+                  Text(
+                    'EARNING',
+                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.2), letterSpacing: 1),
+                  ),
+                ],
               ),
             ],
           ),
-          const Divider(height: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.05)),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
+                  Icon(Icons.calendar_today_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.3)),
+                  const SizedBox(width: 6),
                   Text(
                     order.deliveredAt != null 
-                        ? DateFormat('MMM dd, h:mm a').format(order.deliveredAt!) 
-                        : DateFormat('MMM dd, h:mm a').format(order.createdAt),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        ? DateFormat('MMM dd • h:mm a').format(order.deliveredAt!) 
+                        : DateFormat('MMM dd • h:mm a').format(order.createdAt),
+                    style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.3), fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (isCancelled ? Colors.red : Colors.green).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  color: (isCancelled ? AppColors.error : AppColors.success).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   isCancelled ? 'CANCELLED' : 'COMPLETED',
                   style: TextStyle(
-                    color: isCancelled ? Colors.red : Colors.green,
+                    color: isCancelled ? AppColors.error : AppColors.success,
                     fontSize: 9,
-                    fontWeight: FontWeight.bold
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5
                   ),
                 ),
               ),

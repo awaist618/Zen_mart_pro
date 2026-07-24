@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -194,8 +193,8 @@ class _TicketChatScreenState extends ConsumerState<TicketChatScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.08),
-            border: Border(bottom: BorderSide(color: statusColor.withOpacity(0.1))),
+            color: statusColor.withValues(alpha: 0.08),
+            border: Border(bottom: BorderSide(color: statusColor.withValues(alpha: 0.1))),
           ),
           child: Row(
             children: [

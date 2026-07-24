@@ -43,6 +43,16 @@ class _ProductManagementScreenState extends ConsumerState<ProductManagementScree
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/vendor');
+            }
+          },
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(110),
           child: Column(

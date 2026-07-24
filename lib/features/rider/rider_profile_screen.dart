@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
+import '../../core/settings_provider.dart';
 import '../../theme/app_colors.dart';
 import './widgets/rider_bottom_nav.dart';
 import '../../core/widgets/password_dialogs.dart';
@@ -13,20 +14,23 @@ class RiderProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final userAsync = ref.watch(userModelProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Rider Profile', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: const Text('Rider Profile', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => context.push('/rider/support'),
-            icon: const Icon(Icons.support_agent_rounded),
+            onPressed: () => context.push('/support'),
+            icon: Icon(Icons.help_outline_rounded, color: colorScheme.onSurface),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: userAsync.when(
@@ -34,118 +38,134 @@ class RiderProfileScreen extends ConsumerWidget {
           if (user == null) return const Center(child: Text('User not found'));
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
               children: [
-                // Enhanced Rider Identity Card
-                _buildRiderCard(context, user),
+                _buildRiderCard(context, user, colorScheme),
                 const SizedBox(height: 24),
 
-                // Stats Row
                 Row(
                   children: [
                     Expanded(
                       child: _StatBox(
-                        label: 'Earnings',
+                        label: 'TOTAL EARNINGS',
                         value: 'Rs ${NumberFormat.compact().format(user.totalEarnings)}',
-                        icon: Icons.payments_outlined,
-                        color: Colors.green,
+                        icon: Icons.account_balance_wallet_rounded,
+                        color: AppColors.success,
+                        colorScheme: colorScheme,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: _StatBox(
-                        label: 'Deliveries',
+                        label: 'DELIVERIES',
                         value: user.totalDeliveries.toString(),
-                        icon: Icons.local_shipping_outlined,
+                        icon: Icons.local_shipping_rounded,
                         color: AppColors.rider,
+                        colorScheme: colorScheme,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                _SectionHeader(title: 'Work & Performance'),
-                const SizedBox(height: 12),
-                _SettingsGroup(
-                  children: [
-                    _SettingsTile(
-                      icon: Icons.analytics_outlined,
-                      title: 'Performance Stats',
-                      subtitle: 'Ratings, reviews and feedback',
-                      onTap: () => context.push('/rider/performance'),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.history_rounded,
-                      title: 'Delivery History',
-                      subtitle: 'List of completed tasks',
-                      onTap: () => context.push('/rider/history'),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.account_balance_wallet_outlined,
-                      title: 'Payout Summary',
-                      subtitle: 'Withdrawal and earnings info',
-                      onTap: () => context.push('/rider/earnings'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                _SectionHeader(title: 'Compliance & Vehicle'),
-                const SizedBox(height: 12),
-                _SettingsGroup(
-                  children: [
-                    _SettingsTile(
-                      icon: Icons.directions_bike_rounded,
-                      title: 'Vehicle Details',
-                      subtitle: 'Model, Number Plate, Insurance',
-                      onTap: () => context.push('/rider/vehicle'),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.description_outlined,
-                      title: 'Legal Documents',
-                      subtitle: 'License, CNIC, Verification',
-                      onTap: () => context.push('/rider/documents'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                _SectionHeader(title: 'Security & App'),
-                const SizedBox(height: 12),
-                _SettingsGroup(
-                  children: [
-                    _SettingsTile(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'Change Password',
-                      subtitle: 'Keep your account secure',
-                      onTap: () => PasswordDialogs.showChangePasswordDialog(context, ref),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.language_rounded,
-                      title: 'App Language',
-                      subtitle: 'Select preferred language',
-                      onTap: () {},
                     ),
                   ],
                 ),
                 const SizedBox(height: 32),
 
-                // Logout Button
+                _SectionHeader(title: 'WORK & PERFORMANCE', color: colorScheme.primary),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  colorScheme: colorScheme,
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.analytics_rounded,
+                      title: 'Performance Stats',
+                      subtitle: 'Ratings and feedback metrics',
+                      onTap: () => context.push('/rider/performance'),
+                      colorScheme: colorScheme,
+                    ),
+                    _SettingsTile(
+                      icon: Icons.history_rounded,
+                      title: 'Delivery History',
+                      subtitle: 'Review your past tasks',
+                      onTap: () => context.push('/rider/history'),
+                      colorScheme: colorScheme,
+                    ),
+                    _SettingsTile(
+                      icon: Icons.payments_rounded,
+                      title: 'Payout Summary',
+                      subtitle: 'Manage your earnings',
+                      onTap: () => context.push('/rider/earnings'),
+                      colorScheme: colorScheme,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                _SectionHeader(title: 'COMPLIANCE', color: colorScheme.primary),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  colorScheme: colorScheme,
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.directions_bike_rounded,
+                      title: 'Vehicle Details',
+                      subtitle: 'Verification and insurance',
+                      onTap: () => context.push('/rider/vehicle'),
+                      colorScheme: colorScheme,
+                    ),
+                    _SettingsTile(
+                      icon: Icons.description_rounded,
+                      title: 'Legal Documents',
+                      subtitle: 'License and verification',
+                      onTap: () => context.push('/rider/documents'),
+                      colorScheme: colorScheme,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                _SectionHeader(title: 'ACCOUNT & SECURITY', color: colorScheme.primary),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  colorScheme: colorScheme,
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'Change Password',
+                      subtitle: 'Update security credentials',
+                      onTap: () => PasswordDialogs.showChangePasswordDialog(context, ref),
+                      colorScheme: colorScheme,
+                    ),
+                    _SettingsTile(
+                      icon: Icons.language_rounded,
+                      title: 'App Language',
+                      subtitle: ref.watch(settingsProvider).locale.languageCode == 'en' ? 'English' : 'Urdu',
+                      onTap: () => _showLanguageDialog(context, ref),
+                      colorScheme: colorScheme,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => _showLogoutDialog(context, ref),
-                    icon: const Icon(Icons.power_settings_new_rounded),
-                    label: const Text('Go Offline & Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.power_settings_new_rounded, size: 20),
+                    label: const Text('GO OFFLINE & LOGOUT', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.1),
-                      foregroundColor: Colors.red,
+                      backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.2)),
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Zen Mart Pro • Rider v1.0.2',
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                 ),
                 const SizedBox(height: 40),
               ],
@@ -159,53 +179,57 @@ class RiderProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRiderCard(BuildContext context, UserModel user) {
+  Widget _buildRiderCard(BuildContext context, UserModel user, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(36),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
           Stack(
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.rider.withOpacity(0.1),
-                backgroundImage: user.profilePicture != null ? NetworkImage(user.profilePicture!) : null,
-                child: user.profilePicture == null
-                    ? Text(user.name.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.rider))
-                    : null,
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.rider.withValues(alpha: 0.3), width: 2)),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: AppColors.rider.withValues(alpha: 0.1),
+                  backgroundImage: (user.profilePicture != null && user.profilePicture!.isNotEmpty) ? NetworkImage(user.profilePicture!) : null,
+                  child: (user.profilePicture == null || user.profilePicture!.isEmpty)
+                      ? Text(user.name.substring(0, 1).toUpperCase(),
+                          style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppColors.rider))
+                      : null,
+                ),
               ),
               if (user.verificationStatus == VerificationStatus.verified)
                 Positioned(
-                  bottom: 0,
-                  right: 0,
+                  bottom: 4,
+                  right: 4,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: const Icon(Icons.verified_rounded, color: Colors.blue, size: 24),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle, border: Border.all(color: colorScheme.surface, width: 3)),
+                    child: const Icon(Icons.verified_rounded, color: Colors.white, size: 16),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 20),
-          Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(user.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
           const SizedBox(height: 4),
-          Text('Rider ID: ${user.uid.substring(0, 8).toUpperCase()}', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-          const SizedBox(height: 16),
+          Text('RIDER ID: ${user.uid.substring(0, 8).toUpperCase()}', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _Badge(icon: Icons.star_rounded, label: '${user.rating} Rating', color: Colors.orange),
               const SizedBox(width: 12),
               _Badge(
-                icon: user.isOnline ? Icons.online_prediction : Icons.offline_bolt_outlined,
+                icon: user.isOnline ? Icons.online_prediction_rounded : Icons.offline_bolt_rounded,
                 label: user.isOnline ? 'ONLINE' : 'OFFLINE',
-                color: user.isOnline ? Colors.green : Colors.grey,
+                color: user.isOnline ? AppColors.success : Colors.grey,
               ),
             ],
           ),
@@ -214,14 +238,42 @@ class RiderProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.dialog,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Select Language', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              trailing: ref.watch(settingsProvider).locale.languageCode == 'en' ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('en'); Navigator.pop(context); },
+            ),
+            ListTile(
+              title: const Text('Urdu (اردو)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              trailing: ref.watch(settingsProvider).locale.languageCode == 'ur' ? const Icon(Icons.check_circle_rounded, color: AppColors.primary) : null,
+              onTap: () { ref.read(settingsProvider.notifier).setLocale('ur'); Navigator.pop(context); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Go Offline?'),
-        content: const Text('Logging out will set your status to Offline. You will not receive any new delivery requests.'),
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text('Go Offline?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+        content: Text('Logging out will set your status to Offline. You will not receive any new requests.', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('CANCEL', style: TextStyle(color: Colors.white.withValues(alpha: 0.4)))),
           TextButton(
             onPressed: () async {
               final auth = ref.read(authServiceProvider);
@@ -234,7 +286,7 @@ class RiderProfileScreen extends ConsumerWidget {
               await auth.signOut();
               if (context.mounted) context.go('/welcome');
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            child: const Text('LOGOUT', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -248,7 +300,7 @@ class _Badge extends StatelessWidget {
   final Color color;
   const _Badge({required this.icon, required this.label, required this.color});
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 14, color: color), const SizedBox(width: 4), Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold))]));
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 14, color: color), const SizedBox(width: 6), Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800))]));
 }
 
 class _StatBox extends StatelessWidget {
@@ -256,30 +308,35 @@ class _StatBox extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  const _StatBox({required this.label, required this.value, required this.icon, required this.color});
+  final ColorScheme colorScheme;
+  const _StatBox({required this.label, required this.value, required this.icon, required this.color, required this.colorScheme});
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]), child: Column(children: [Icon(icon, color: color, size: 28), const SizedBox(height: 12), Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), const SizedBox(height: 2), Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 11))]));
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(32), border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05))), child: Column(children: [Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 24)), const SizedBox(height: 16), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)), const SizedBox(height: 2), Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5))]));
 }
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
   @override
-  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 8), Text(title.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey[400], letterSpacing: 1.5))]);
+  Widget build(BuildContext context) => Row(children: [const SizedBox(width: 8), Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color.withValues(alpha: 0.6), letterSpacing: 2))]);
 }
 
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> children;
-  const _SettingsGroup({required this.children});
+  final ColorScheme colorScheme;
+  const _SettingsGroup({required this.children, required this.colorScheme});
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24), 
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
-          ),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(32),
+          clipBehavior: Clip.antiAlias,
           child: Column(children: children),
         ),
       );
@@ -290,7 +347,8 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  final ColorScheme colorScheme;
+  const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.onTap, required this.colorScheme});
   @override
-  Widget build(BuildContext context) => ListTile(onTap: onTap, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.rider.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppColors.rider, size: 20)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey[500])), trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20));
+  Widget build(BuildContext context) => ListTile(onTap: onTap, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.rider.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: AppColors.rider, size: 22)), title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.w500)), trailing: Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onSurface.withValues(alpha: 0.15), size: 14));
 }

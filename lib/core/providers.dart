@@ -38,9 +38,9 @@ final uploadServiceProvider = Provider((ref) => UploadService(ref));
 final vendorServiceProvider = Provider((ref) => VendorService());
 final adminServiceProvider = Provider((ref) => AdminService());
 final customerServiceProvider = Provider((ref) => CustomerService());
-final orderServiceProvider = Provider((ref) => OrderService());
-final supportServiceProvider = Provider((ref) => SupportService());
-final emergencyServiceProvider = Provider((ref) => EmergencyService());
+final orderServiceProvider = Provider((ref) => OrderService(ref.read(notificationServiceProvider)));
+final supportServiceProvider = Provider((ref) => SupportService(ref.read(notificationServiceProvider)));
+final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(notificationServiceProvider)));
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
 final splashDurationProvider = FutureProvider<void>((ref) async {

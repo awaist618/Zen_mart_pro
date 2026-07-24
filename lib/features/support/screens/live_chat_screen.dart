@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../theme/app_colors.dart';
 import '../../../core/providers.dart';
 import '../../../models/user_model.dart';
@@ -27,14 +29,37 @@ class LiveChatScreen extends ConsumerStatefulWidget {
 class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  final _audioRecorder = AudioRecorder();
+  final _audioPlayer = AudioPlayer();
   bool _showEmojiPicker = false;
   bool _isSending = false;
+  bool _isRecording = false;
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _startRecording() async {
+    if (await _audioRecorder.hasPermission()) {
+      final directory = await getTemporaryDirectory();
+      final path = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(const RecordConfig(), path: path);
+      setState(() => _isRecording = true);
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    final path = await _audioRecorder.stop();
+    setState(() => _isRecording = false);
+    if (path != null) {
+      final url = await ref.read(uploadServiceProvider).uploadImage(File(path), folder: 'support_voice');
+      if (url != null) _sendMessage(type: 'voice', attachmentUrl: url);
+    }
   }
 
   void _sendMessage({String type = 'text', String? attachmentUrl, String? linkedId, String? message}) async {
@@ -168,9 +193,9 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.forum_rounded, size: 64, color: secondaryTextColor.withOpacity(0.2)),
+                        Icon(Icons.forum_rounded, size: 64, color: secondaryTextColor.withValues(alpha: 0.2)),
                         const SizedBox(height: 16),
-                        Text('No messages yet', style: TextStyle(color: secondaryTextColor.withOpacity(0.4))),
+                        Text('No messages yet', style: TextStyle(color: secondaryTextColor.withValues(alpha: 0.4))),
                       ],
                     ),
                   );
@@ -199,14 +224,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                 onEmojiSelected: (category, emoji) {
                   _messageController.text += emoji.emoji;
                 },
-                config: const Config(
-                  emojiViewConfig: EmojiViewConfig(
-                    columns: 7,
-                    verticalSpacing: 0,
-                    horizontalSpacing: 0,
-                    gridPadding: EdgeInsets.zero,
-                  ),
-                ),
+                config: const Config(),
               ),
             ),
         ],
@@ -341,11 +359,15 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: primary,
-            child: IconButton(
-              icon: Icon(_messageController.text.trim().isEmpty ? Icons.send_rounded : Icons.send_rounded, color: Colors.white, size: 18),
-              onPressed: _isSending ? null : () => _sendMessage(),
+          GestureDetector(
+            onLongPress: _startRecording,
+            onLongPressUp: _stopRecording,
+            child: CircleAvatar(
+              backgroundColor: primary,
+              child: IconButton(
+                icon: Icon(_messageController.text.trim().isEmpty ? Icons.mic_rounded : Icons.send_rounded, color: Colors.white, size: 18),
+                onPressed: _isSending ? null : (_messageController.text.trim().isEmpty ? null : () => _sendMessage()),
+              ),
             ),
           ),
         ],

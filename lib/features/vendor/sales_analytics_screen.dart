@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
@@ -23,7 +24,13 @@ class VendorSalesAnalyticsScreen extends ConsumerWidget {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/vendor');
+              }
+            },
           ),
           bottom: TabBar(
             labelColor: colorScheme.primary,

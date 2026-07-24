@@ -79,6 +79,20 @@ class CustomerService {
   /// Place a new order
   Future<String> placeOrder(Map<String, dynamic> orderData) async {
     final docRef = await _db.collection('orders').add(orderData);
+    
+    // Notify Vendor of New Order
+    final vendorId = orderData['vendorId'];
+    if (vendorId != null) {
+      await _db.collection('users').doc(vendorId).collection('notifications').add({
+        'title': 'New Order Received! 🛍️',
+        'message': 'Order #${docRef.id.substring(0, 5)} for Rs ${orderData['totalAmount']}',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'orderId': docRef.id,
+        'type': 'new_order',
+      });
+    }
+
     return docRef.id;
   }
 

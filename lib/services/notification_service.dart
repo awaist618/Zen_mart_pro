@@ -3,10 +3,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<void> initialize() async {
     // 1. Request Permission
@@ -30,9 +32,9 @@ class NotificationService {
     // 3. Create Android Notification Channel
     if (!kIsWeb && Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'zen_mart_high_importance_channel',
+        'zen_mart_pro_high_channel',
         'High Importance Notifications',
-        description: 'This channel is used for important order updates.',
+        description: 'Used for critical order and system updates.',
         importance: Importance.high,
       );
 
@@ -80,6 +82,57 @@ class NotificationService {
     }
   }
 
+  /// Send a push notification to a specific user
+  Future<void> notifyUser({
+    required String userId,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      // 1. Log to user's notification history in Firestore
+      await _db.collection('users').doc(userId).collection('notifications').add({
+        'title': title,
+        'message': body,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'data': data,
+      });
+
+      // 2. Trigger Push via 'push_notifications' collection (For Cloud Function)
+      final userDoc = await _db.collection('users').doc(userId).get();
+      final fcmToken = userDoc.data()?['fcmToken'];
+
+      if (fcmToken != null) {
+        await _db.collection('push_notifications').add({
+          'token': fcmToken,
+          'title': title,
+          'body': body,
+          'data': data,
+          'userId': userId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'status': 'pending',
+        });
+      }
+    } catch (e) {
+      debugPrint('Notification error (insufficient permissions?): $e');
+    }
+  }
+
+  /// Notify all users of a specific role (e.g. Super Admins)
+  Future<void> notifyRole({
+    required UserRole role,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    final users = await _db.collection('users').where('role', isEqualTo: role.name).get();
+    
+    for (var doc in users.docs) {
+      await notifyUser(userId: doc.id, title: title, body: body, data: data);
+    }
+  }
+
   Future<String?> getToken() async {
     return await _fcm.getToken();
   }
@@ -87,7 +140,7 @@ class NotificationService {
   Future<void> saveTokenToFirestore(String userId) async {
     String? token = await getToken();
     if (token != null) {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      await _db.collection('users').doc(userId).update({
         'fcmToken': token,
         'lastActive': FieldValue.serverTimestamp(),
       });

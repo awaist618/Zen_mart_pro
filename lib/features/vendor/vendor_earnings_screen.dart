@@ -30,6 +30,16 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/vendor');
+            }
+          },
+        ),
       ),
       body: userAsync.when(
         data: (user) {

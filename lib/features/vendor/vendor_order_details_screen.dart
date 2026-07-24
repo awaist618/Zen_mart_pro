@@ -90,20 +90,23 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text('x${item['quantity']}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 12)),
                                 ),
-                                child: Text('x${item['quantity']}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 12)),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(child: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis)),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text('Rs ${item['price'] * item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w700)),
                         ],
                       ),

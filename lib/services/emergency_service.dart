@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/emergency_report_model.dart';
 import '../models/support_ticket_model.dart';
+import '../models/user_model.dart';
+import 'notification_service.dart';
 
 class EmergencyService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final NotificationService _notifications;
+
+  EmergencyService(this._notifications);
 
   /// Submit an emergency report
   Future<String> submitReport(EmergencyReportModel report) async {
@@ -31,25 +36,28 @@ class EmergencyService {
       },
     });
 
+    // Send Push to Admins
+    _notifications.notifyRole(
+      role: UserRole.superAdmin, 
+      title: '🚨 EMERGENCY REPORT', 
+      body: 'Critical: ${report.customerName} reported ${report.category}',
+    );
+
     // 3. Notify Vendor/Rider if involved (Professional alert)
     if (report.riderId != null) {
-      await _db.collection('users').doc(report.riderId).collection('notifications').add({
-        'title': 'Safety Alert',
-        'message': 'A report regarding your recent delivery is under investigation. Please remain available.',
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-        'type': 'emergency_alert',
-      });
+      _notifications.notifyUser(
+        userId: report.riderId!, 
+        title: 'Safety Alert', 
+        body: 'A report regarding your recent delivery is under investigation.',
+      );
     }
 
     if (report.vendorId != null) {
-      await _db.collection('users').doc(report.vendorId).collection('notifications').add({
-        'title': 'Critical Store Update',
-        'message': 'Our compliance team is reviewing a recent order from your shop due to a serious issue.',
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-        'type': 'emergency_alert',
-      });
+      _notifications.notifyUser(
+        userId: report.vendorId!, 
+        title: 'Critical Store Update', 
+        body: 'Our compliance team is reviewing a recent order from your shop.',
+      );
     }
 
     return docRef.id;

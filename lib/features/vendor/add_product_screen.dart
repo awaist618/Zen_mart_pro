@@ -121,7 +121,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/vendor');
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(

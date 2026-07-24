@@ -4,10 +4,15 @@ import '../models/support_ticket_model.dart';
 import '../models/support_chat_model.dart';
 import '../models/notification_model.dart';
 import '../models/activity_model.dart';
+import '../models/user_model.dart';
+import 'notification_service.dart';
 import 'package:flutter/material.dart';
 
 class SupportService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final NotificationService _notifications;
+
+  SupportService(this._notifications);
 
   // --- LIVE CHAT SUPPORT ---
 
@@ -97,6 +102,24 @@ class SupportService {
        await _db.collection('support_chats').doc(chatId).update({
          'unreadCount': FieldValue.increment(1),
        });
+       
+       // Notify Admin
+       _notifications.notifyRole(
+         role: UserRole.superAdmin, 
+         title: 'New message from ${message.senderName}', 
+         body: message.message.length > 50 ? '${message.message.substring(0, 47)}...' : message.message,
+       );
+    } else if (message.senderRole != 'system') {
+       // If it's an admin message, notify the customer
+       final chatDoc = await _db.collection('support_chats').doc(chatId).get();
+       final customerId = chatDoc.data()?['customerId'];
+       if (customerId != null) {
+         _notifications.notifyUser(
+           userId: customerId, 
+           title: 'Support Team Replied', 
+           body: message.message.length > 50 ? '${message.message.substring(0, 47)}...' : message.message,
+         );
+       }
     }
   }
 
