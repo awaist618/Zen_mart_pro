@@ -110,11 +110,15 @@ class _RiderListTile extends ConsumerWidget {
                       children: [
                         Text(
                           rider.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: colorScheme.onSurface),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           rider.phone,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
@@ -122,9 +126,13 @@ class _RiderListTile extends ConsumerWidget {
                           children: [
                             Icon(Icons.commute_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.3)),
                             const SizedBox(width: 4),
-                            Text(
-                              rider.vehicleInfo ?? "No Vehicle",
-                              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
+                            Expanded(
+                              child: Text(
+                                rider.vehicleInfo ?? "No Vehicle",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ],
                         ),
@@ -151,12 +159,17 @@ class _RiderListTile extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        'Rs ${rider.totalEarnings.toInt()}',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF10B981)),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Rs ${rider.totalEarnings.toInt()}',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF10B981)),
+                        ),
                       ),
                       Text(
                         '${rider.totalDeliveries} Deliveries',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w800),
                       ),
                     ],
@@ -191,7 +204,7 @@ class _RiderListTile extends ConsumerWidget {
                   _QuickAction(
                     icon: isSuspended ? Icons.check_circle_rounded : Icons.block_rounded,
                     label: isSuspended ? 'ACTIVATE' : 'SUSPEND',
-                    color: isSuspended ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                    color: isSuspended ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                     onTap: () {
                       ref.read(adminServiceProvider).updateRiderStatus(
                         rider.uid, 
@@ -244,15 +257,17 @@ class _RiderListTile extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Rider Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full Name')),
-            const SizedBox(height: 16),
-            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone Number')),
-            const SizedBox(height: 16),
-            TextField(controller: vehicleController, decoration: const InputDecoration(labelText: 'Vehicle Info')),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full Name')),
+              const SizedBox(height: 16),
+              TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone Number')),
+              const SizedBox(height: 16),
+              TextField(controller: vehicleController, decoration: const InputDecoration(labelText: 'Vehicle Info')),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
@@ -326,25 +341,27 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color ?? colorScheme.onSurface.withValues(alpha: 0.4)),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 8, 
-                fontWeight: FontWeight.w900, 
-                color: color ?? colorScheme.onSurface.withValues(alpha: 0.4),
-                letterSpacing: 0.5,
+            Icon(icon, size: 20, color: color ?? colorScheme.onSurface.withValues(alpha: 0.4)),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9, 
+                  fontWeight: FontWeight.w900, 
+                  color: color ?? colorScheme.onSurface.withValues(alpha: 0.4),
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],

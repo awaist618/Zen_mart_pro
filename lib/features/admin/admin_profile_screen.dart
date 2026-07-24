@@ -103,6 +103,9 @@ class AdminProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 48),
 
+                const DeveloperSection(),
+                const SizedBox(height: 24),
+
                 // Logout Button
                 SizedBox(
                   width: double.infinity,
@@ -119,7 +122,6 @@ class AdminProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const DeveloperSection(),
                 const SizedBox(height: 40),
               ],
             ),
@@ -264,7 +266,6 @@ class _SettingsGroup extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Material(
       color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(24),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),

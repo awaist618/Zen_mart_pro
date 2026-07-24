@@ -621,9 +621,12 @@ class _StatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 16),
           ),
           const Spacer(),
-          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          ),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -657,13 +660,18 @@ class _RevenueRow extends StatelessWidget {
             child: Icon(Icons.wallet, color: color),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-              const SizedBox(height: 4),
-              Text('Rs ${NumberFormat('#,###').format(amount)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Rs ${NumberFormat('#,###').format(amount)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+                ),
+              ],
+            ),
           ),
         ],
       ),

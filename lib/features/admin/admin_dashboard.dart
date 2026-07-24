@@ -233,9 +233,13 @@ class _RevenueMasterCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           monthlyAsync.when(
-            data: (val) => Text(
-              'Rs ${NumberFormat('#,###').format(val)}',
-              style: TextStyle(color: colorScheme.onSurface, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1.5),
+            data: (val) => FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Rs ${NumberFormat('#,###').format(val)}',
+                style: TextStyle(color: colorScheme.onSurface, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1.5),
+              ),
             ),
             loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
             error: (_,__) => const Text('Rs 0.00'),
@@ -305,7 +309,7 @@ class _KpiGrid extends ConsumerWidget {
           value: ref.watch(totalRidersCountProvider).asData?.value.toString() ?? '0',
           icon: Icons.directions_bike_rounded,
           color: const Color(0xFF38BDF8),
-          onTap: () => context.push('/admin/riders'),
+          onTap: () => context.push('/admin/users?tab=2'),
         ),
         _ModernKpi(
           title: 'Pending',
@@ -319,7 +323,7 @@ class _KpiGrid extends ConsumerWidget {
           value: ref.watch(totalShopsCountProvider).asData?.value.toString() ?? '0',
           icon: Icons.storefront_rounded,
           color: const Color(0xFF8B5CF6),
-          onTap: () => context.push('/admin/all-shops'),
+          onTap: () => context.push('/admin/users?tab=0'),
         ),
       ],
     );
@@ -673,7 +677,10 @@ class _AdminNavIcon extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 26),
           const SizedBox(height: 6),
-          Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+          ),
         ],
       ),
     );

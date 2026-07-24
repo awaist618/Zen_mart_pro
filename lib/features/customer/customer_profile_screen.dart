@@ -122,7 +122,10 @@ class CustomerProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
+
+                const DeveloperSection(),
+                const SizedBox(height: 24),
 
                 ElevatedButton.icon(
                   onPressed: () => _showLogoutDialog(context, ref),
@@ -139,7 +142,6 @@ class CustomerProfileScreen extends ConsumerWidget {
                   'Zen Mart Pro • v1.0.2',
                   style: TextStyle(color: AppColors.textDisabled, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1),
                 ),
-                const DeveloperSection(),
                 const SizedBox(height: 40),
               ],
             ),
@@ -423,7 +425,6 @@ class _SettingsGroup extends StatelessWidget {
 
     return Material(
       color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(28),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),

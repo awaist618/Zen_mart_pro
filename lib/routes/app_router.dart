@@ -203,10 +203,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/categories', builder: (context, state) => const CategoryManagementScreen()),
       GoRoute(path: '/admin/coupons', builder: (context, state) => const admin.CouponManagementScreen()),
       GoRoute(path: '/admin/users', builder: (context, state) => UserManagementScreen(initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0)),
-      GoRoute(path: '/admin/riders', builder: (context, state) => const RiderManagementScreen()),
+      GoRoute(path: '/admin/riders', builder: (context, state) => Scaffold(
+        appBar: AppBar(title: const Text('Rider Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+        body: const RiderManagementScreen(),
+      )),
       GoRoute(path: '/admin/pending-orders', builder: (context, state) => const PendingOrdersScreen()),
-      GoRoute(path: '/admin/customers', builder: (context, state) => const CustomerManagementScreen()),
-      GoRoute(path: '/admin/vendors', builder: (context, state) => const VendorManagementScreen()),
+      GoRoute(path: '/admin/customers', builder: (context, state) => Scaffold(
+        appBar: AppBar(title: const Text('Customer Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+        body: const CustomerManagementScreen(),
+      )),
+      GoRoute(path: '/admin/vendors', builder: (context, state) => Scaffold(
+        appBar: AppBar(title: const Text('Vendor Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+        body: const VendorManagementScreen(),
+      )),
       GoRoute(path: '/admin/approvals', builder: (context, state) => const ApprovalCenterScreen()),
       GoRoute(path: '/admin/payouts', builder: (context, state) => const PayoutManagementScreen()),
       GoRoute(path: '/admin/system', builder: (context, state) => const SystemSettingsScreen()),

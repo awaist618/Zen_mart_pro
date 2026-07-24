@@ -422,13 +422,17 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 22, 
-            fontWeight: FontWeight.w900, 
-            color: textColor, 
-            letterSpacing: -0.5
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 22, 
+              fontWeight: FontWeight.w900, 
+              color: textColor, 
+              letterSpacing: -0.5
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         if (showSeeAll)
@@ -476,32 +480,39 @@ class _CategoryGrid extends StatelessWidget {
           {'name': 'fashion'.tr(ref), 'key': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
         ];
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: categories.map((cat) {
-            final color = cat['color'] as Color;
-            return InkWell(
-              onTap: () => context.push('/customer/category/${cat['key']}'),
-              borderRadius: BorderRadius.circular(24),
-              child: Column(
-                children: [
-                  Container(
-                    width: 78,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(26),
-                      border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
-                      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15)] : null,
-                    ),
-                    child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 30)),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: categories.map((cat) {
+              final color = cat['color'] as Color;
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: InkWell(
+                  onTap: () => context.push('/customer/category/${cat['key']}'),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 78,
+                        height: 78,
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(26),
+                          border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
+                          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15)] : null,
+                        ),
+                        child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 30)),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
-                ],
-              ),
-            );
-          }).toList(),
+                ),
+              );
+            }).toList(),
+          ),
         );
       },
     );
@@ -711,7 +722,8 @@ class _SmallProductCard extends StatelessWidget {
                       fontSize: 14, 
                       color: textColor
                     ), 
-                    maxLines: 1
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -808,7 +820,8 @@ class _ShopCard extends StatelessWidget {
                       fontSize: 13, 
                       color: textColor
                     ), 
-                    maxLines: 1
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Row(

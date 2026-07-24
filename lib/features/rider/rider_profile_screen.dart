@@ -153,7 +153,10 @@ class RiderProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
+
+                const DeveloperSection(),
+                const SizedBox(height: 24),
 
                 SizedBox(
                   width: double.infinity,
@@ -176,7 +179,6 @@ class RiderProfileScreen extends ConsumerWidget {
                   'Zen Mart Pro • Rider v1.0.2',
                   style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                 ),
-                const DeveloperSection(),
                 const SizedBox(height: 40),
               ],
             ),
@@ -432,7 +434,6 @@ class _SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(32),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),

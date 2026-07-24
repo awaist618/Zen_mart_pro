@@ -172,15 +172,17 @@ class _VendorHero extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Flexible(
-                          child: Text(
-                            'Rs ${NumberFormat('#,###').format(user?.totalEarnings ?? 0)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 38,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.bottomLeft,
+                            child: Text(
+                              'Rs ${NumberFormat('#,###').format(user?.totalEarnings ?? 0)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 38,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1,
+                              ),
                             ),
                           ),
                         ),
@@ -690,6 +692,8 @@ class _OrderTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${order.customerName} • Rs ${order.totalAmount.round()}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ],

@@ -42,7 +42,7 @@ class DeveloperProfileScreen extends StatelessWidget {
             // Bio Section
             _buildSection(
               title: 'ABOUT ME',
-              content: 'Awais Tariq is a Computer Science student and Flutter developer from Pakistan, passionate about creating modern, user-friendly, and high-performance mobile applications.\n\nHe specializes in developing Android and iOS apps using Flutter, with experience integrating Firebase, authentication systems, cloud storage, push notifications, and responsive UI/UX design. His projects focus on clean architecture, scalability, and delivering smooth user experiences.',
+              content: 'I am a Computer Science student and Flutter developer from Pakistan, passionate about creating modern, user-friendly, and high-performance mobile applications.\n\nI specializes in developing Android and iOS apps using Flutter, with experience integrating Firebase, authentication systems, cloud storage, push notifications, and responsive UI/UX design. My projects focus on clean architecture, scalability, and delivering smooth user experiences.',
               colorScheme: colorScheme,
             ),
             
@@ -240,8 +240,8 @@ class DeveloperProfileScreen extends StatelessWidget {
         Expanded(
           child: _SocialTile(
             label: 'GitHub',
-            icon: Icons.code_rounded,
-            color: colorScheme.onSurface,
+            icon: Icons.terminal_rounded,
+            color: const Color(0xFF181717),
             onTap: () => _launchUrl('https://github.com/awaist618'),
           ),
         ),

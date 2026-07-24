@@ -13,3 +13,6 @@
 # Cloudinary / HTTP Rules
 -keep class com.cloudinary.** { *; }
 -dontwarn com.cloudinary.**
+
+# Play Store Core (Fixes R8 missing class errors)
+-dontwarn com.google.android.play.core.**

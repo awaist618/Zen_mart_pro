@@ -129,13 +129,19 @@ class _CustomerNavItem extends StatelessWidget {
           ),
           if (!isActive) ...[
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: inactiveColor,
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: inactiveColor,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ),
           ],

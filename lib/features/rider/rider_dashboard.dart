@@ -186,13 +186,19 @@ class _RiderHero extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        ref.watch(todayRiderHistoryProvider).when(
-                          data: (orders) {
-                            final todayEarnings = orders.fold(0.0, (sum, order) => sum + order.deliveryFee);
-                            return Text('Rs ${todayEarnings.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: -1));
-                          },
-                          loading: () => const Text('...', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
-                          error: (e, s) => const Text('Rs 0', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
+                        Flexible(
+                          child: ref.watch(todayRiderHistoryProvider).when(
+                            data: (orders) {
+                              final todayEarnings = orders.fold(0.0, (sum, order) => sum + order.deliveryFee);
+                              return FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.bottomLeft,
+                                child: Text('Rs ${todayEarnings.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                              );
+                            },
+                            loading: () => const Text('...', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
+                            error: (e, s) => const Text('Rs 0', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900)),
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Container(
@@ -529,7 +535,10 @@ class _OrderRequestTile extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end, 
                 children: [
-                  Text('Rs ${order.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.success)), 
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Rs ${order.deliveryFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.success))
+                  ),
                   Text('EARNINGS', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1))
                 ]
               ),

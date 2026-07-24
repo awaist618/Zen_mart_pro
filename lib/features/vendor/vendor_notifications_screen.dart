@@ -155,14 +155,19 @@ class _VendorNotificationCard extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          notification.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            color: colorScheme.onSurface,
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           DateFormat('h:mm a').format(notification.timestamp),
                           style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700),

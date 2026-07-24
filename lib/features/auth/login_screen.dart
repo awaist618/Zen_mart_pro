@@ -59,13 +59,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
     setState(() => _isLoading = true);
     try {
-      await ref.read(authServiceProvider).signIn(
-            _emailController.text.trim(),
-            _passwordController.text.trim(),
-          );
-      
+      // 1. Real Login
+      await ref.read(authServiceProvider).signIn(email, password);
       _saveRememberedUser();
       
       // On successful login, trigger a 3-second splash transition

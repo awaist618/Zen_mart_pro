@@ -313,7 +313,6 @@ class ShopManagementScreen extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 16),
       child: Material(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
