@@ -7,9 +7,34 @@ import '../models/approval_model.dart';
 import '../models/payout_model.dart';
 import '../models/activity_model.dart';
 import '../models/category_model.dart';
+import '../models/offer_model.dart';
+import '../models/system_settings_model.dart';
+import '../models/coupon_model.dart';
 
 class AdminService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  /// Manage Platform Settings
+  Stream<SystemSettingsModel> getSystemSettings() {
+    return _db.collection('settings').doc('platform').snapshots().map((doc) {
+      if (!doc.exists) {
+        // Return default settings if none exist
+        return SystemSettingsModel(
+          deliveryCharge: 150.0,
+          taxPercentage: 5.0,
+          platformCommission: 15.0,
+          appVersion: '1.2.0',
+          supportEmail: 'support@zenmartpro.com',
+          supportPhone: '+92 300 1234567',
+        );
+      }
+      return SystemSettingsModel.fromFirestore(doc);
+    });
+  }
+
+  Future<void> updateSystemSettings(Map<String, dynamic> data) async {
+    await _db.collection('settings').doc('platform').set(data, SetOptions(merge: true));
+  }
 
   /// Manage Platform Categories
   Stream<List<CategoryModel>> getCategories() {
@@ -44,11 +69,12 @@ class AdminService {
     return _db
         .collection('approvals')
         .where('status', isEqualTo: ApprovalStatus.pending.name)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ApprovalModel.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+      final approvals = snapshot.docs.map((doc) => ApprovalModel.fromFirestore(doc)).toList();
+      approvals.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return approvals;
+    });
   }
 
   /// Update approval status
@@ -140,14 +166,50 @@ class AdminService {
     await _db.collection('users').doc(uid).update({'status': status});
   }
 
+  /// Update user basic details
+  Future<void> updateUserDetails(String uid, Map<String, dynamic> data) async {
+    await _db.collection('users').doc(uid).update(data);
+  }
+
   /// Delete user
   Future<void> deleteUser(String uid) async {
+    // Also delete their shop if they are a vendor
+    final userDoc = await _db.collection('users').doc(uid).get();
+    final shopId = userDoc.data()?['shopId'];
+    if (shopId != null) {
+      await _db.collection('shops').doc(shopId).delete();
+    }
     await _db.collection('users').doc(uid).delete();
   }
 
   /// Reset Password logic (Sending password reset email)
   Future<void> sendResetPasswordEmail(String email) async {
     // Typically this would use FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    // For now we simulate or use standard Firebase Auth if available in this context
+  }
+
+  /// Get user specific orders
+  Stream<List<OrderModel>> getUserOrders(String userId, UserRole role) {
+    String field = role == UserRole.customer ? 'customerId' : 
+                   role == UserRole.vendor ? 'vendorId' : 'riderId';
+    
+    return _db.collection('orders')
+        .where(field, isEqualTo: userId)
+        .snapshots()
+        .map((s) {
+          final orders = s.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return orders;
+        });
+  }
+
+  /// Get user specific payouts
+  Stream<List<PayoutModel>> getUserPayouts(String userId) {
+    return _db.collection('payouts')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map((doc) => PayoutModel.fromFirestore(doc)).toList());
   }
 
   /// Get stream of all riders
@@ -176,11 +238,12 @@ class AdminService {
     return _db
         .collection('orders')
         .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    });
   }
 
   /// Get a single order by ID
@@ -194,12 +257,12 @@ class AdminService {
   Stream<List<OrderModel>> getAllOrders() {
     return _db
         .collection('orders')
-        .orderBy('createdAt', descending: true)
-        .limit(50)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderModel.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
+          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return orders.take(50).toList();
+        });
   }
 
   /// Cancel order
@@ -279,6 +342,61 @@ class AdminService {
   /// Delete shop
   Future<void> deleteShop(String shopId) async {
     await _db.collection('shops').doc(shopId).delete();
+  }
+
+  /// Manage Promotional Offers / Banners
+  Stream<List<OfferModel>> getAllOffers() {
+    return _db.collection('offers').orderBy('expiryDate', descending: true).snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => OfferModel.fromFirestore(doc)).toList());
+  }
+
+  Future<void> addOffer(OfferModel offer) async {
+    await _db.collection('offers').add(offer.toMap());
+  }
+
+  Future<void> deleteOffer(String id) async {
+    await _db.collection('offers').doc(id).delete();
+  }
+
+  /// Assign Vendor to Shop
+  Future<void> assignVendorToShop(String vendorId, String shopId, String shopName) async {
+    final batch = _db.batch();
+    
+    // 1. Update User record
+    batch.update(_db.collection('users').doc(vendorId), {'shopId': shopId});
+    
+    // 2. Update Shop record
+    batch.update(_db.collection('shops').doc(shopId), {
+      'vendorId': vendorId,
+      'vendorName': shopName,
+    });
+
+    await batch.commit();
+  }
+
+  /// Assign Rider to Order
+  Future<void> assignRiderToOrder(String orderId, String riderId, String riderName) async {
+    await _db.collection('orders').doc(orderId).update({
+      'riderId': riderId,
+      'riderName': riderName,
+      'status': OrderStatus.confirmed.name, // Usually goes to confirmed when rider assigned
+    });
+  }
+
+  /// Global Coupon Management
+  Stream<List<CouponModel>> getGlobalCoupons() {
+    return _db.collection('coupons')
+        .where('shopId', isNull: true) // Null shopId means global
+        .snapshots()
+        .map((s) => s.docs.map((doc) => CouponModel.fromFirestore(doc)).toList());
+  }
+
+  Future<void> addGlobalCoupon(CouponModel coupon) async {
+    await _db.collection('coupons').add(coupon.toMap());
+  }
+
+  Future<void> deleteCoupon(String id) async {
+    await _db.collection('coupons').doc(id).delete();
   }
 
   /// Create a notification (Helper for testing and system triggers)

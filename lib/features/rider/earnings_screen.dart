@@ -6,6 +6,7 @@ import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../models/user_model.dart';
 import '../../models/order_model.dart';
+import '../../models/payout_model.dart';
 import '../../services/pdf_service.dart';
 
 class RiderEarningsScreen extends ConsumerWidget {
@@ -63,9 +64,15 @@ class RiderEarningsScreen extends ConsumerWidget {
             _EarningsGrid(user: user, colorScheme: colorScheme),
             
             const SizedBox(height: 40),
-            _SectionTitle(title: 'WITHDRAWAL STATUS', color: colorScheme.primary),
+            _SectionTitle(title: 'WITHDRAWAL HISTORY', color: colorScheme.primary),
             const SizedBox(height: 16),
-            _WithdrawalStatusCard(colorScheme: colorScheme),
+            ref.watch(riderPayoutHistoryProvider).when(
+              data: (payouts) => payouts.isEmpty 
+                ? Center(child: Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: Text('No payouts requested yet.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)))))
+                : Column(children: payouts.map((p) => _PayoutTile(payout: p, colorScheme: colorScheme)).toList()),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => Text('Error: $e'),
+            ),
             
             const SizedBox(height: 40),
             _SectionTitle(title: "TODAY'S ACTIVITY", color: AppColors.success),
@@ -154,26 +161,55 @@ class _HeroStat extends StatelessWidget {
   }
 }
 
-class _EarningsGrid extends StatelessWidget {
+class _EarningsGrid extends ConsumerWidget {
   final UserModel user;
   final ColorScheme colorScheme;
   const _EarningsGrid({required this.user, required this.colorScheme});
 
   @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.6,
-      children: [
-        _StatCard(label: 'TODAY', value: 'Rs 1,200', color: Colors.blue),
-        _StatCard(label: 'WEEKLY', value: 'Rs 8,450', color: Colors.purple),
-        _StatCard(label: 'MONTHLY', value: 'Rs 28,000', color: Colors.orange),
-        _StatCard(label: 'LIFETIME', value: 'Rs ${user.totalEarnings.toInt()}', color: AppColors.success),
-      ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(riderHistoryProvider);
+
+    return historyAsync.when(
+      data: (orders) {
+        final now = DateTime.now();
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final startOfMonth = DateTime(now.year, now.month, 1);
+
+        double daily = 0;
+        double weekly = 0;
+        double monthly = 0;
+
+        for (var o in orders) {
+          final date = o.deliveredAt ?? o.createdAt;
+          if (date.day == now.day && date.month == now.month && date.year == now.year) {
+            daily += o.deliveryFee;
+          }
+          if (date.isAfter(startOfWeek)) {
+            weekly += o.deliveryFee;
+          }
+          if (date.isAfter(startOfMonth)) {
+            monthly += o.deliveryFee;
+          }
+        }
+
+        return GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.6,
+          children: [
+            _StatCard(label: 'TODAY', value: 'Rs ${daily.toInt()}', color: Colors.blue),
+            _StatCard(label: 'WEEKLY', value: 'Rs ${weekly.toInt()}', color: Colors.purple),
+            _StatCard(label: 'MONTHLY', value: 'Rs ${monthly.toInt()}', color: Colors.orange),
+            _StatCard(label: 'LIFETIME', value: 'Rs ${user.totalEarnings.toInt()}', color: AppColors.success),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Text('Error: $e'),
     );
   }
 }
@@ -201,43 +237,6 @@ class _StatCard extends StatelessWidget {
           Text(label, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
           const SizedBox(height: 4),
           FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900))),
-        ],
-      ),
-    );
-  }
-}
-
-class _WithdrawalStatusCard extends StatelessWidget {
-  final ColorScheme colorScheme;
-  const _WithdrawalStatusCard({required this.colorScheme});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.timer_rounded, color: Colors.orange, size: 22),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Processing...', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                const SizedBox(height: 2),
-                Text('Payout ID: #X2481A', style: TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-          const Text('Rs 5,000', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.orange, fontSize: 16)),
         ],
       ),
     );
@@ -425,6 +424,72 @@ class _OrderEarningTile extends StatelessWidget {
             ],
           ),
           Text('+Rs ${order.deliveryFee.toInt()}', style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.success, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PayoutTile extends StatelessWidget {
+  final PayoutModel payout;
+  final ColorScheme colorScheme;
+  const _PayoutTile({required this.payout, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    Color statusColor;
+    IconData statusIcon;
+    switch (payout.status) {
+      case PayoutStatus.paid:
+        statusColor = AppColors.success;
+        statusIcon = Icons.check_circle_rounded;
+        break;
+      case PayoutStatus.pending:
+        statusColor = Colors.orange;
+        statusIcon = Icons.timer_rounded;
+        break;
+      case PayoutStatus.rejected:
+        statusColor = AppColors.error;
+        statusIcon = Icons.error_outline_rounded;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusIcon = Icons.info_outline;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(statusIcon, color: statusColor, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  payout.status == PayoutStatus.paid ? 'Withdrawal Completed' : 
+                  payout.status == PayoutStatus.pending ? 'Payout Processing' : 'Payout Rejected',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  DateFormat('dd MMM yyyy').format(payout.createdAt),
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Text('Rs ${payout.amount.toInt()}', style: TextStyle(fontWeight: FontWeight.w900, color: statusColor, fontSize: 15)),
         ],
       ),
     );

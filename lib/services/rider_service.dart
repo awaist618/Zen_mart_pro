@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/order_model.dart';
 import '../models/rider_notification_model.dart';
 import '../models/review_model.dart';
+import '../models/payout_model.dart';
 
 class RiderService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -180,6 +181,18 @@ class RiderService {
   /// Update Rider Profile
   Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);
+  }
+
+  /// Get payout history for a rider
+  Stream<List<PayoutModel>> getPayoutHistory(String riderId) {
+    return _db.collection('payouts')
+        .where('userId', isEqualTo: riderId)
+        .snapshots()
+        .map((s) {
+          final payouts = s.docs.map((doc) => PayoutModel.fromFirestore(doc)).toList();
+          payouts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return payouts;
+        });
   }
 
   /// Request a withdrawal

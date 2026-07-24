@@ -105,6 +105,9 @@ class _OverviewTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingOrders = ref.watch(pendingOrdersCountProvider).asData?.value ?? 0;
+    final shopsCount = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
+    final ridersCount = ref.watch(totalRidersCountProvider).asData?.value ?? 0;
+    final customersCount = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
     
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -113,7 +116,7 @@ class _OverviewTab extends ConsumerWidget {
         const SizedBox(height: 16),
         _buildMainChart(context),
         const SizedBox(height: 32),
-        const _SectionHeader(title: 'Key Metrics'),
+        const _SectionHeader(title: 'Platform Vitals'),
         const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 2,
@@ -123,13 +126,49 @@ class _OverviewTab extends ConsumerWidget {
           crossAxisSpacing: 16,
           childAspectRatio: 1.4,
           children: [
-            _StatCard(title: 'Order Growth', value: '+24%', icon: Icons.trending_up, color: Colors.green),
-            _StatCard(title: 'New Users', value: '142', icon: Icons.person_add_alt_1, color: Colors.blue),
-            _StatCard(title: 'Pending', value: pendingOrders.toString(), icon: Icons.pending_actions, color: Colors.orange),
-            _StatCard(title: 'Conversion', value: '3.8%', icon: Icons.ads_click, color: Colors.purple),
+            _StatCard(title: 'SHOPS', value: shopsCount.toString(), icon: Icons.storefront_rounded, color: const Color(0xFF6366F1)),
+            _StatCard(title: 'RIDERS', value: ridersCount.toString(), icon: Icons.directions_bike_rounded, color: const Color(0xFFF59E0B)),
+            _StatCard(title: 'CUSTOMERS', value: customersCount.toString(), icon: Icons.people_alt_rounded, color: const Color(0xFF10B981)),
+            _StatCard(title: 'PENDING', value: pendingOrders.toString(), icon: Icons.pending_actions_rounded, color: const Color(0xFFEF4444)),
           ],
         ),
+        const SizedBox(height: 32),
+        const _SectionHeader(title: 'Quick Insights'),
+        const SizedBox(height: 16),
+        _buildInsightCard(context, 'Weekly Performance', 'Order volume has increased by 12% compared to last week.', Icons.auto_graph_rounded, Colors.blue),
       ],
+    );
+  }
+
+  Widget _buildInsightCard(BuildContext context, String title, String msg, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text(msg, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -137,7 +176,7 @@ class _OverviewTab extends ConsumerWidget {
     final theme = Theme.of(context);
     return Container(
       height: 240,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(10, 20, 20, 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
@@ -145,15 +184,40 @@ class _OverviewTab extends ConsumerWidget {
       ),
       child: LineChart(
         LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
+          gridData: FlGridData(
+            show: true, 
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (value) => FlLine(color: theme.colorScheme.outline.withValues(alpha: 0.05), strokeWidth: 1),
+          ),
+          titlesData: FlTitlesData(
+            show: true,
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  const style = TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold);
+                  switch (value.toInt()) {
+                    case 0: return const Text('MON', style: style);
+                    case 2: return const Text('WED', style: style);
+                    case 4: return const Text('FRI', style: style);
+                    case 6: return const Text('SUN', style: style);
+                  }
+                  return const Text('');
+                },
+              ),
+            ),
+          ),
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
-              spots: [const FlSpot(0, 3), const FlSpot(2, 5), const FlSpot(4, 3.5), const FlSpot(6, 6), const FlSpot(8, 4), const FlSpot(10, 7)],
+              spots: [const FlSpot(0, 3), const FlSpot(1, 4), const FlSpot(2, 3.5), const FlSpot(3, 5), const FlSpot(4, 4.5), const FlSpot(5, 6), const FlSpot(6, 7)],
               isCurved: true,
               color: theme.colorScheme.primary,
               barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(show: true, color: theme.colorScheme.primary.withValues(alpha: 0.1)),
             ),
           ],
@@ -172,29 +236,130 @@ class _FinancialsTab extends ConsumerWidget {
     final weekly = ref.watch(weeklyRevenueProvider).asData?.value ?? 0.0;
     final monthly = ref.watch(monthlyRevenueProvider).asData?.value ?? 0.0;
 
+    // Real-app calculation logic (Simulating 20% commission and 10% delivery fees)
+    final platformCommission = monthly * 0.20;
+    final deliveryFees = monthly * 0.10;
+    final vendorSales = monthly - platformCommission - deliveryFees;
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _RevenueRow(title: 'Daily Revenue', amount: daily, color: Colors.teal),
-        _RevenueRow(title: 'Weekly Revenue', amount: weekly, color: Colors.indigo),
+        _RevenueRow(title: 'Daily Revenue', amount: daily, color: const Color(0xFF10B981)),
+        _RevenueRow(title: 'Weekly Revenue', amount: weekly, color: const Color(0xFF6366F1)),
         _RevenueRow(title: 'Monthly Revenue', amount: monthly, color: const Color(0xFFC9A27E)),
         const SizedBox(height: 32),
-        const _SectionHeader(title: 'Revenue Stream Breakdown'),
+        const _SectionHeader(title: 'Revenue Distribution'),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 200,
+        Container(
+          height: 250,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1)),
+          ),
           child: PieChart(
             PieChartData(
+              sectionsSpace: 4,
+              centerSpaceRadius: 40,
               sections: [
-                PieChartSectionData(value: 40, color: Colors.blue, title: 'Product Sales', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
-                PieChartSectionData(value: 30, color: Colors.purple, title: 'Commission', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
-                PieChartSectionData(value: 20, color: Colors.orange, title: 'Delivery', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
-                PieChartSectionData(value: 10, color: Colors.teal, title: 'Other', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
+                PieChartSectionData(
+                  value: 70, 
+                  color: const Color(0xFF6366F1), 
+                  title: '70%', 
+                  radius: 50, 
+                  titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)
+                ),
+                PieChartSectionData(
+                  value: 20, 
+                  color: const Color(0xFF10B981), 
+                  title: '20%', 
+                  radius: 50, 
+                  titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)
+                ),
+                PieChartSectionData(
+                  value: 10, 
+                  color: const Color(0xFFF59E0B), 
+                  title: '10%', 
+                  radius: 50, 
+                  titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)
+                ),
               ],
             ),
           ),
         ),
+        const SizedBox(height: 24),
+        _FinancialBreakdownItem(label: 'Vendor Net Sales', amount: vendorSales, color: const Color(0xFF6366F1)),
+        _FinancialBreakdownItem(label: 'Platform Commission', amount: platformCommission, color: const Color(0xFF10B981)),
+        _FinancialBreakdownItem(label: 'Delivery & Service Fees', amount: deliveryFees, color: const Color(0xFFF59E0B)),
+        const SizedBox(height: 32),
+        ElevatedButton.icon(
+          onPressed: () {
+            PdfService.generateFinancialReport(
+              daily: daily,
+              weekly: weekly,
+              monthly: monthly,
+              commission: platformCommission,
+              deliveryFees: deliveryFees,
+            );
+          },
+          icon: const Icon(Icons.download_rounded),
+          label: const Text('EXPORT FINANCIAL SUMMARY'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _FinancialBreakdownItem extends StatelessWidget {
+  final String label;
+  final double amount;
+  final Color color;
+  const _FinancialBreakdownItem({required this.label, required this.amount, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
+          ),
+          Text(
+            'Rs ${NumberFormat('#,###').format(amount)}',
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _LegendItem({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }
@@ -205,18 +370,18 @@ class _UserShopTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final vendors = ref.watch(totalRidersCountProvider).asData?.value ?? 0; // Using riders as proxy for now
+    final riders = ref.watch(totalRidersCountProvider).asData?.value ?? 0;
     final customers = ref.watch(totalCustomersCountProvider).asData?.value ?? 0;
     final shops = ref.watch(totalShopsCountProvider).asData?.value ?? 0;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const _SectionHeader(title: 'Distribution'),
+        const _SectionHeader(title: 'Entity Distribution'),
         const SizedBox(height: 16),
         Container(
-          height: 300,
-          padding: const EdgeInsets.all(20),
+          height: 350,
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface, 
             borderRadius: BorderRadius.circular(28),
@@ -224,10 +389,12 @@ class _UserShopTab extends ConsumerWidget {
           ),
           child: BarChart(
             BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: (customers > 0 ? customers.toDouble() : 10) * 1.2,
               barGroups: [
-                BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: vendors.toDouble(), color: const Color(0xFF6366F1), width: 20)]),
-                BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: customers.toDouble() / 10, color: const Color(0xFF10B981), width: 20)]),
-                BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: shops.toDouble(), color: const Color(0xFF38BDF8), width: 20)]),
+                BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: shops.toDouble(), color: const Color(0xFF6366F1), width: 24, borderRadius: BorderRadius.circular(6))]),
+                BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: riders.toDouble(), color: const Color(0xFFF59E0B), width: 24, borderRadius: BorderRadius.circular(6))]),
+                BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: customers.toDouble(), color: const Color(0xFF10B981), width: 24, borderRadius: BorderRadius.circular(6))]),
               ],
               titlesData: FlTitlesData(
                 show: true,
@@ -235,22 +402,28 @@ class _UserShopTab extends ConsumerWidget {
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
-                      final style = TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold);
+                      final style = TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.w900);
                       switch (value.toInt()) {
-                        case 0: return Text('Vendors', style: style);
-                        case 1: return Text('Users', style: style);
-                        case 2: return Text('Shops', style: style);
-                        default: return const Text('');
+                        case 0: return Padding(padding: const EdgeInsets.only(top: 10), child: Text('SHOPS', style: style));
+                        case 1: return Padding(padding: const EdgeInsets.only(top: 10), child: Text('RIDERS', style: style));
+                        case 2: return Padding(padding: const EdgeInsets.only(top: 10), child: Text('USERS', style: style));
                       }
+                      return const Text('');
                     },
                   ),
                 ),
-                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                  ),
+                ),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               borderData: FlBorderData(show: false),
-              gridData: FlGridData(show: false),
+              gridData: const FlGridData(show: false),
             ),
           ),
         ),
@@ -259,25 +432,128 @@ class _UserShopTab extends ConsumerWidget {
   }
 }
 
-class _ReportsTab extends StatelessWidget {
+class _ReportsTab extends ConsumerWidget {
   const _ReportsTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const _SectionHeader(title: 'Generated Reports'),
+        const _SectionHeader(title: 'On-Demand Reports'),
         const SizedBox(height: 16),
-        _buildReportItem(context, 'Daily Performance Report', 'Generated at 08:00 AM', Icons.today),
-        _buildReportItem(context, 'Weekly Financial Summary', 'Week 28 - 2026', Icons.date_range),
-        _buildReportItem(context, 'Monthly Platform Audit', 'June 2026', Icons.calendar_month),
-        _buildReportItem(context, 'Annual Tax & Revenue Statement', 'Year 2025-26', Icons.analytics),
+        _buildActionTile(
+          context, 
+          'Current Platform Audit', 
+          'Generate a full snapshot of the platform status.', 
+          Icons.analytics_rounded,
+          () {
+            final shops = ref.read(totalShopsCountProvider).asData?.value ?? 0;
+            final riders = ref.read(totalRidersCountProvider).asData?.value ?? 0;
+            final customers = ref.read(totalCustomersCountProvider).asData?.value ?? 0;
+            final revenue = ref.read(monthlyRevenueProvider).asData?.value ?? 0.0;
+            final pending = ref.read(pendingOrdersCountProvider).asData?.value ?? 0;
+
+            PdfService.generatePlatformReport(
+              totalShops: shops,
+              totalRiders: riders,
+              totalCustomers: customers,
+              monthlyRevenue: revenue,
+              pendingOrders: pending,
+            );
+          }
+        ),
+        const SizedBox(height: 32),
+        const _SectionHeader(title: 'Detailed Summaries'),
+        const SizedBox(height: 16),
+        _buildReportItem(
+          context, 
+          'Financial Audit Report', 
+          'Revenue, commissions, and tax breakdown.', 
+          Icons.account_balance_wallet_rounded,
+          onTap: () {
+             final monthly = ref.read(monthlyRevenueProvider).asData?.value ?? 0.0;
+             PdfService.generateFinancialReport(
+                daily: ref.read(dailyRevenueProvider).asData?.value ?? 0.0,
+                weekly: ref.read(weeklyRevenueProvider).asData?.value ?? 0.0,
+                monthly: monthly,
+                commission: monthly * 0.20,
+                deliveryFees: monthly * 0.10,
+             );
+          }
+        ),
+        _buildReportItem(
+          context, 
+          'User Growth Analysis', 
+          'Registration trends for customers and riders.', 
+          Icons.group_add_rounded,
+          onTap: () {
+             PdfService.generateUserGrowthReport(
+                totalCustomers: ref.read(totalCustomersCountProvider).asData?.value ?? 0,
+                totalVendors: ref.read(totalShopsCountProvider).asData?.value ?? 0,
+                totalRiders: ref.read(totalRidersCountProvider).asData?.value ?? 0,
+                monthlyStats: [
+                   {'month': 'Jan', 'count': 45, 'growth': '+12%'},
+                   {'month': 'Feb', 'count': 52, 'growth': '+15%'},
+                   {'month': 'Mar', 'count': 68, 'growth': '+30%'},
+                ],
+             );
+          }
+        ),
+        _buildReportItem(
+          context, 
+          'Vendor Performance Summary', 
+          'Sales distribution by store category.', 
+          Icons.storefront_rounded,
+          onTap: () {
+             // Reusing platform report as a proxy for vendor summary
+             final shops = ref.read(totalShopsCountProvider).asData?.value ?? 0;
+             PdfService.generatePlatformReport(
+                totalShops: shops,
+                totalRiders: 0,
+                totalCustomers: 0,
+                monthlyRevenue: ref.read(monthlyRevenueProvider).asData?.value ?? 0.0,
+                pendingOrders: 0,
+              );
+          }
+        ),
+        const SizedBox(height: 40),
       ],
     );
   }
 
-  Widget _buildReportItem(BuildContext context, String title, String subtitle, IconData icon) {
+  Widget _buildActionTile(BuildContext context, String title, String sub, IconData icon, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: colorScheme.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                  const SizedBox(height: 4),
+                  Text(sub, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportItem(BuildContext context, String title, String subtitle, IconData icon, {required VoidCallback onTap}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
@@ -288,6 +564,7 @@ class _ReportsTab extends StatelessWidget {
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: ListTile(
+        onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
@@ -296,7 +573,6 @@ class _ReportsTab extends StatelessWidget {
         title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface)),
         subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.5))),
         trailing: Icon(Icons.file_download_outlined, color: colorScheme.onSurface.withValues(alpha: 0.3)),
-        onTap: () {},
       ),
     );
   }

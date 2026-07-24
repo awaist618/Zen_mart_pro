@@ -284,6 +284,26 @@ class _ReviewTile extends StatelessWidget {
             review.review,
             style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13, height: 1.4),
           ),
+          if (review.reply != null && review.reply!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('STORE RESPONSE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 9, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5)),
+                  const SizedBox(height: 4),
+                  Text(review.reply!, style: TextStyle(fontSize: 12, height: 1.3, color: textColor.withValues(alpha: 0.6), fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

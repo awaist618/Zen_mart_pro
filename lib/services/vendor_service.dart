@@ -229,10 +229,10 @@ class VendorService {
     await _db.collection('payouts').add({
       'userId': vendorId,
       'userName': userDoc.data()?['name'] ?? 'Unknown',
-      'userRole': role,
+      'userType': 'vendor',
       'amount': amount,
       'status': 'pending',
-      'requestedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
       'bankDetails': userDoc.data()?['bankDetails'] ?? {},
     });
 

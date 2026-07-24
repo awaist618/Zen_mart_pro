@@ -6,8 +6,8 @@ plugins {
 }
 
 android {
-    namespace = "com.example.zen_mart_pro"
-    compileSdk = 36
+    namespace = "com.zenmartpro.app"
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -24,19 +24,26 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.zen_mart_pro"
+        applicationId = "com.zenmartpro.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Enable ProGuard for code shrinking and obfuscation
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Signing with the debug keys for now so you can build and test.
+            // Replace with your production keystore before store upload.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

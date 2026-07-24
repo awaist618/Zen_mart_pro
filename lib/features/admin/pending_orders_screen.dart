@@ -66,84 +66,135 @@ class _OrderListTile extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))
+        ],
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'ID: #${order.id.substring(0, 8).toUpperCase()}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onSurface),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  '#${order.id.substring(0, 8).toUpperCase()}',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: colorScheme.primary, letterSpacing: 0.5),
+                ),
               ),
               Text(
                 DateFormat('h:mm a').format(order.createdAt),
-                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
+                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w700),
               ),
-            ],
-          ),
-          const Divider(height: 32),
-          Row(
-            children: [
-              _OrderInfo(label: 'CUSTOMER', value: order.customerName, icon: Icons.person_outline),
-              _OrderInfo(label: 'VENDOR', value: order.shopName, icon: Icons.storefront_rounded),
             ],
           ),
           const SizedBox(height: 24),
           Row(
+            children: [
+              _OrderInfo(label: 'CUSTOMER', value: order.customerName, icon: Icons.person_rounded),
+              _OrderInfo(label: 'STORE', value: order.shopName, icon: Icons.storefront_rounded),
+            ],
+          ),
+          const Divider(height: 48),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Rs ${order.totalAmount}',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.primary),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('TOTAL AMOUNT', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Rs ${order.totalAmount}',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.onSurface),
+                  ),
+                ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
                   'PENDING',
-                  style: TextStyle(color: Color(0xFFF59E0B), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                  style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                 ),
               ),
             ],
           ),
-          const Divider(height: 32),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _ActionButton(
-                icon: Icons.info_outline,
-                label: 'Details',
-                onTap: () {},
-              ),
-              _ActionButton(
-                icon: Icons.person_add_outlined,
+                icon: Icons.assignment_ind_rounded,
                 label: 'Assign Rider',
                 color: const Color(0xFFF59E0B),
-                onTap: () {},
+                onTap: () => _showAssignRiderDialog(context, ref),
               ),
               _ActionButton(
-                icon: Icons.cancel_outlined,
-                label: 'Cancel',
+                icon: Icons.cancel_rounded,
+                label: 'Cancel Order',
                 color: const Color(0xFFEF4444),
                 onTap: () => _showCancelDialog(context, ref, order),
               ),
               _ActionButton(
-                icon: Icons.call_outlined,
-                label: 'Vendor',
+                icon: Icons.call_rounded,
+                label: 'Contact Store',
                 onTap: () => launchUrl(Uri.parse('tel:${order.vendorPhone}')),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAssignRiderDialog(BuildContext context, WidgetRef ref) {
+    final ridersAsync = ref.watch(allRidersProvider);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Assign Rider'),
+        content: ridersAsync.when(
+          data: (riders) {
+            final activeRiders = riders.where((r) => r.status == 'active' && r.isOnline).toList();
+            if (activeRiders.isEmpty) return const Text('No online riders available right now.');
+            
+            return SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: activeRiders.length,
+                itemBuilder: (context, index) {
+                  final rider = activeRiders[index];
+                  return ListTile(
+                    leading: const CircleAvatar(child: Icon(Icons.person)),
+                    title: Text(rider.name),
+                    subtitle: Text(rider.vehicleInfo ?? 'No vehicle info'),
+                    onTap: () async {
+                      await ref.read(adminServiceProvider).assignRiderToOrder(order.id, rider.uid, rider.name);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Order assigned to ${rider.name}')));
+                      }
+                    },
+                  );
+                },
+              ),
+            );
+          },
+          loading: () => const CircularProgressIndicator(),
+          error: (e, s) => Text('Error: $e'),
+        ),
       ),
     );
   }

@@ -4,37 +4,77 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/shop_model.dart';
 
-class AllShopsScreen extends ConsumerWidget {
+class AllShopsScreen extends ConsumerStatefulWidget {
   const AllShopsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AllShopsScreen> createState() => _AllShopsScreenState();
+}
+
+class _AllShopsScreenState extends ConsumerState<AllShopsScreen> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
     final shopsAsync = ref.watch(allShopsProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('All Shops', style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(130),
+        child: Column(
+          children: [
+            AppBar(
+              title: const Text('All Shops', style: TextStyle(fontWeight: FontWeight.w900)),
+              backgroundColor: theme.scaffoldBackgroundColor,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+                ),
+                child: TextField(
+                  onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search shops by name or vendor...',
+                    hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3)),
+                    border: InputBorder.none,
+                    icon: Icon(Icons.search, size: 20, color: colorScheme.primary),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       body: shopsAsync.when(
         data: (shops) {
-          if (shops.isEmpty) {
+          final filtered = shops.where((s) => 
+            s.name.toLowerCase().contains(_searchQuery) || 
+            s.vendorName.toLowerCase().contains(_searchQuery)
+          ).toList();
+
+          if (filtered.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.storefront_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
                   const SizedBox(height: 16),
-                  Text('No shops registered yet.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                  Text('No shops found.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
                 ],
               ),
             );
@@ -42,9 +82,9 @@ class AllShopsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             physics: const BouncingScrollPhysics(),
-            itemCount: shops.length,
+            itemCount: filtered.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) => _ShopListTile(shop: shops[index]),
+            itemBuilder: (context, index) => _ShopListTile(shop: filtered[index]),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

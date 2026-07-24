@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/widgets/developer_section.dart';
 import '../../core/providers.dart';
 import '../../core/settings_provider.dart';
 import '../../theme/app_colors.dart';
@@ -167,6 +168,7 @@ class RiderProfileScreen extends ConsumerWidget {
                   'Zen Mart Pro • Rider v1.0.2',
                   style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                 ),
+                const DeveloperSection(),
                 const SizedBox(height: 40),
               ],
             ),

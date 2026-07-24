@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/widgets/developer_section.dart';
 import '../../core/providers.dart';
 import '../../core/settings_provider.dart';
 import '../../core/localization.dart';
@@ -156,6 +157,7 @@ class VendorProfileScreen extends ConsumerWidget {
                   'Zen Mart Pro • v1.0.2',
                   style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                 ),
+                const DeveloperSection(),
                 const SizedBox(height: 40),
               ],
             ),

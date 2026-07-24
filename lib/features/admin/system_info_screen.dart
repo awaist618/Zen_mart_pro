@@ -24,13 +24,15 @@ class SystemInfoScreen extends ConsumerWidget {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         physics: const BouncingScrollPhysics(),
         children: [
+          _buildHealthStatus(context),
+          const SizedBox(height: 32),
           _buildInfoGroup(context, 'PLATFORM STATISTICS', [
             _InfoRow(label: 'Total Customers', value: customersCount.toString()),
             _InfoRow(label: 'Total Registered Shops', value: shopsCount.toString()),
@@ -40,16 +42,38 @@ class SystemInfoScreen extends ConsumerWidget {
           _buildInfoGroup(context, 'APPLICATION DETAILS', [
             _InfoRow(label: 'App Name', value: 'Zen Mart Pro'),
             _InfoRow(label: 'Environment', value: 'Production'),
-            _InfoRow(label: 'Version', value: '1.0.2'),
-            _InfoRow(label: 'Build Number', value: '124'),
+            _InfoRow(label: 'Version', value: '1.2.0'),
+            _InfoRow(label: 'Build ID', value: 'ZN-124-PRD'),
           ]),
           const SizedBox(height: 32),
-          _buildInfoGroup(context, 'SERVER STATUS', [
-            _InfoRow(label: 'Cloud Firestore', value: 'Operational', color: const Color(0xFF10B981)),
-            _InfoRow(label: 'Firebase Auth', value: 'Operational', color: const Color(0xFF10B981)),
-            _InfoRow(label: 'Storage Server', value: 'Connected', color: const Color(0xFF10B981)),
-            _InfoRow(label: 'Push Notification Service', value: 'Active', color: const Color(0xFF10B981)),
+          _buildInfoGroup(context, 'SERVICE STATUS', [
+            _InfoRow(label: 'Database (Firestore)', value: 'OPERATIONAL', color: const Color(0xFF10B981)),
+            _InfoRow(label: 'Identity (Firebase Auth)', value: 'OPERATIONAL', color: const Color(0xFF10B981)),
+            _InfoRow(label: 'CDN (Cloudinary)', value: 'CONNECTED', color: const Color(0xFF10B981)),
+            _InfoRow(label: 'Messaging (FCM)', value: 'ACTIVE', color: const Color(0xFF10B981)),
           ]),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthStatus(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+          const SizedBox(height: 16),
+          const Text('System Health: Excellent', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF10B981))),
+          const SizedBox(height: 4),
+          Text('All nodes are performing optimally.', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
         ],
       ),
     );

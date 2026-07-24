@@ -60,9 +60,18 @@ class CategoryManagementScreen extends ConsumerWidget {
                   ),
                   title: Text(cat.name, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
                   subtitle: Text('${cat.shopCount} Shops', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
-                    onPressed: () => ref.read(adminServiceProvider).deleteCategory(cat.id),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        onPressed: () => _showAddCategoryDialog(context, ref, category: cat),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                        onPressed: () => _showDeleteDialog(context, ref, cat),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -72,16 +81,37 @@ class CategoryManagementScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddCategoryDialog(context, ref),
         backgroundColor: colorScheme.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text('ADD CATEGORY', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  void _showAddCategoryDialog(BuildContext context, WidgetRef ref) {
-    final nameController = TextEditingController();
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, CategoryModel category) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Category?'),
+        content: Text('Delete "${category.name}"? This will affect shops linked to this category.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              ref.read(adminServiceProvider).deleteCategory(category.id);
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context, WidgetRef ref, {CategoryModel? category}) {
+    final nameController = TextEditingController(text: category?.name);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
@@ -93,11 +123,11 @@ class CategoryManagementScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24), 
           side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
         ),
-        title: Text('Add New Category', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+        title: Text(category == null ? 'Add New Category' : 'Edit Category', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
         content: TextField(
           controller: nameController,
           style: TextStyle(color: colorScheme.onSurface),
-          decoration: const InputDecoration(hintText: 'Category Name (e.g. Grocery)'),
+          decoration: const InputDecoration(hintText: 'Category Name (e.g. Grocery)', border: OutlineInputBorder()),
         ),
         actions: [
           TextButton(
@@ -107,12 +137,18 @@ class CategoryManagementScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (nameController.text.isNotEmpty) {
-                ref.read(adminServiceProvider).addCategory(CategoryModel(
-                  id: '',
-                  name: nameController.text.trim(),
-                  icon: 'category',
-                  imageUrl: '',
-                ));
+                if (category == null) {
+                  ref.read(adminServiceProvider).addCategory(CategoryModel(
+                    id: '',
+                    name: nameController.text.trim(),
+                    icon: 'category',
+                    imageUrl: '',
+                  ));
+                } else {
+                  ref.read(adminServiceProvider).updateCategory(category.id, {
+                    'name': nameController.text.trim(),
+                  });
+                }
                 Navigator.pop(context);
               }
             },
@@ -120,7 +156,7 @@ class CategoryManagementScreen extends ConsumerWidget {
               minimumSize: const Size(100, 48),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('ADD'),
+            child: Text(category == null ? 'ADD' : 'UPDATE'),
           ),
         ],
       ),

@@ -74,11 +74,14 @@ class _ApprovalListTile extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,11 +103,12 @@ class _ApprovalListTile extends ConsumerWidget {
                   children: [
                     Text(
                       approval.applicantName,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface),
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: colorScheme.onSurface),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       approval.type.name.replaceAll(RegExp(r'(?<!^)(?=[A-Z])'), ' ').toUpperCase(),
-                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.w900),
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1),
                     ),
                   ],
                 ),
@@ -115,20 +119,28 @@ class _ApprovalListTile extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: colorScheme.onSurface.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
             ),
-            child: Text(
-              approval.details['message'] ?? "No message provided.",
-              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13, height: 1.4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('REQUEST MESSAGE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.3), letterSpacing: 1)),
+                const SizedBox(height: 8),
+                Text(
+                  approval.details['message'] ?? "No introductory message provided.",
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13, height: 1.5, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           ),
-          const Divider(height: 32),
+          const Divider(height: 48),
           Row(
             children: [
               Expanded(
@@ -137,9 +149,10 @@ class _ApprovalListTile extends ConsumerWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFEF4444),
                     side: const BorderSide(color: Color(0xFFEF4444)),
-                    minimumSize: const Size(0, 48),
+                    minimumSize: const Size(0, 52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('REJECT'),
+                  child: const Text('REJECT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -151,19 +164,21 @@ class _ApprovalListTile extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 48),
+                    minimumSize: const Size(0, 52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('APPROVE'),
+                  child: const Text('APPROVE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Center(
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
             child: TextButton.icon(
               onPressed: () {},
               icon: Icon(Icons.file_present_rounded, size: 18, color: colorScheme.primary),
-              label: Text('VIEW DOCUMENTS', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
+              label: Text('VERIFY DOCUMENTS', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
             ),
           ),
         ],

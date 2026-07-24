@@ -36,6 +36,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cart = ref.watch(cartProvider);
     final address = ref.watch(defaultAddressProvider);
     final user = ref.watch(userModelProvider).asData?.value;
+    final settings = ref.watch(systemSettingsProvider).asData?.value;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
@@ -45,6 +46,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final shopAsync = shopId.isNotEmpty 
         ? ref.watch(shopDetailProvider(shopId))
         : const AsyncData<ShopModel?>(null);
+
+    final platformDeliveryFee = settings?.deliveryCharge ?? 150.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -80,11 +83,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 16),
             shopAsync.when(
               data: (shop) {
-                final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? 100.0);
+                final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? platformDeliveryFee);
                 return _buildOrderSummary(cart, colorScheme, isLight, deliveryFee);
               },
               loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
-              error: (_, __) => _buildOrderSummary(cart, colorScheme, isLight, 100.0), // Fallback
+              error: (_, __) => _buildOrderSummary(cart, colorScheme, isLight, platformDeliveryFee), // Fallback
             ),
             const SizedBox(height: 40),
           ],
@@ -97,7 +100,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         user, 
         colorScheme, 
         isLight, 
-        shopAsync.value?.deliveryFee ?? 100.0,
+        shopAsync.value?.deliveryFee ?? platformDeliveryFee,
       ),
     );
   }

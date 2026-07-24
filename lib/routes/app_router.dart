@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers.dart';
@@ -25,10 +25,12 @@ import '../features/admin/system_info_screen.dart';
 import '../features/admin/activity_log_screen.dart';
 import '../features/admin/shop_management_screen.dart';
 import '../features/admin/category_management_screen.dart';
+import '../features/admin/coupon_management_screen.dart' as admin;
 import '../features/admin/user_management_screen.dart';
 import '../features/admin/support_list_screen.dart';
 import '../features/admin/support_chat_detail_screen.dart';
 import '../features/admin/order_management_screen.dart';
+import '../features/admin/user_history_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/vendor/vendor_notifications_screen.dart';
@@ -95,12 +97,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authStateProvider);
       final userModel = ref.read(userModelProvider);
       final splashWait = ref.read(splashDurationProvider);
+      final settings = ref.read(systemSettingsProvider).asData?.value;
 
       final loggingIn = state.matchedLocation == '/login' || 
                          state.matchedLocation == '/welcome' || 
                          state.matchedLocation == '/signup';
 
-      // 1. Splash Duration logic
+      // 1. Maintenance Mode Logic (Super Admin bypasses this)
+      if (settings?.maintenanceMode == true) {
+        final isSuperAdmin = userModel.asData?.value?.role == UserRole.superAdmin;
+        if (!isSuperAdmin && state.matchedLocation != '/maintenance') {
+          return '/maintenance';
+        }
+      }
+
+      // 2. Splash Duration logic
       if (splashWait.isLoading) return null;
 
       // 2. Auth Loading logic
@@ -152,6 +163,30 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(
+        path: '/maintenance', 
+        builder: (context, state) => Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.settings_suggest_rounded, size: 80, color: Color(0xFFC9A27E)),
+                const SizedBox(height: 24),
+                const Text('Zen Mart Pro', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 48),
+                  child: Text(
+                    'We are currently performing scheduled maintenance to improve your experience. Please check back shortly.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
@@ -164,6 +199,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/all-shops', builder: (context, state) => const AllShopsScreen()),
       GoRoute(path: '/admin/shops', builder: (context, state) => const ShopManagementScreen()),
       GoRoute(path: '/admin/categories', builder: (context, state) => const CategoryManagementScreen()),
+      GoRoute(path: '/admin/coupons', builder: (context, state) => const admin.CouponManagementScreen()),
       GoRoute(path: '/admin/users', builder: (context, state) => UserManagementScreen(initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0)),
       GoRoute(path: '/admin/riders', builder: (context, state) => const RiderManagementScreen()),
       GoRoute(path: '/admin/pending-orders', builder: (context, state) => const PendingOrdersScreen()),
@@ -175,6 +211,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/system-info', builder: (context, state) => const SystemInfoScreen()),
       GoRoute(path: '/admin/activity-log', builder: (context, state) => const ActivityLogScreen()),
       GoRoute(path: '/admin/orders', builder: (context, state) => const OrderManagementScreen()),
+      GoRoute(
+        path: '/admin/user-history/:userId/:role',
+        builder: (context, state) => UserHistoryScreen(
+          userId: state.pathParameters['userId']!,
+          role: UserRole.values.firstWhere(
+            (e) => e.name == state.pathParameters['role'],
+            orElse: () => UserRole.unknown,
+          ),
+        ),
+      ),
       GoRoute(path: '/admin/support', builder: (context, state) => const SupportListScreen()),
       GoRoute(
         path: '/admin/support-chat/:userId/:userName',

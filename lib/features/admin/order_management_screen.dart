@@ -134,11 +134,14 @@ class _OrderCard extends ConsumerWidget {
     final isCancelled = order.status == OrderStatus.cancelled;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,19 +149,23 @@ class _OrderCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'ID: #${order.id.substring(0, 8).toUpperCase()}',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onSurface),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  '#${order.id.substring(0, 8).toUpperCase()}',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: colorScheme.primary, letterSpacing: 0.5),
+                ),
               ),
               _StatusBadge(status: order.status),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
-            DateFormat('dd MMM yyyy, h:mm a').format(order.createdAt),
+            DateFormat('dd MMM yyyy • hh:mm a').format(order.createdAt),
             style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
           ),
-          const Divider(height: 32),
+          const Divider(height: 48),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -173,29 +180,30 @@ class _OrderCard extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('AMOUNT', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  Text('TOTAL AMOUNT', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
                   const SizedBox(height: 4),
-                  Text('Rs ${order.totalAmount}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 15)),
+                  Text('Rs ${order.totalAmount}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 16)),
                 ],
               ),
             ],
           ),
           if (!isCancelled && order.status != OrderStatus.delivered) ...[
-            const Divider(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _showCancelDialog(context, ref),
-                icon: const Icon(Icons.cancel_outlined, size: 18),
-                label: const Text('CANCEL ORDER', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                  foregroundColor: const Color(0xFFEF4444),
-                  elevation: 0,
-                  minimumSize: const Size(0, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            const Divider(height: 40),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showCancelDialog(context, ref),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFEF4444),
+                      side: const BorderSide(color: Color(0xFFEF4444)),
+                      minimumSize: const Size(0, 48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('CANCEL ORDER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ],

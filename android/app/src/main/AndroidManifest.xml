@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application
-        android:label="zen_mart_pro"
+        android:label="Zen Mart Pro"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true">

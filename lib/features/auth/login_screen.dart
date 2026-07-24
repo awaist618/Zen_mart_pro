@@ -607,7 +607,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Zenvyro Labs',
+                          'Zenvyro Labs X Awais',
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w800,

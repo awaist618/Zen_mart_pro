@@ -8,6 +8,7 @@ class CouponModel {
   final double fixedDiscount;
   final DateTime expiryDate;
   final double minOrderAmount;
+  final String description;
   final bool isActive;
 
   CouponModel({
@@ -18,6 +19,7 @@ class CouponModel {
     this.fixedDiscount = 0.0,
     required this.expiryDate,
     this.minOrderAmount = 0.0,
+    this.description = '',
     this.isActive = true,
   });
 
@@ -31,6 +33,7 @@ class CouponModel {
       fixedDiscount: (data['fixedDiscount'] ?? 0.0).toDouble(),
       expiryDate: (data['expiryDate'] as Timestamp).toDate(),
       minOrderAmount: (data['minOrderAmount'] ?? 0.0).toDouble(),
+      description: data['description'] ?? '',
       isActive: data['isActive'] ?? true,
     );
   }
@@ -43,6 +46,7 @@ class CouponModel {
       'fixedDiscount': fixedDiscount,
       'expiryDate': Timestamp.fromDate(expiryDate),
       'minOrderAmount': minOrderAmount,
+      'description': description,
       'isActive': isActive,
     };
   }

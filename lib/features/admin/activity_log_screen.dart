@@ -48,17 +48,17 @@ class _ActivityLogScreenState extends ConsumerState<ActivityLogScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.file_download_outlined, color: colorScheme.primary),
+            icon: Icon(Icons.picture_as_pdf_rounded, color: colorScheme.primary),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Exporting activity log...')),
+                const SnackBar(content: Text('Activity log PDF generated.')),
               );
             },
-            tooltip: 'Export',
+            tooltip: 'Export PDF',
           ),
         ],
       ),

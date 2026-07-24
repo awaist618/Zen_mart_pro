@@ -31,6 +31,7 @@ import '../models/support_ticket_model.dart';
 import '../models/emergency_report_model.dart';
 import '../models/offer_model.dart';
 import '../models/cart_model.dart';
+import '../models/system_settings_model.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -117,6 +118,12 @@ final riderReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getRiderReviews(user.uid);
+});
+
+final riderPayoutHistoryProvider = StreamProvider<List<PayoutModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getPayoutHistory(user.uid);
 });
 
 // --- VENDOR PROVIDERS ---
@@ -344,10 +351,24 @@ final allCategoriesStreamProvider = StreamProvider<List<CategoryModel>>((ref) {
   return ref.watch(adminServiceProvider).getCategories();
 });
 
+final allOffersProvider = StreamProvider<List<OfferModel>>((ref) {
+  final user = ref.watch(userModelProvider).asData?.value;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllOffers();
+});
+
 final activityLogsProvider = StreamProvider.family<List<ActivityModel>, DateTime?>((ref, start) {
   final user = ref.watch(userModelProvider).asData?.value;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getActivityLogs(start: start);
+});
+
+final systemSettingsProvider = StreamProvider<SystemSettingsModel>((ref) {
+  return ref.watch(adminServiceProvider).getSystemSettings();
+});
+
+final globalCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
+  return ref.watch(adminServiceProvider).getGlobalCoupons();
 });
 
 // Admin Stats Providers
