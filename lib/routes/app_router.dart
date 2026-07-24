@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers.dart';
 import '../models/user_model.dart';
 import '../screens/splash_screen.dart';
+import '../screens/developer_profile_screen.dart';
 import '../features/auth/welcome_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
@@ -163,6 +164,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/developer-profile', builder: (context, state) => const DeveloperProfileScreen()),
       GoRoute(
         path: '/maintenance', 
         builder: (context, state) => Scaffold(

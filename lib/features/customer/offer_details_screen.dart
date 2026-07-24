@@ -175,13 +175,14 @@ class _SmallShopTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+      child: Material(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.1)) : BorderSide.none,
+        ),
         child: ListTile(
           onTap: () => context.push('/customer/shop/${shop.id}'),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

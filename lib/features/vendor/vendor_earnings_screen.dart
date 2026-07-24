@@ -129,25 +129,36 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
           else ...[
             Row(
               children: [
-                Icon(Icons.account_balance_rounded, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  user.bankDetails!['bankName'] ?? 'Digital Account',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                  child: Icon(Icons.account_balance_rounded, color: colorScheme.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(user.bankDetails!['bankName'] ?? 'Business Account', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      Text(user.bankDetails!['accountNumber'] ?? 'Verified', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: (_isRequesting || user.totalEarnings < 500) ? null : () => _handleWithdrawal(user.uid, user.totalEarnings),
+              onPressed: (_isRequesting || user.totalEarnings < 500) ? null : () => _showWithdrawalOptions(context, user),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
-                minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 64),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 0,
               ),
               child: _isRequesting 
                 ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text('WITHDRAW ALL (RS ${user.totalEarnings.toInt()})', style: const TextStyle(fontWeight: FontWeight.w900)),
+                : const Text('CREATE PAYOUT REQUEST', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
             ),
             const SizedBox(height: 12),
             Text(
@@ -156,6 +167,124 @@ class _VendorEarningsScreenState extends ConsumerState<VendorEarningsScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _showWithdrawalOptions(BuildContext context, UserModel user) {
+    final amountController = TextEditingController(text: user.totalEarnings.toInt().toString());
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(36))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 28, right: 28, top: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Withdraw Funds', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white24)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text('Available Balance: Rs ${user.totalEarnings.toInt()}', style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 32),
+              
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('ENTER AMOUNT', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      prefixText: 'Rs ',
+                      prefixStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [1000, 2000, 5000, 10000].map((amt) => Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: ChoiceChip(
+                      label: Text('Rs $amt'),
+                      selected: amountController.text == amt.toString(),
+                      onSelected: (v) => setSheetState(() => amountController.text = amt.toString()),
+                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      labelStyle: TextStyle(color: amountController.text == amt.toString() ? Colors.white : Colors.white60, fontWeight: FontWeight.bold),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  )).toList(),
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white10)),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(Icons.account_balance_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('TRANSFER TO', style: TextStyle(color: Colors.white30, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          Text(user.bankDetails!['bankName'] ?? 'Business Account', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                          Text(user.bankDetails!['accountNumber'] ?? 'Verified Account', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  final amt = double.tryParse(amountController.text);
+                  if (amt == null || amt < 500 || amt > user.totalEarnings) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid amount (Min Rs 500)')));
+                    return;
+                  }
+                  Navigator.pop(context);
+                  _handleWithdrawal(user.uid, amt);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 64),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: const Text('CONFIRM WITHDRAWAL', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
       ),
     );
   }

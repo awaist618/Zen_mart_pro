@@ -120,17 +120,20 @@ class _SupportItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+      child: Material(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: color ?? AppColors.rider, size: 20),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colorScheme.onSurface.withValues(alpha: 0.1)),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.05)),
+        ),
+        child: ListTile(
+          leading: Icon(icon, color: color ?? AppColors.rider, size: 20),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+          onTap: onTap,
+        ),
       ),
     );
   }

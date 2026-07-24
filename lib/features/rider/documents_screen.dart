@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
+import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
 
 class DocumentsScreen extends ConsumerWidget {
@@ -15,6 +16,12 @@ class DocumentsScreen extends ConsumerWidget {
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     final docs = user.documents ?? {};
+    final urls = user.documentUrls ?? {};
+    
+    // Check if all essential docs are uploaded
+    final bool canSubmit = docs['cnic_front'] == 'pending' || 
+                          docs['cnic_back'] == 'pending' || 
+                          docs['license'] == 'pending';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -34,71 +41,117 @@ class DocumentsScreen extends ConsumerWidget {
           },
         ),
       ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          Text(
-            'GOVERNMENT COMPLIANCE',
-            style: TextStyle(color: colorScheme.primary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Keep your documents up to date to maintain your active verified status.',
-            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
-          ),
-          const SizedBox(height: 32),
-          _DocumentCard(
-            title: 'CNIC Front Face',
-            status: docs['cnic_front'] ?? 'not_uploaded',
-            colorScheme: colorScheme,
-            onUpload: () => _handleUpload(context, ref, user.uid, 'cnic_front'),
-          ),
-          _DocumentCard(
-            title: 'CNIC Rear Face',
-            status: docs['cnic_back'] ?? 'not_uploaded',
-            colorScheme: colorScheme,
-            onUpload: () => _handleUpload(context, ref, user.uid, 'cnic_back'),
-          ),
-          _DocumentCard(
-            title: 'Driving License',
-            status: docs['license'] ?? 'not_uploaded',
-            colorScheme: colorScheme,
-            onUpload: () => _handleUpload(context, ref, user.uid, 'license'),
-          ),
-          _DocumentCard(
-            title: 'Vehicle Registration',
-            status: docs['registration'] ?? 'not_uploaded',
-            colorScheme: colorScheme,
-            onUpload: () => _handleUpload(context, ref, user.uid, 'registration'),
-          ),
-          _DocumentCard(
-            title: 'Personal Insurance',
-            status: docs['insurance'] ?? 'not_uploaded',
-            colorScheme: colorScheme,
-            onUpload: () => _handleUpload(context, ref, user.uid, 'insurance'),
-          ),
-          const SizedBox(height: 40),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
-            ),
-            child: Row(
+          Expanded(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(24),
               children: [
-                Icon(Icons.info_outline_rounded, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'Documents are reviewed within 24-48 business hours.',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white60),
+                Text(
+                  'GOVERNMENT COMPLIANCE',
+                  style: TextStyle(color: colorScheme.primary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Keep your documents up to date to maintain your active verified status.',
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500, height: 1.5),
+                ),
+                const SizedBox(height: 32),
+                _DocumentCard(
+                  title: 'CNIC Front Face',
+                  status: docs['cnic_front'] ?? 'not_uploaded',
+                  colorScheme: colorScheme,
+                  onUpload: () => _handleUpload(context, ref, user.uid, 'cnic_front'),
+                ),
+                _DocumentCard(
+                  title: 'CNIC Rear Face',
+                  status: docs['cnic_back'] ?? 'not_uploaded',
+                  colorScheme: colorScheme,
+                  onUpload: () => _handleUpload(context, ref, user.uid, 'cnic_back'),
+                ),
+                _DocumentCard(
+                  title: 'Driving License',
+                  status: docs['license'] ?? 'not_uploaded',
+                  colorScheme: colorScheme,
+                  onUpload: () => _handleUpload(context, ref, user.uid, 'license'),
+                ),
+                _DocumentCard(
+                  title: 'Vehicle Registration',
+                  status: docs['registration'] ?? 'not_uploaded',
+                  colorScheme: colorScheme,
+                  onUpload: () => _handleUpload(context, ref, user.uid, 'registration'),
+                ),
+                _DocumentCard(
+                  title: 'Personal Insurance',
+                  status: docs['insurance'] ?? 'not_uploaded',
+                  colorScheme: colorScheme,
+                  onUpload: () => _handleUpload(context, ref, user.uid, 'insurance'),
+                ),
+                const SizedBox(height: 40),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: colorScheme.primary, size: 20),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Text(
+                          'Documents are reviewed within 24-48 business hours.',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white60),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+          
+          // Professional Submission Action
+          if (canSubmit && user.verificationStatus != VerificationStatus.pending)
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1))),
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                   final Map<String, String> docUrls = {};
+                   urls.forEach((k, v) => docUrls[k] = v.toString());
+                   
+                   await ref.read(riderServiceProvider).submitDocumentsForApproval(user.uid, user.name, docUrls);
+                   if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       const SnackBar(content: Text('Verification request submitted to Admin!'), backgroundColor: AppColors.success),
+                     );
+                   }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 64),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: const Text('SUBMIT FOR REVIEW', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+            ),
+            
+          if (user.verificationStatus == VerificationStatus.pending)
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+              child: Text(
+                'YOUR DOCUMENTS ARE UNDER REVIEW',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1),
+              ),
+            ),
         ],
       ),
     );

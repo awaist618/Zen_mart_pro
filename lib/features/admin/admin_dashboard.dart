@@ -28,7 +28,6 @@ class AdminDashboard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    const SizedBox(height: 24),
                     const _KpiGrid(),
                     const SizedBox(height: 32),
                     const _AdminQuickActions(),
@@ -62,7 +61,7 @@ class _ModernHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 70, 24, 140),
+      padding: const EdgeInsets.fromLTRB(24, 70, 24, 32),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

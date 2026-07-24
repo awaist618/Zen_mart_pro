@@ -65,6 +65,7 @@ class _ApprovalListTile extends ConsumerWidget {
       case ApprovalType.vendorRegistration: return Icons.person_add_rounded;
       case ApprovalType.riderRegistration: return Icons.directions_bike_rounded;
       case ApprovalType.shopApproval: return Icons.storefront_rounded;
+      case ApprovalType.riderVerification: return Icons.fact_check_rounded;
     }
   }
 
@@ -72,6 +73,7 @@ class _ApprovalListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final bool isVerification = approval.type == ApprovalType.riderVerification;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -120,6 +122,14 @@ class _ApprovalListTile extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
+          
+          if (isVerification) ...[
+             const Text('DOCUMENT PREVIEW', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+             const SizedBox(height: 12),
+             _DocumentGrid(urls: Map<String, dynamic>.from(approval.details['documentUrls'] ?? {})),
+             const SizedBox(height: 24),
+          ],
+
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -172,15 +182,6 @@ class _ApprovalListTile extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.file_present_rounded, size: 18, color: colorScheme.primary),
-              label: Text('VERIFY DOCUMENTS', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5)),
-            ),
-          ),
         ],
       ),
     );
@@ -209,3 +210,5 @@ class _ApprovalListTile extends ConsumerWidget {
     );
   }
 }
+
+class _DocumentGrid extends StatelessWidget {

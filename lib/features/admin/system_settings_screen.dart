@@ -230,28 +230,31 @@ class SystemSettingsScreen extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
+      child: Material(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
+        ),
+        child: ListTile(
+          onTap: onTap,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accent, size: 20),
           ),
-          child: Icon(icon, color: accent, size: 20),
+          title: Text(
+            title,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
+          ),
+          subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12)) : null,
+          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.2)),
         ),
-        title: Text(
-          title,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
-        ),
-        subtitle: subtitle != null ? Text(subtitle, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12)) : null,
-        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurface.withValues(alpha: 0.2)),
       ),
     );
   }

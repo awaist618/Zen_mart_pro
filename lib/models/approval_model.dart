@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum ApprovalType {
   vendorRegistration,
   riderRegistration,
-  shopApproval
+  shopApproval,
+  riderVerification
 }
 
 enum ApprovalStatus {

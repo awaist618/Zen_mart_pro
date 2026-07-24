@@ -289,84 +289,131 @@ class _WithdrawalActionState extends ConsumerState<_WithdrawalAction> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(36))),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 28, right: 28, top: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Payout Request', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-            const SizedBox(height: 8),
-            Text('Available: Rs ${widget.balance.toStringAsFixed(0)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
-            const SizedBox(height: 32),
-            
-            if (!hasBankDetails)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.red.withValues(alpha: 0.3))),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline_rounded, color: Colors.red),
-                    const SizedBox(width: 16),
-                    Expanded(child: Text('Add bank details in profile to withdraw.', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13))),
-                  ],
-                ),
-              )
-            else ...[
-              _buildField(label: 'Amount', hint: '0.00', icon: Icons.payments_rounded, prefix: 'Rs ', controller: amountController),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.account_balance_rounded, color: AppColors.rider, size: 20),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('WITHDRAWING TO', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900)),
-                        Text(widget.user.bankDetails!['bankName'] ?? 'Bank Account', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 28, right: 28, top: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Payout Request', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white24)),
+                ],
               ),
+              const SizedBox(height: 8),
+              Text('Available Balance: Rs ${widget.balance.toStringAsFixed(0)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w600)),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () async {
-                  final amount = double.tryParse(amountController.text);
-                  if (amount == null || amount < 500) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimum Rs 500 required')));
-                    return;
-                  }
-                  
-                  Navigator.pop(context);
-                  setState(() => _isRequesting = true);
-                  
-                  try {
-                    await ref.read(riderServiceProvider).requestWithdrawal(widget.user.uid, amount);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request Sent! Balance adjusted.'), backgroundColor: AppColors.success));
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
-                    }
-                  } finally {
-                    if (mounted) setState(() => _isRequesting = false);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.rider,
-                  minimumSize: const Size(double.infinity, 64),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              
+              if (!hasBankDetails)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.red.withValues(alpha: 0.2))),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.account_balance_rounded, color: Colors.red, size: 32),
+                      const SizedBox(height: 16),
+                      const Text('Bank Account Required', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                      const SizedBox(height: 8),
+                      Text('Please update your payout method in profile settings to enable withdrawals.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13, height: 1.5)),
+                      const SizedBox(height: 24),
+                      TextButton(
+                        onPressed: () { Navigator.pop(context); context.push('/rider/profile'); }, 
+                        child: const Text('GO TO PROFILE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                _buildField(label: 'Enter Amount', hint: '0', icon: Icons.payments_rounded, prefix: 'Rs ', controller: amountController),
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [500, 1000, 2000, 5000].map((amt) => Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: ChoiceChip(
+                        label: Text('Rs $amt'),
+                        selected: amountController.text == amt.toString(),
+                        onSelected: (v) => setSheetState(() => amountController.text = amt.toString()),
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
+                        selectedColor: AppColors.rider,
+                        labelStyle: TextStyle(color: amountController.text == amt.toString() ? Colors.white : Colors.white60, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    )).toList(),
+                  ),
                 ),
-                child: const Text('SUBMIT REQUEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1)),
-              ),
+                const SizedBox(height: 32),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white10)),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: AppColors.rider.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.account_balance_rounded, color: AppColors.rider, size: 20),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('TRANSFER TO', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                            Text(widget.user.bankDetails!['bankName'] ?? 'Verified Account', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                            Text(widget.user.bankDetails!['accountNumber'] ?? 'XXXX-XXXX', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () async {
+                    final amount = double.tryParse(amountController.text);
+                    if (amount == null || amount < 500) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimum withdrawal is Rs 500')));
+                      return;
+                    }
+                    if (amount > widget.balance) {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient available balance')));
+                       return;
+                    }
+                    
+                    Navigator.pop(context);
+                    setState(() => _isRequesting = true);
+                    
+                    try {
+                      await ref.read(riderServiceProvider).requestWithdrawal(widget.user.uid, amount);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout request sent to Zen Mart Admin!'), backgroundColor: AppColors.success));
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isRequesting = false);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.rider,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 70),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    elevation: 0,
+                  ),
+                  child: const Text('CONFIRM WITHDRAWAL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.5)),
+                ),
+              ],
+              const SizedBox(height: 40),
             ],
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );

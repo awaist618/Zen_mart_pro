@@ -173,8 +173,29 @@ class RiderService {
   /// Upload document
   Future<void> uploadDocument(String uid, String type, String url) async {
     await _db.collection('users').doc(uid).update({
-      'documents.$type': 'uploaded',
+      'documents.$type': 'pending', // Mark as pending review
       'documentUrls.$type': url,
+    });
+  }
+
+  /// Submit all uploaded documents for Admin approval
+  Future<void> submitDocumentsForApproval(String uid, String name, Map<String, String> documentUrls) async {
+    // 1. Create a verification request in approvals collection
+    await _db.collection('approvals').add({
+      'applicantId': uid,
+      'applicantName': name,
+      'type': 'riderVerification',
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'details': {
+        'documentUrls': documentUrls,
+        'message': 'Rider has uploaded new documents for verification.',
+      },
+    });
+
+    // 2. Mark user status as pending_verification if not already
+    await _db.collection('users').doc(uid).update({
+      'verificationStatus': 'pending',
     });
   }
 

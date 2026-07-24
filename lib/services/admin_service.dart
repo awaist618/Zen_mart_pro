@@ -79,7 +79,48 @@ class AdminService {
 
   /// Update approval status
   Future<void> updateApprovalStatus(String id, ApprovalStatus status) async {
-    await _db.collection('approvals').doc(id).update({'status': status.name});
+    final approvalDoc = await _db.collection('approvals').doc(id).get();
+    if (!approvalDoc.exists) return;
+    
+    final approval = ApprovalModel.fromFirestore(approvalDoc);
+    final batch = _db.batch();
+
+    // 1. Update the approval request itself
+    batch.update(_db.collection('approvals').doc(id), {'status': status.name});
+
+    // 2. Handle role-specific logic on approval
+    if (status == ApprovalStatus.approved) {
+       if (approval.type == ApprovalType.riderVerification) {
+          // Verify rider and update their document status
+          final Map<String, String> approvedDocs = {};
+          final docUrls = approval.details['documentUrls'] as Map<String, dynamic>? ?? {};
+          docUrls.forEach((k, v) => approvedDocs['documents.$k'] = 'approved');
+          
+          batch.update(_db.collection('users').doc(approval.applicantId), {
+            ...approvedDocs,
+            'verificationStatus': 'verified',
+          });
+
+          // Notify Rider
+          _db.collection('users').doc(approval.applicantId).collection('notifications').add({
+            'title': 'Identity Verified! ✅',
+            'message': 'Your documents have been approved. You are now a verified rider.',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+            'type': 'verification_success',
+          });
+       }
+    }
+
+    if (status == ApprovalStatus.rejected) {
+       if (approval.type == ApprovalType.riderVerification) {
+          batch.update(_db.collection('users').doc(approval.applicantId), {
+            'verificationStatus': 'rejected',
+          });
+       }
+    }
+
+    await batch.commit();
   }
 
   /// Get stream of all payout requests

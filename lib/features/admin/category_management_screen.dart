@@ -48,30 +48,35 @@ class CategoryManagementScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final cat = categories[index];
               return Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface, 
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Material(
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                    child: Icon(Icons.category_rounded, color: colorScheme.primary),
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
                   ),
-                  title: Text(cat.name, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-                  subtitle: Text('${cat.shopCount} Shops', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        onPressed: () => _showAddCategoryDialog(context, ref, category: cat),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
-                        onPressed: () => _showDeleteDialog(context, ref, cat),
-                      ),
-                    ],
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                      child: Icon(Icons.category_rounded, color: colorScheme.primary),
+                    ),
+                    title: Text(cat.name, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                    subtitle: Text('${cat.shopCount} Shops', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          onPressed: () => _showAddCategoryDialog(context, ref, category: cat),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                          onPressed: () => _showDeleteDialog(context, ref, cat),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

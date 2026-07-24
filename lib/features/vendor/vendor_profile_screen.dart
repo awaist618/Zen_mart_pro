@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -91,6 +92,12 @@ class VendorProfileScreen extends ConsumerWidget {
                       title: 'Earnings & Payouts',
                       subtitle: 'Withdrawals and sales history',
                       onTap: () => context.push('/vendor/earnings'),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: 'Bank Details',
+                      subtitle: 'Update payout account info',
+                      onTap: () => _showBankInfoDialog(context, ref, user),
                     ),
                     _SettingsTile(
                       icon: Icons.insights_rounded,
@@ -298,34 +305,80 @@ class VendorProfileScreen extends ConsumerWidget {
   }
 
   void _showBankInfoDialog(BuildContext context, WidgetRef ref, UserModel user) {
-    final accountController = TextEditingController();
-    final bankNameController = TextEditingController();
-    
+    final accountController = TextEditingController(text: user.bankDetails?['accountNumber'] ?? '');
+    final bankNameController = TextEditingController(text: user.bankDetails?['bankName'] ?? '');
+    final titleController = TextEditingController(text: user.bankDetails?['accountTitle'] ?? '');
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Payout Account', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: bankNameController, decoration: const InputDecoration(labelText: 'Bank / Digital Wallet')),
-            const SizedBox(height: 16),
-            TextField(controller: accountController, decoration: const InputDecoration(labelText: 'Account Number / ID')),
-          ],
+        title: const Text('Payout Settings', style: TextStyle(fontWeight: FontWeight.w900)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Enter your settlement account details where you will receive your earnings.', style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 24),
+              TextField(
+                controller: bankNameController, 
+                decoration: InputDecoration(
+                  labelText: 'Bank / Wallet Name', 
+                  hintText: 'e.g. HBL, JazzCash, EasyPaisa',
+                  prefixIcon: const Icon(Icons.account_balance_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                )
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController, 
+                decoration: InputDecoration(
+                  labelText: 'Account Title', 
+                  hintText: 'e.g. John Doe',
+                  prefixIcon: const Icon(Icons.person_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                )
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: accountController, 
+                decoration: InputDecoration(
+                  labelText: 'Account Number / IBAN', 
+                  hintText: 'Enter full account or wallet ID',
+                  prefixIcon: const Icon(Icons.numbers_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                )
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
           ElevatedButton(
             onPressed: () async {
+              if (bankNameController.text.isEmpty || accountController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill required fields')));
+                return;
+              }
               await ref.read(vendorServiceProvider).updateBankDetails(user.uid, {
                 'bankName': bankNameController.text.trim(),
                 'accountNumber': accountController.text.trim(),
+                'accountTitle': titleController.text.trim(),
+                'updatedAt': FieldValue.serverTimestamp(),
               });
-              if (context.mounted) Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bank details updated successfully!'), backgroundColor: AppColors.success));
+              }
             },
-            style: ElevatedButton.styleFrom(minimumSize: const Size(100, 48)),
-            child: const Text('UPDATE'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(120, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Text('SAVE SETTINGS'),
           ),
         ],
       ),
@@ -430,19 +483,18 @@ class _SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+    final colorScheme = theme.colorScheme;
+    final isLight = theme.brightness == Brightness.light;
+
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(32),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(32),
-        boxShadow: theme.brightness == Brightness.light ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)] : null,
-        border: theme.brightness == Brightness.light ? Border.all(color: theme.colorScheme.outline.withOpacity(0.05)) : null,
+        side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.05)) : BorderSide.none,
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(32),
-        clipBehavior: Clip.antiAlias,
-        child: Column(children: children),
-      ),
+      child: Column(children: children),
     );
   }
 }

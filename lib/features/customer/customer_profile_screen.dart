@@ -421,17 +421,15 @@ class _SettingsGroup extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(28),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 30)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.05)) : null,
+        side: isLight ? BorderSide(color: colorScheme.outline.withOpacity(0.05)) : BorderSide.none,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: Column(children: children),
-      ),
+      child: Column(children: children),
     );
   }
 }
