@@ -212,3 +212,68 @@ class _ApprovalListTile extends ConsumerWidget {
 }
 
 class _DocumentGrid extends StatelessWidget {
+  final Map<String, dynamic> urls;
+  const _DocumentGrid({required this.urls});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: urls.entries.map((e) => GestureDetector(
+          onTap: () => _showLargeImage(context, e.value, e.key),
+          child: Container(
+            width: 140,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white10),
+              image: DecorationImage(image: NetworkImage(e.value), fit: BoxFit.cover),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              alignment: Alignment.bottomLeft,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter, 
+                  end: Alignment.bottomCenter, 
+                  colors: [Colors.transparent, Colors.black87]
+                ),
+              ),
+              child: Text(
+                e.key.replaceAll('_', ' ').toUpperCase(), 
+                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)
+              ),
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  void _showLargeImage(BuildContext context, String url, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent, 
+              elevation: 0, 
+              title: Text(title.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(color: Colors.white)),
+              leading: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(url, fit: BoxFit.contain),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
