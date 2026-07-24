@@ -706,7 +706,7 @@ class _OSMMap extends StatelessWidget {
     return FlutterMap(
       options: MapOptions(initialCenter: delivery, initialZoom: 14.0),
       children: [
-        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.example.zen_mart_pro'),
+        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.zenmartpro.app'),
         MarkerLayer(markers: [
           Marker(point: pickup, width: 40, height: 40, child: const Icon(Icons.storefront_rounded, color: AppColors.info, size: 32)),
           Marker(point: delivery, width: 40, height: 40, child: Icon(Icons.location_on_rounded, color: primaryColor, size: 32)),

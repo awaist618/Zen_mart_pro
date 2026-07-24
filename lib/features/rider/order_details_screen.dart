@@ -231,7 +231,7 @@ class _OSMMapState extends State<_OSMMap> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.zen_mart_pro',
+              userAgentPackageName: 'com.zenmartpro.app',
             ),
             PolylineLayer(
               polylines: [

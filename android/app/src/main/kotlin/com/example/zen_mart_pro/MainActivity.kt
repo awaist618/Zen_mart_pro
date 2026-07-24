@@ -1,4 +1,4 @@
-package com.example.zen_mart_pro
+package com.zenmartpro.app
 
 import io.flutter.embedding.android.FlutterActivity
 
