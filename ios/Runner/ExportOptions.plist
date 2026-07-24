@@ -16,7 +16,7 @@
 	<string>manual</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>com.zenmartpro.app</key>
+		<key>com.example.zenMartPro</key>
 		<string>Zen Mart Pro Distribution</string>
 	</dict>
 </dict>

@@ -39,7 +39,7 @@ jobs:
         run: flutter build ios --release --no-codesign --no-tree-shake-icons
 
       - name: Build iOS Simulator (For Appetize)
-        run: flutter build ios --simulator --debug --no-codesign --no-tree-shake-icons
+        run: flutter build ios --simulator --debug --no-codesign --no-tree-shake-icons --dart-define=FLUTTER_ENABLE_SKIA=true
 
       - name: Create Unsigned IPA
         run: |
