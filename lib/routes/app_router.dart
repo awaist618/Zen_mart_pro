@@ -32,6 +32,7 @@ import '../features/admin/support_list_screen.dart';
 import '../features/admin/support_chat_detail_screen.dart';
 import '../features/admin/order_management_screen.dart';
 import '../features/admin/user_history_screen.dart';
+import '../features/admin/order_map_screen.dart';
 import '../features/vendor/vendor_dashboard.dart';
 import '../features/vendor/add_product_screen.dart';
 import '../features/vendor/vendor_notifications_screen.dart';
@@ -222,6 +223,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/system-info', builder: (context, state) => const SystemInfoScreen()),
       GoRoute(path: '/admin/activity-log', builder: (context, state) => const ActivityLogScreen()),
       GoRoute(path: '/admin/orders', builder: (context, state) => const OrderManagementScreen()),
+      GoRoute(path: '/admin/order-map', builder: (context, state) => const OrderMapScreen()),
       GoRoute(
         path: '/admin/user-history/:userId/:role',
         builder: (context, state) => UserHistoryScreen(

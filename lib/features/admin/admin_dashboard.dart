@@ -419,6 +419,7 @@ class _AdminQuickActions extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
+              _ModernToolCard(label: 'Map', icon: Icons.map_rounded, color: const Color(0xFFC9A27E), route: '/admin/order-map'),
               _ModernToolCard(label: 'Orders', icon: Icons.receipt_long_rounded, color: const Color(0xFF6366F1), route: '/admin/orders'),
               _ModernToolCard(label: 'Inventory', icon: Icons.inventory_2_rounded, color: const Color(0xFF10B981), route: '/admin/shops'),
               _ModernToolCard(label: 'Users', icon: Icons.people_rounded, color: const Color(0xFF38BDF8), route: '/admin/users'),

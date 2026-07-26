@@ -74,6 +74,28 @@ class CustomerProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 32),
 
+                _SectionHeader(title: 'Rewards & Referrals'),
+                const SizedBox(height: 12),
+                _SettingsGroup(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.card_giftcard_rounded,
+                      title: 'Invite Friends',
+                      subtitle: user.referralCode != null 
+                          ? 'Your Code: ${user.referralCode}' 
+                          : 'Get your unique invite code',
+                      onTap: () {
+                        if (user.referralCode == null) {
+                          ref.read(authServiceProvider).generateReferralCode(user.uid);
+                        } else {
+                          // Share logic could be added here
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
                 _SectionHeader(title: 'account_settings'.tr(ref)),
                 const SizedBox(height: 12),
                 _SettingsGroup(

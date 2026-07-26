@@ -24,6 +24,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _otpController = TextEditingController();
+  final _referralController = TextEditingController();
   
   bool _isLoading = false;
   bool _isOtpSent = false;
@@ -38,6 +39,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _otpController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -131,6 +133,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text.trim(),
+        referredBy: _referralController.text.trim().isEmpty ? null : _referralController.text.trim(),
       );
 
       // On successful signup, trigger a 3-second splash transition
@@ -329,6 +332,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             isPassword: true, 
                             isObscured: _obscurePassword
                           ),
+                          const SizedBox(height: 16),
+                          _buildTextField(_referralController, 'Referral Code (Optional)', Icons.card_giftcard_rounded, required: false),
                           
                           if (_isOtpSent) ...[
                             const SizedBox(height: 24),
@@ -474,6 +479,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     VoidCallback? toggleObscure,
     TextInputType? type, 
     bool enabled = true,
+    bool required = true,
   }) {
     const accentColor = Color(0xFF38BDF8);
 
@@ -515,7 +521,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.02)),
         ),
       ),
-      validator: (v) => v!.isEmpty ? 'Field required' : null,
+      validator: (v) => (required && v!.isEmpty) ? 'Field required' : null,
     );
   }
 }

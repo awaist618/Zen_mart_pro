@@ -22,6 +22,7 @@ class AuthService {
     required String email,
     required String phone,
     required String password,
+    String? referredBy,
   }) async {
     UserCredential credential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -36,6 +37,8 @@ class AuthService {
       'shopId': null,
       'status': 'active',
       'createdAt': FieldValue.serverTimestamp(),
+      'referredBy': referredBy,
+      'referralCode': credential.user!.uid.substring(0, 6).toUpperCase(),
     });
   }
 
@@ -172,6 +175,13 @@ class AuthService {
   Future<void> updateProfilePicture(String uid, String imageUrl) async {
     await _db.collection('users').doc(uid).update({
       'profilePicture': imageUrl,
+    });
+  }
+
+  Future<void> generateReferralCode(String uid) async {
+    final code = uid.substring(0, 6).toUpperCase();
+    await _db.collection('users').doc(uid).update({
+      'referralCode': code,
     });
   }
 

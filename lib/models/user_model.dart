@@ -43,6 +43,8 @@ class UserModel {
   final Map<String, String>? documentUrls; // docType -> url
   final Map<String, dynamic>? bankDetails;
   final String? fcmToken;
+  final String? referralCode;
+  final String? referredBy;
 
   UserModel({
     required this.uid,
@@ -71,6 +73,8 @@ class UserModel {
     this.documentUrls,
     this.bankDetails,
     this.fcmToken,
+    this.referralCode,
+    this.referredBy,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -104,6 +108,8 @@ class UserModel {
       documentUrls: data['documentUrls'] != null ? Map<String, String>.from(data['documentUrls']) : null,
       bankDetails: data['bankDetails'] != null ? Map<String, dynamic>.from(data['bankDetails']) : null,
       fcmToken: data['fcmToken'],
+      referralCode: data['referralCode'],
+      referredBy: data['referredBy'],
     );
   }
 
@@ -158,6 +164,8 @@ class UserModel {
       'documentUrls': documentUrls,
       'bankDetails': bankDetails,
       'fcmToken': fcmToken,
+      'referralCode': referralCode,
+      'referredBy': referredBy,
     };
   }
 }
