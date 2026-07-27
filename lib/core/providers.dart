@@ -32,6 +32,8 @@ import '../models/emergency_report_model.dart';
 import '../models/offer_model.dart';
 import '../models/cart_model.dart';
 import '../models/system_settings_model.dart';
+import '../services/cache_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
@@ -44,6 +46,10 @@ final orderServiceProvider = Provider((ref) => OrderService(ref.read(notificatio
 final supportServiceProvider = Provider((ref) => SupportService(ref.read(notificationServiceProvider)));
 final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(notificationServiceProvider)));
 final notificationServiceProvider = Provider((ref) => NotificationService());
+
+final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
+  return Connectivity().onConnectivityChanged.map((results) => results.first);
+});
 
 final splashDurationProvider = FutureProvider<void>((ref) async {
   await Future.delayed(const Duration(seconds: 3));
@@ -237,10 +243,27 @@ final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
 });
 
 final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
-  return ref.watch(customerServiceProvider).getNearbyShops();
+  final connectivity = ref.watch(connectivityProvider).asData?.value;
+  final isOffline = connectivity == ConnectivityResult.none;
+
+  if (isOffline) {
+    return Stream.value(CacheService.getCachedShops());
+  }
+
+  return ref.watch(customerServiceProvider).getNearbyShops().map((shops) {
+    CacheService.cacheShops(shops);
+    return shops;
+  });
 });
 
 final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final connectivity = ref.watch(connectivityProvider).asData?.value;
+  final isOffline = connectivity == ConnectivityResult.none;
+
+  if (isOffline) {
+    return Stream.value(CacheService.getCachedProducts());
+  }
+
   return FirebaseFirestore.instance
       .collection('products')
       .where('isAvailable', isEqualTo: true)
@@ -249,7 +272,10 @@ final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
         final products = s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList();
         // Professional Trending: Sort by orderCount or rating in memory to avoid index errors for now
         products.sort((a, b) => b.orderCount.compareTo(a.orderCount));
-        return products.take(10).toList();
+        
+        final topProducts = products.take(10).toList();
+        CacheService.cacheProducts(topProducts);
+        return topProducts;
       });
 });
 

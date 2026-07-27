@@ -8,6 +8,7 @@ import '../../models/shop_model.dart';
 import '../../models/product_model.dart';
 import './widgets/customer_bottom_nav.dart';
 import '../../core/localization.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class CustomerHome extends ConsumerWidget {
   const CustomerHome({super.key});
@@ -16,6 +17,8 @@ class CustomerHome extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
+    final connectivity = ref.watch(connectivityProvider).asData?.value;
+    final isOffline = connectivity == ConnectivityResult.none;
     
     // Dynamic Theme Mapping
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
@@ -58,11 +61,27 @@ class CustomerHome extends ConsumerWidget {
                   ),
                 ),
                 title: _LocationHeader(ref: ref),
-                bottom: const PreferredSize(
-                  preferredSize: Size.fromHeight(80),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: _SearchBar(),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(80),
+                  child: Column(
+                    children: [
+                      if (isOffline)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          color: AppColors.error.withOpacity(0.8),
+                          child: const Center(
+                            child: Text(
+                              'WORKING OFFLINE • VIEWING CACHED DATA',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                            ),
+                          ),
+                        ),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
+                        child: _SearchBar(),
+                      ),
+                    ],
                   ),
                 ),
               ),

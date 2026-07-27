@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 import 'routes/app_router.dart';
 import 'core/settings_provider.dart';
 import 'services/notification_service.dart';
+import 'services/cache_service.dart';
 import 'core/providers.dart';
 import 'models/user_model.dart';
 
@@ -15,6 +16,8 @@ void main() async {
   
   try {
     await Firebase.initializeApp();
+    // Initialize Cache Service
+    await CacheService.initialize();
     // Initialize Notifications - Don't await to prevent blocking app startup if FCM hangs
     NotificationService().initialize();
   } catch (e) {
