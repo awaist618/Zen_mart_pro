@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../models/product_model.dart';
@@ -143,6 +144,14 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
+  void _shareProduct() {
+    final link = 'https://zenmartpro.app/product/${product.id}';
+    Share.share(
+      'Check out this ${product.name} on Zen Mart Pro!\n\nBuy it here: $link',
+      subject: 'Great deal on Zen Mart Pro!',
+    );
+  }
+
   Widget _buildModernAppBar(BuildContext context, WidgetRef ref, bool isWishlisted) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -165,6 +174,11 @@ class ProductDetailsScreen extends ConsumerWidget {
         ),
       ),
       actions: [
+        _CircleActionBtn(
+          icon: Icons.share_rounded, 
+          onTap: _shareProduct,
+        ),
+        const SizedBox(width: 12),
         _CircleActionBtn(
           icon: isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded, 
           color: isWishlisted ? Colors.redAccent : null,

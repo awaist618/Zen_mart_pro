@@ -280,6 +280,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/customer/notifications', builder: (context, state) => const CustomerNotificationsScreen()),
+      GoRoute(
+        path: '/product/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return FutureBuilder(
+            future: FirebaseFirestore.instance.collection('products').doc(id).get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasData && snapshot.data!.exists) {
+                return ProductDetailsScreen(product: ProductModel.fromFirestore(snapshot.data!));
+              }
+              return const Scaffold(body: Center(child: Text('Product not found')));
+            },
+          );
+        },
+      ),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
       GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
       GoRoute(path: '/rider/active-tasks', builder: (context, state) => const ActiveTasksScreen()),
